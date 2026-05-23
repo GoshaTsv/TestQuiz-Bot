@@ -3,4 +3,4 @@ WORKDIR /app
 COPY . .
 RUN chmod +x mvnw
 RUN ./mvnw clean package
-CMD ["java", "-jar", "target/original-MakerTime_Ryzen10950x4DTelegramBot-1.0-SNAPSHOT.jar"]
+CMD ["java", "-jar", "target/MakerTime_Ryzen10950x4DTelegramBot-1.0-SNAPSHOT.jar"]
