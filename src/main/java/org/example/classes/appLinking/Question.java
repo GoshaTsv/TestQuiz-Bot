@@ -2,7 +2,6 @@ package org.example.classes.appLinking;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Question {
     public String question;
