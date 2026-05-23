@@ -59,5 +59,12 @@
             <version>42.7.10</version>
             <scope>compile</scope>
         </dependency>
+        <!-- Source: https://mvnrepository.com/artifact/org.checkerframework/checker-qual -->
+        <dependency>
+            <groupId>org.checkerframework</groupId>
+            <artifactId>checker-qual</artifactId>
+            <version>4.1.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>
