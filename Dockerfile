@@ -7,4 +7,4 @@ RUN ./mvnw clean package -DskipTests
 
 # Line 6: The command to run your app
 # This is what Railway executes to start your program
-CMD ["java", "-cp", "src/main/java", "Main"]
+CMD ["java", "-cp", "target/classes", "org.example.Main"]
