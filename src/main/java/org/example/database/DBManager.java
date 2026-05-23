@@ -21,6 +21,7 @@ public class DBManager {
         try {
             return DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (SQLException e) {
+            System.out.println(e);
             return null;
         }
     }
