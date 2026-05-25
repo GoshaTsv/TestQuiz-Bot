@@ -672,7 +672,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
                     List keyset = new ArrayList<>(currentQuestion.answers.keySet());
-                    String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)).toString();
+                    String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)-1).toString();
                     user.getUserAnswers().put(userAnswer, false);
                  }
                 else {
@@ -693,7 +693,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         continue;
                     }
                     String userAnswer = user.getUserAnswers().keySet().toArray()[qIndex].toString();
-                    String correntAnswer = User.getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex));
+                    String correntAnswer = User.getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex-1));
                     sendMessage("Вопрос #" + qIndex + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
                 }
                 userCurrent.setQuizState(-1);
