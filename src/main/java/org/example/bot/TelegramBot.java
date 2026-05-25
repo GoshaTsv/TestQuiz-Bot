@@ -672,7 +672,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
                     List keyset = new ArrayList<>(currentQuestion.answers.keySet());
-                    String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)-1).toString();
+                    String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)).toString();
                     user.getUserAnswers().put(userAnswer, false);
                  }
                 else {
