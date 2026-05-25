@@ -690,7 +690,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 int qIndex = 0;
                 for (Boolean b: user.getUserAnswers().values()){
                     otherqIndex++;
-                    if (b.booleanValue()){
+                    if (b){
                         continue;
                     }
                     String userAnswer = user.getUserAnswers().keySet().toArray()[qIndex].toString();
@@ -702,6 +702,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 userCurrent.setQuizState(-1);
                 userCurrent.setCurrentQuiz(null);
                 userCurrent.setCorrectAnswers(0);
+                userCurrent.setUserAnswers(new LinkedHashMap<>());
                 return;
             }
 
