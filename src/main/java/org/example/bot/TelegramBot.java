@@ -668,7 +668,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion))+1);
 
                     if (selectedAnswer.equals(correctAnswer)) {
-                        user.getUserAnswers().put(User.getCorrectAnswerForQuestion(currentQuestion)+1, true);
+                        user.getUserAnswers().put(User.getCorrectAnswerForQuestion(currentQuestion), true);
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
                     List keyset = new ArrayList<>(currentQuestion.answers.keySet());
@@ -690,8 +690,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 for (Boolean b: user.getUserAnswers().values()){
                     String userAnswer = user.getUserAnswers().keySet().toArray()[qIndex].toString();
                     String correntAnswer = User.getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex));
-                    sendMessage("Вопрос #" + qIndex+1 + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
                     qIndex++;
+                    sendMessage("Вопрос #" + qIndex + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
+
                 }
                 userCurrent.setQuizState(-1);
                 userCurrent.setCurrentQuiz(null);
