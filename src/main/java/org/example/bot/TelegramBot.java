@@ -683,19 +683,15 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             // move to the next answer
             userCurrent.setQuizState(user.getQuizState() + 1);
-            if (userCurrent.getQuizState()>quiz.getTest().questions.size()){
+            if (user.getQuizState()>quiz.getTest().questions.size()){
                 sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", chatId);
-                sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nНеправильные ответы (если ничего не написано, то нету):", quiz.getTeacherId());
+                sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nОтветы ученика:", quiz.getTeacherId());
                 int qIndex = 0;
-                for (Boolean b: userCurrent.getUserAnswers().values()){
-                    if (b){
-                        continue;
-                    }
-                    String userAnswer = userCurrent.getUserAnswers().keySet().toArray()[qIndex].toString();
-                    String correntAnswer = User.getCorrectAnswerForQuestion(userCurrent.getCurrentQuiz().getTest().questions.get(qIndex));
-                    List keyset = new ArrayList<>(userCurrent.getUserAnswers().keySet());
-                    int RealQIndex = keyset.indexOf(userAnswer)+1;
-                    sendMessage("Вопрос #" + RealQIndex + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
+                for (Boolean b: user.getUserAnswers().values()){
+                    String userAnswer = user.getUserAnswers().keySet().toArray()[qIndex].toString();
+                    String correntAnswer = User.getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex));
+                    qIndex++;
+                    sendMessage("Вопрос #" + qIndex + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
 
                 }
                 userCurrent.setQuizState(-1);
