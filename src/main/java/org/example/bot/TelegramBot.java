@@ -648,9 +648,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String userAnswer = update.getMessage().getText();
                     String correctAnswer = getCorrectAnswerForQuestion(currentQuestion);
                     if (userAnswer.equalsIgnoreCase(correctAnswer)) {
+                        user.getUserAnswers().put(userAnswer, true);
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
-
+                    user.getUserAnswers().put(userAnswer, false);
                 }
                 else{
                     sendMessage("Пожалуйста, ответьте на вопрос словом/словами.", chatId);
@@ -667,8 +668,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion))+1);
 
                     if (selectedAnswer.equals(correctAnswer)) {
+                        user.getUserAnswers().put(User.getCorrectAnswerForQuestion(currentQuestion), true);
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
+                    user.getUserAnswers().put((String) user.getUserAnswers().sequencedKeySet().toArray()[Integer.parseInt(selectedAnswer)], false);
                  }
                 else {
                     sendMessage("Пожалуйста, нажмите на 1 из кнопок.", chatId);
@@ -679,8 +682,19 @@ public class TelegramBot extends TelegramLongPollingBot {
             // move to the next answer
             userCurrent.setQuizState(user.getQuizState() + 1);
             if (user.getQuizState()>quiz.getTest().questions.size()){
-                sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", chatId);
-                sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов.", quiz.getTeacherId());
+                sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось! Вот ваши неправильные ответы (если они есть):", chatId);
+                sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nНеправильные ответы (если ничего не написано, то нету):", quiz.getTeacherId());
+                int qIndex = 0;
+                for (Boolean b: user.getUserAnswers().values()){
+                    qIndex++;
+                    if (b==true){
+                        continue;
+                    }
+                    String userAnswer = user.getUserAnswers().keySet().toArray()[qIndex].toString();
+                    String correntAnswer = User.getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex));
+                    sendMessage("Ответ вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
+                    sendMessage("Ваш ответ: " + userAnswer + "\nПравильный ответ: " + correntAnswer, chatId);
+                }
                 userCurrent.setQuizState(-1);
                 userCurrent.setCurrentQuiz(null);
                 userCurrent.setCorrectAnswers(0);

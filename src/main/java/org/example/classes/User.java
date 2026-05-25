@@ -2,6 +2,7 @@ package org.example.classes;
 
 import org.example.classes.appLinking.Question;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class User {
@@ -15,6 +16,15 @@ public class User {
     private String correctAnswer;
     private String prevType;
     private int correctAnswers;
+    private LinkedHashMap<String, Boolean> userAnswers;
+
+    public LinkedHashMap<String, Boolean> getUserAnswers() {
+        return userAnswers;
+    }
+
+    public void setUserAnswers(LinkedHashMap<String, Boolean> userAnswers) {
+        this.userAnswers = userAnswers;
+    }
 
     public int getCorrectAnswers() {
         return correctAnswers;
@@ -65,6 +75,7 @@ public class User {
         this.currentQuiz = currentQuiz;
         prevType = "";
         correctAnswers =0;
+        userAnswers = new LinkedHashMap<>();
     }
 
     public String getState() {
