@@ -671,7 +671,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                         user.getUserAnswers().put(User.getCorrectAnswerForQuestion(currentQuestion), true);
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
-                    user.getUserAnswers().put((String) user.getUserAnswers().sequencedKeySet().toArray()[Integer.parseInt(selectedAnswer)], false);
+                    List keyset = new ArrayList<>(currentQuestion.answers.keySet());
+                    String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)-1).toString();
+                    user.getUserAnswers().put(userAnswer, false);
                  }
                 else {
                     sendMessage("Пожалуйста, нажмите на 1 из кнопок.", chatId);
