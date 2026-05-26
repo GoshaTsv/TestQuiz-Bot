@@ -686,14 +686,22 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (user.getQuizState()>quiz.getTest().questions.size()){
                 sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", chatId);
                 sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nОтветы ученика:", quiz.getTeacherId());
-                int qIndex = 0;
-                for (Boolean b: user.getUserAnswers().values()){
-                    String userAnswer = user.getUserAnswers().keySet().toArray()[qIndex].toString();
-                    String correntAnswer = User.getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex));
-                    qIndex++;
-                    sendMessage("Вопрос #" + qIndex + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
+                Thread thread = new Thread(() ->{
+                    int qIndex = 0;
 
-                }
+                    for (Boolean b: user.getUserAnswers().values()){
+                        String userAnswer = user.getUserAnswers().keySet().toArray()[qIndex].toString();
+                        String correntAnswer = User.getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex));
+                        qIndex++;
+                        sendMessage("Вопрос #" + qIndex + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
+                        try {
+                            Thread.sleep(250);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                });
+                thread.start();
                 userCurrent.setQuizState(-1);
                 userCurrent.setCurrentQuiz(null);
                 userCurrent.setCorrectAnswers(0);
