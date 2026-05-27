@@ -676,7 +676,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     List keyset = new ArrayList<>(currentQuestion.answers.keySet());
                     String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)-1).toString();
                     System.out.println(userAnswer);
-                    System.out.println(correctAnswer);
+                    System.out.println(User.getCorrectAnswerForQuestion(currentQuestion));
                     newUserAnswers.put(userAnswer, false);
                     user.setUserAnswers(newUserAnswers);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
@@ -739,7 +739,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                     userCurrent.setCorrectAnswer(correctAnswer);
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(250);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
@@ -753,7 +753,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 long finalChatId6 = chatId;
                 new Thread(() ->{
                     try {
-                        Thread.sleep(1000);
+                        Thread.sleep(250);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
