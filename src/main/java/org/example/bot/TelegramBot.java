@@ -645,12 +645,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                     System.out.println(correctAnswer);
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
-                    if (userAnswer.equalsIgnoreCase(correctAnswer)) {
-                        newUserAnswers.put(userAnswer, true);
+                    boolean isCorrect = userAnswer.equalsIgnoreCase(correctAnswer);
+                    newUserAnswers.put(userAnswer, isCorrect);
+                    if (isCorrect) {
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
-                    }
-                    else{
-                        newUserAnswers.put(userAnswer, false);
                     }
 
                     user.setUserAnswers(newUserAnswers);
@@ -671,19 +669,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion))+1);
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
+                    String userAnswer = keys.get(Integer.parseInt(selectedAnswer)-1).toString();
+                    boolean isCorrect = selectedAnswer.equals(correctAnswer);
 
-                    if (selectedAnswer.equals(correctAnswer)) {
-                        newUserAnswers.put(User.getCorrectAnswerForQuestion(currentQuestion), true);
+                    newUserAnswers.put(userAnswer, isCorrect);
+                    if (isCorrect) {
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
-                    else{
-                        List keyset = new ArrayList<>(currentQuestion.answers.keySet());
-                        String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)-1).toString();
-                        newUserAnswers.put(userAnswer, false);
-
-                    }
-
-
 
                     user.setUserAnswers(newUserAnswers);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
