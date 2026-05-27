@@ -39,7 +39,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     //moved all the user.setTestCount and user.setClassCount a bit lower so that it doesnt count when you get an error
     @Override
     public void onUpdateReceived(Update update) {
-        System.out.println(update);
         long chatId = 0;
         Message message = new Message();
         if(update.hasMessage()){
@@ -62,7 +61,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (user == null) {
             System.out.println("User is null for " + chatId);
             System.out.print("Users: ");
-            System.out.println(users);
             if (message.hasText() && message.getText().startsWith("/start") && !(message.getText().startsWith("/startquiz"))) //added a check so that it doesnt get activated by /startquiz
                 startRegistration(update, chatId);
             else
@@ -441,7 +439,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 else if (msg.startsWith("/myclasses")) {
                     ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
-                    System.out.println("Classes: " + classes);
                     if (classes == null) {
                         sendMessage("Не удалось получить классы пользователя...", chatId);
                         return;
@@ -492,7 +489,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 //made the method for listing the teacher's tests (just copied the classes thing)
                 else if (msg.startsWith("/mytests")) {
                     ArrayList<Test> tests = DBManager.getTests(chatId);
-                    System.out.println("Tests: " + tests);
                     if (tests == null) {
                         sendMessage("Не удалось получить тесты пользователя...", chatId);
                         return;
@@ -579,11 +575,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String line;
                     while ((line = br.readLine()) != null) {
                         json += line;
-                        System.out.println(json);
                     }
                     Test test = gson.fromJson(json, Test.class);
                     test.setTestName(test.getTestName());
-                    System.out.println(Arrays.toString(test.questions.toArray()));
 
                     ArrayList<Test> tests = DBManager.getTests(chatId);
                     if (tests == null) {
@@ -647,6 +641,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 if (update.hasMessage() && update.getMessage().hasText()) {
                     String userAnswer = update.getMessage().getText();
                     String correctAnswer = getCorrectAnswerForQuestion(currentQuestion);
+                    System.out.println(userAnswer);
+                    System.out.println(correctAnswer);
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
                     if (userAnswer.equalsIgnoreCase(correctAnswer)) {
@@ -875,6 +871,5 @@ public class TelegramBot extends TelegramLongPollingBot {
             throw new RuntimeException("Users is null");
         }
         System.out.print("Loaded users: ");
-        System.out.println(users);
     }
 }
