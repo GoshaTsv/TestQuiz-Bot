@@ -703,14 +703,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     System.out.println("thread launched!");
                     sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", finalChatId4);
                     sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nОтветы ученика:", quiz.getTeacherId());
-                    int qIndex = 0;
+                    List<String> userAnswers = new ArrayList<>(user.getUserAnswers().keySet());
 
-                    for (Boolean b: user.getUserAnswers().values()){
-                        String userAnswer = user.getUserAnswers().keySet().toArray()[qIndex].toString();
-                        String correntAnswer = getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex));
-                        qIndex++;
-                        sendMessage("Вопрос #" + qIndex + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
-                        System.out.println(user.getUserAnswers().size());
+                    for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().questions.size(); i++) {
+                        String userAnswer = userAnswers.get(i);
+                        String correctAnswer = getCorrectAnswerForQuestion(quiz.getTest().questions.get(i));
+                        sendMessage("Вопрос #" + (i + 1) + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correctAnswer, quiz.getTeacherId());
+
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException e) {
