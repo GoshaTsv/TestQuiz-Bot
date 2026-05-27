@@ -668,12 +668,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion))+1);
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
+
                     if (selectedAnswer.equals(correctAnswer)) {
                         newUserAnswers.put(User.getCorrectAnswerForQuestion(currentQuestion), true);
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
                     List keyset = new ArrayList<>(currentQuestion.answers.keySet());
                     String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)-1).toString();
+                    System.out.println(userAnswer);
+                    System.out.println(correctAnswer);
                     newUserAnswers.put(userAnswer, false);
                     user.setUserAnswers(newUserAnswers);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
