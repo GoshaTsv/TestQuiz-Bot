@@ -649,7 +649,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                         newUserAnswers.put(userAnswer, true);
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
-                    newUserAnswers.put(userAnswer, false);
+                    else{
+                        newUserAnswers.put(userAnswer, false);
+                    }
+
                     user.setUserAnswers(newUserAnswers);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                 }
@@ -673,11 +676,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                         newUserAnswers.put(User.getCorrectAnswerForQuestion(currentQuestion), true);
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
-                    List keyset = new ArrayList<>(currentQuestion.answers.keySet());
-                    String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)-1).toString();
-                    System.out.println(userAnswer);
-                    System.out.println(User.getCorrectAnswerForQuestion(currentQuestion));
-                    newUserAnswers.put(userAnswer, false);
+                    else{
+                        List keyset = new ArrayList<>(currentQuestion.answers.keySet());
+                        String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)-1).toString();
+                        newUserAnswers.put(userAnswer, false);
+
+                    }
+
+
+
                     user.setUserAnswers(newUserAnswers);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                 }
