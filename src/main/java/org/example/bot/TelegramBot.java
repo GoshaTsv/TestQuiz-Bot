@@ -678,6 +678,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
 
                     user.setUserAnswers(newUserAnswers);
+                    System.out.println(selectedAnswer);
+                    System.out.println(correctAnswer);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                 }
                 else {
