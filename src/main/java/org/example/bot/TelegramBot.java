@@ -724,27 +724,45 @@ public class TelegramBot extends TelegramLongPollingBot {
             var question = quiz.getTest().questions.get(user.getQuizState()-1);
 
             if (question.answers.size() > 1) {
-                //if the answers size is bigger than 1, it means that the question has variants of answers
-                ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
+                long finalChatId5 = chatId;
+                new Thread(() ->{
+                    //if the answers size is bigger than 1, it means that the question has variants of answers
+                    ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
 
-                //dasjdas
-                String correctAnswer = null;
-                for (Map.Entry<String, Boolean> entry : question.answers.entrySet()) {
-                    if (entry.getValue()) {
-                        correctAnswer = entry.getKey();
-                        break;
+                    //dasjdas
+                    String correctAnswer = null;
+                    for (Map.Entry<String, Boolean> entry : question.answers.entrySet()) {
+                        if (entry.getValue()) {
+                            correctAnswer = entry.getKey();
+                            break;
+                        }
                     }
-                }
-                userCurrent.setCorrectAnswer(correctAnswer);
+                    userCurrent.setCorrectAnswer(correctAnswer);
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, finalChatId5, variants, variants.size());
+                    userCurrent.setPrevType("var");
+                }).start();
 
-                sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId, variants, variants.size());
-                userCurrent.setPrevType("var");
+
                 return;
             } else {
-                //sending a message with a question and storing the answer
-                sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId);
-                userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
-                userCurrent.setPrevType("ans");
+                long finalChatId6 = chatId;
+                new Thread(() ->{
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    //sending a message with a question and storing the answer
+                    sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, finalChatId6);
+                    userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
+                    userCurrent.setPrevType("ans");
+                }).start();
+
             }
         }
     }
