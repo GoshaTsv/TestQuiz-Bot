@@ -684,14 +684,17 @@ public class TelegramBot extends TelegramLongPollingBot {
             // move to the next answer
             userCurrent.setQuizState(user.getQuizState() + 1);
             if (user.getQuizState()>quiz.getTest().questions.size()){
-                sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", chatId);
-                sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nОтветы ученика:", quiz.getTeacherId());
+                System.out.println("got to start of the thread!");
+                long finalChatId4 = chatId;
                 Thread thread = new Thread(() ->{
+                    System.out.println("thread launched!");
+                    sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", finalChatId4);
+                    sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nОтветы ученика:", quiz.getTeacherId());
                     int qIndex = 0;
 
                     for (Boolean b: user.getUserAnswers().values()){
                         String userAnswer = user.getUserAnswers().keySet().toArray()[qIndex].toString();
-                        String correntAnswer = User.getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex));
+                        String correntAnswer = getCorrectAnswerForQuestion(user.getCurrentQuiz().getTest().questions.get(qIndex));
                         qIndex++;
                         sendMessage("Вопрос #" + qIndex + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correntAnswer, quiz.getTeacherId());
                         try {
@@ -700,12 +703,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                             throw new RuntimeException(e);
                         }
                     }
+                    userCurrent.setQuizState(-1);
+                    userCurrent.setCurrentQuiz(null);
+                    userCurrent.setCorrectAnswers(0);
+                    userCurrent.setUserAnswers(new LinkedHashMap<>());
                 });
                 thread.start();
-                userCurrent.setQuizState(-1);
-                userCurrent.setCurrentQuiz(null);
-                userCurrent.setCorrectAnswers(0);
-                userCurrent.setUserAnswers(new LinkedHashMap<>());
+
+
                 return;
             }
 
