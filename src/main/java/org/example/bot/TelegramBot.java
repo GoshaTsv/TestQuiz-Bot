@@ -647,11 +647,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                 if (update.hasMessage() && update.getMessage().hasText()) {
                     String userAnswer = update.getMessage().getText();
                     String correctAnswer = getCorrectAnswerForQuestion(currentQuestion);
+                    LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
+
                     if (userAnswer.equalsIgnoreCase(correctAnswer)) {
-                        user.getUserAnswers().put(userAnswer, true);
+                        newUserAnswers.put(userAnswer, true);
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
-                    user.getUserAnswers().put(userAnswer, false);
+                    newUserAnswers.put(userAnswer, false);
+                    user.setUserAnswers(newUserAnswers);
+                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                 }
                 else{
                     sendMessage("Пожалуйста, ответьте на вопрос словом/словами.", chatId);
@@ -666,14 +670,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String selectedAnswer = callbackData.replace("test_", "");
                     List<String> keys = new ArrayList<>(quiz.getTest().questions.get(user.getQuizState()-1).answers.keySet());
                     String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion))+1);
+                    LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
                     if (selectedAnswer.equals(correctAnswer)) {
-                        user.getUserAnswers().put(User.getCorrectAnswerForQuestion(currentQuestion), true);
+                        newUserAnswers.put(User.getCorrectAnswerForQuestion(currentQuestion), true);
                         user.setCorrectAnswers(user.getCorrectAnswers()+1);
                     }
                     List keyset = new ArrayList<>(currentQuestion.answers.keySet());
                     String userAnswer = keyset.get(Integer.parseInt(selectedAnswer)-1).toString();
-                    user.getUserAnswers().put(userAnswer, false);
+                    newUserAnswers.put(userAnswer, false);
+                    user.setUserAnswers(newUserAnswers);
+                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                 }
                 else {
                     sendMessage("Пожалуйста, нажмите на 1 из кнопок.", chatId);
