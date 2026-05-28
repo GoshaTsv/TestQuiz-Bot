@@ -714,7 +714,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         String correctAnswer = getCorrectAnswerForQuestion(quiz.getTest().questions.get(i));
                         System.out.println(userAnswer);
                         System.out.println(correctAnswer);
-                        sendMessage("Вопрос #" + (i + 1) + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correctAnswer, quiz.getTeacherId());
+                        sendMessage("Вопрос #" + (i + 1) + ". \nОтвет вашего ученика (@"  + userName + "): " + userAnswer + "\nПравильный ответ: " + correctAnswer, quiz.getTeacherId());
 
                         try {
                             Thread.sleep(500);
