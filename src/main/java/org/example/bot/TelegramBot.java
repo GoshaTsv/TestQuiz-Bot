@@ -816,7 +816,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         String username = update.getMessage().getFrom().getUserName();
 
         if (username == null) {
-            sendMessage("Задайте username свому аккаунту чтобы продолжить.", chatId);
+            sendMessage("Задайте username своему аккаунту чтобы продолжить.", chatId);
             return;
         }
 
