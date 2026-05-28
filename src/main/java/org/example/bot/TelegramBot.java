@@ -642,7 +642,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.out.println("User answer: " + userAnswer);
                         System.out.println("Correct answer: " + correctAnswer);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        System.out.println("Message: " + e.getMessage());
                     }
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
@@ -657,7 +657,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                         System.out.println("new user answers: " + newUserAnswers);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        System.out.println("Message: " + e.getMessage());
                     }
                 } else {
                     sendMessage("Пожалуйста, ответьте на вопрос словом/словами.", chatId);
@@ -690,7 +690,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                         System.out.println("new user answers: " + newUserAnswers);
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        System.out.println("Message: " + e.getMessage());
                     }
                 } else {
                     sendMessage("Пожалуйста, нажмите на 1 из кнопок.", chatId);
