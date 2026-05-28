@@ -637,9 +637,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 if (update.hasMessage() && update.getMessage().hasText()) {
                     String userAnswer = update.getMessage().getText();
                     String correctAnswer = getCorrectAnswerForQuestion(currentQuestion);
-                    System.out.println("Ans");
-                    System.out.println("User answer: " + userAnswer);
-                    System.out.println("Correct answer: " + correctAnswer);
+                    try {
+                        System.out.println("Ans");
+                        System.out.println("User answer: " + userAnswer);
+                        System.out.println("Correct answer: " + correctAnswer);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
                     boolean isCorrect = userAnswer.equalsIgnoreCase(correctAnswer);
@@ -649,8 +653,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                         user.setCorrectAnswers(user.getCorrectAnswers() + 1);
 
                     user.setUserAnswers(newUserAnswers);
-                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
-                    System.out.println("new user answers: " + newUserAnswers);
+                    try {
+                        System.out.println("added new user answer. size: " + user.getUserAnswers().size());
+                        System.out.println("new user answers: " + newUserAnswers);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     sendMessage("Пожалуйста, ответьте на вопрос словом/словами.", chatId);
                     return;
@@ -675,12 +683,15 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     user.setUserAnswers(newUserAnswers);
 
-                    System.out.println("Var");
-                    System.out.println("Selected answer: " + selectedAnswer);
-                    System.out.println("Correct answer: " + correctAnswer);
-                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
-                    System.out.println("new user answers: " + newUserAnswers);
-
+                    try {
+                        System.out.println("Var");
+                        System.out.println("Selected answer: " + selectedAnswer);
+                        System.out.println("Correct answer: " + correctAnswer);
+                        System.out.println("added new user answer. size: " + user.getUserAnswers().size());
+                        System.out.println("new user answers: " + newUserAnswers);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     sendMessage("Пожалуйста, нажмите на 1 из кнопок.", chatId);
                     return;
