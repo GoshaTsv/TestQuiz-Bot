@@ -71,10 +71,10 @@ public class User {
         this.state = state;
         this.classCount = classCount;
         this.testsCount = testsCount;
-         this.quizState = quizState;
+        this.quizState = quizState;
         this.currentQuiz = currentQuiz;
         prevType = "";
-        correctAnswers =0;
+        correctAnswers = 0;
         userAnswers = new LinkedHashMap<>();
     }
 
@@ -85,12 +85,18 @@ public class User {
     public long getChatId() {
         return chatId;
     }
+
     public String getCurrentClassName() {
         return currentClassName;
     }
 
-    public int getClassCount() {return classCount; }
-    public int getTestsCount() {return testsCount; }
+    public int getClassCount() {
+        return classCount;
+    }
+
+    public int getTestsCount() {
+        return testsCount;
+    }
 
     public void setState(String state) {
         this.state = state;
@@ -99,11 +105,18 @@ public class User {
     public void setChatId(long chatId) {
         this.chatId = chatId;
     }
+
     public void setCurrentClassName(String currentClassName) {
         this.currentClassName = currentClassName;
     }
-    public void setClassCount(int classCount) { this.classCount = classCount; }
-    public void setTestsCount(int testsCount) { this.testsCount = testsCount; }
+
+    public void setClassCount(int classCount) {
+        this.classCount = classCount;
+    }
+
+    public void setTestsCount(int testsCount) {
+        this.testsCount = testsCount;
+    }
 
     @Override
     public String toString() {
@@ -113,8 +126,15 @@ public class User {
                 ", currentClassName='" + currentClassName + '\'' +
                 ", classCount=" + classCount +
                 ", testsCount=" + testsCount +
+                ", quizState=" + quizState +
+                ", currentQuiz=" + currentQuiz +
+                ", correctAnswer='" + correctAnswer + '\'' +
+                ", prevType='" + prevType + '\'' +
+                ", correctAnswers=" + correctAnswers +
+                ", userAnswers=" + userAnswers +
                 '}';
     }
+
     public static String getCorrectAnswerForQuestion(Question question) {
         for (Map.Entry<String, Boolean> entry : question.answers.entrySet()) {
             if (entry.getValue()) {

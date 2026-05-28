@@ -27,6 +27,7 @@ import static org.example.classes.User.getCorrectAnswerForQuestion;
 
 public class TelegramBot extends TelegramLongPollingBot {
     private ArrayList<User> users = new ArrayList<>();
+
     @Override
     public String getBotUsername() {
         return "TestQuizBot";
@@ -36,19 +37,18 @@ public class TelegramBot extends TelegramLongPollingBot {
     public String getBotToken() {
         return System.getenv("BOT_TOKEN");
     }
+
     //moved all the user.setTestCount and user.setClassCount a bit lower so that it doesnt count when you get an error
     @Override
     public void onUpdateReceived(Update update) {
         long chatId = 0;
         Message message = new Message();
-        if(update.hasMessage()){
+        if (update.hasMessage()) {
             message = update.getMessage();
             chatId = update.getMessage().getChatId();
-        }
-        else{
+        } else {
             chatId = update.getCallbackQuery().getFrom().getId();
         }
-
 
 
         if (!message.hasText() && !message.hasDocument() && !update.hasCallbackQuery()) {
@@ -67,7 +67,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage("Напишите /start для регистрации.", chatId);
             return;
         }
-        if (user.getQuizState() == -1){
+        if (user.getQuizState() == -1) {
             if (message.hasText()) {
                 String msg = message.getText();
                 if (msg.trim().isEmpty()) {
@@ -206,13 +206,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     * then it sets the state to default, checks for it being done and goes back to the start
                     also added an if-clause for checking the state
                     * */
-                        if (!user.getState().equalsIgnoreCase("create_test")){
+                        if (!user.getState().equalsIgnoreCase("create_test")) {
                             System.out.println("чё");
                             return;
                         }
-                        if (update.getMessage().hasText()){
-                            if (update.getMessage().getText().startsWith("/")){
-                                if (update.getMessage().getText().startsWith("/exit")){
+                        if (update.getMessage().hasText()) {
+                            if (update.getMessage().getText().startsWith("/")) {
+                                if (update.getMessage().getText().startsWith("/exit")) {
                                     sendMessage("Вы отменили загрузку теста.", chatId);
                                     user.setState("default");
                                     if (!saveUser(user)) {
@@ -224,7 +224,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                                 return;
                             }
                         }
-                        if (!(update.getMessage().hasDocument())){
+                        if (!(update.getMessage().hasDocument())) {
                             sendMessage("Пожалуйста, отправьте файл.", chatId);
                             return;
                         }
@@ -346,12 +346,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                         sendMessage("Создание квиза...", chatId);
 
                         Thread quizThread = new Thread(() -> {
-                            synchronized (this){
+                            synchronized (this) {
                                 sendMessage("Квиз успешно создан!", finalChatId);
                                 Quiz quiz = new Quiz(finalChatId, DBManager.getClass(user.getCurrentClassName(), finalChatId2), DBManager.getTest(finalChatId2, msg));
-                                quiz.getStudentClass().getStudents().forEach(x ->{
+                                quiz.getStudentClass().getStudents().forEach(x -> {
                                     User userCurrent = users.stream().filter(user1 -> user1.getChatId() == x).findFirst().orElse(null);
-                                    if (userCurrent == null){
+                                    if (userCurrent == null) {
                                         System.out.println("User not found in thread when starting test");
                                         sendMessage("Что-то пошло не так. Попробуйте ещё раз...", finalChatId);
                                         return;
@@ -430,14 +430,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                         return;
                     }
                     user.setState("class_name");
-                    if(!saveUser(user)) {
+                    if (!saveUser(user)) {
                         sendMessage("Не удалось обновить состояние пользователя.", chatId);
                         return;
                     }
 
                     sendMessage("Введите название класса.", chatId);
-                }
-                else if (msg.startsWith("/myclasses")) {
+                } else if (msg.startsWith("/myclasses")) {
                     ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
                     if (classes == null) {
                         sendMessage("Не удалось получить классы пользователя...", chatId);
@@ -473,14 +472,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
 
                     sendMessage("Введите название класса", chatId);
-                }
-                else if (msg.startsWith("/newtest")) {
+                } else if (msg.startsWith("/newtest")) {
                     if (user.getTestsCount() >= 10) { //added >= so that you can create 10 and not 11 tests
                         sendMessage("Вы больше не можете создавать тесты! Лимит - 10 тестов", chatId);
                         return;
                     }
                     user.setState("create_test");
-                    if (!saveUser(user)){
+                    if (!saveUser(user)) {
                         sendMessage("Не удалось обновить состояние пользователя.", chatId);
                         return;
                     }
@@ -523,8 +521,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
 
                     sendMessage("Введите название теста", chatId);
-                }
-                else if (msg.startsWith("/startquiz")) { // new command
+                } else if (msg.startsWith("/startquiz")) { // new command
                     //started the logic for starting the quiz
                     ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
                     if (classes == null) {
@@ -532,7 +529,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         return;
                     }
 
-                    if (classes.isEmpty()){
+                    if (classes.isEmpty()) {
                         sendMessage("У вас ещё нет классов.", chatId);
                         return;
                     }
@@ -549,7 +546,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
 
                     user.setState("quiz_start");
-                    if (!saveUser(user)){
+                    if (!saveUser(user)) {
                         sendMessage("Не удалось обновить состояние пользователя.", chatId);
                         return;
                     }
@@ -557,8 +554,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     sendMessage("Введите название класса для запуска квиза.", chatId);
                 }
             }
-            if(message.hasDocument()){
-                if (!(update.getMessage().getDocument().getFileName().endsWith(".json"))){
+            if (message.hasDocument()) {
+                if (!(update.getMessage().getDocument().getFileName().endsWith(".json"))) {
                     sendMessage("Пожалуйста, отправьте файл с типом .json.", chatId);
                     return;
                 }
@@ -612,12 +609,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
-        if (user.getQuizState()>-1){
+        if (user.getQuizState() > -1) {
             String userName;
-            if(update.hasMessage()){
+            if (update.hasMessage()) {
                 userName = update.getMessage().getFrom().getUserName();
-            }
-            else{
+            } else {
                 userName = update.getCallbackQuery().getFrom().getUserName();
             }
 
@@ -626,78 +622,90 @@ public class TelegramBot extends TelegramLongPollingBot {
             User userCurrent = users.stream().filter(user1 -> user1.getChatId() == finalChatId1).findFirst().orElse(null);
 
             assert userCurrent != null;
-            if (userCurrent.getCurrentQuiz() == null){
+            if (userCurrent.getCurrentQuiz() == null) {
                 System.out.println("unable to get quiz when continuing the quiz (user.getQuizState()!=-1)");
                 sendMessage("Произошла ошибка, попробуйте ещё раз...", chatId);
             }
             Quiz quiz = userCurrent.getCurrentQuiz();
-            Question currentQuestion = quiz.getTest().questions.get(user.getQuizState()-1);
+            Question currentQuestion = quiz.getTest().questions.get(user.getQuizState() - 1);
 
-            if (!(update.hasMessage() || update.hasCallbackQuery())){
+            if (!(update.hasMessage() || update.hasCallbackQuery())) {
                 sendMessage("Пожалуйста, отправьте ответ на вопрос.", chatId);
                 return;
             }
-            if (userCurrent.getPrevType().equalsIgnoreCase("ans")){
+            if (userCurrent.getPrevType().equalsIgnoreCase("ans")) {
                 if (update.hasMessage() && update.getMessage().hasText()) {
                     String userAnswer = update.getMessage().getText();
                     String correctAnswer = getCorrectAnswerForQuestion(currentQuestion);
+                    System.out.println("Ans");
                     System.out.println(userAnswer);
                     System.out.println(correctAnswer);
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
                     boolean isCorrect = userAnswer.equalsIgnoreCase(correctAnswer);
                     newUserAnswers.put(userAnswer, isCorrect);
-                    if (isCorrect) {
-                        user.setCorrectAnswers(user.getCorrectAnswers()+1);
-                    }
+
+                    if (isCorrect)
+                        user.setCorrectAnswers(user.getCorrectAnswers() + 1);
 
                     user.setUserAnswers(newUserAnswers);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
-                }
-                else{
+                } else {
                     sendMessage("Пожалуйста, ответьте на вопрос словом/словами.", chatId);
                     return;
                 }
             }
-            if (userCurrent.getPrevType().equalsIgnoreCase("var")){
+            if (userCurrent.getPrevType().equalsIgnoreCase("var")) {
                 if (update.hasCallbackQuery()) {
                     String callbackData = update.getCallbackQuery().getData();
 
                     // call back
                     String selectedAnswer = callbackData.replace("test_", "");
-                    List<String> keys = new ArrayList<>(quiz.getTest().questions.get(user.getQuizState()-1).answers.keySet());
-                    String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion))+1);
+                    List<String> keys = new ArrayList<>(quiz.getTest().questions.get(user.getQuizState() - 1).answers.keySet());
+                    String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion)) + 1);
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
-                    String userAnswer = keys.get(Integer.parseInt(selectedAnswer)-1).toString();
+                    String userAnswer = keys.get(Integer.parseInt(selectedAnswer) - 1).toString();
                     boolean isCorrect = selectedAnswer.equals(correctAnswer);
 
                     newUserAnswers.put(userAnswer, isCorrect);
-                    if (isCorrect) {
-                        user.setCorrectAnswers(user.getCorrectAnswers()+1);
-                    }
+                    if (isCorrect)
+                        user.setCorrectAnswers(user.getCorrectAnswers() + 1);
 
                     user.setUserAnswers(newUserAnswers);
+
+                    System.out.println("Var");
                     System.out.println(selectedAnswer);
                     System.out.println(correctAnswer);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
-                }
-                else {
+                } else {
                     sendMessage("Пожалуйста, нажмите на 1 из кнопок.", chatId);
                     return;
                 }
-
             }
+
+            if (!saveUser(user)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
+            if (!saveUser(userCurrent)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
             // move to the next answer
             userCurrent.setQuizState(user.getQuizState() + 1);
-            if (user.getQuizState()>quiz.getTest().questions.size()){
+            if (user.getQuizState() > quiz.getTest().questions.size()) {
                 System.out.println("got to start of the thread!");
                 long finalChatId4 = chatId;
-                Thread thread = new Thread(() ->{
+                Thread thread = new Thread(() -> {
                     System.out.println("thread launched!");
                     sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", finalChatId4);
                     sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nОтветы ученика:", quiz.getTeacherId());
                     List<String> userAnswers = new ArrayList<>(user.getUserAnswers().keySet());
+
+                    System.out.println("User answers: " + userAnswers);
 
                     for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().questions.size(); i++) {
                         String userAnswer = userAnswers.get(i);
@@ -716,18 +724,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                     userCurrent.setCurrentQuiz(null);
                     userCurrent.setCorrectAnswers(0);
                     userCurrent.setUserAnswers(new LinkedHashMap<>());
+
+                    if (!saveUser(userCurrent))
+                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", finalChatId1);
                 });
                 thread.start();
-
-
                 return;
             }
 
-            var question = quiz.getTest().questions.get(user.getQuizState()-1);
+            var question = quiz.getTest().questions.get(user.getQuizState() - 1);
 
             if (question.answers.size() > 1) {
                 long finalChatId5 = chatId;
-                new Thread(() ->{
+                new Thread(() -> {
                     //if the answers size is bigger than 1, it means that the question has variants of answers
                     ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
 
@@ -747,13 +756,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                     sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, finalChatId5, variants, variants.size());
                     userCurrent.setPrevType("var");
+
+                    if (!saveUser(userCurrent))
+                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", finalChatId1);
                 }).start();
-
-
-                return;
             } else {
                 long finalChatId6 = chatId;
-                new Thread(() ->{
+                new Thread(() -> {
                     try {
                         Thread.sleep(250);
                     } catch (InterruptedException e) {
@@ -763,37 +772,39 @@ public class TelegramBot extends TelegramLongPollingBot {
                     sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, finalChatId6);
                     userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
                     userCurrent.setPrevType("ans");
-                }).start();
 
+                    if (!saveUser(userCurrent))
+                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", finalChatId1);
+                }).start();
             }
         }
     }
 
     //changed all JsonObject to Test
     private String checkForTest(@MonotonicNonNull Test test) {
-        if (test.toString().isBlank()){
+        if (test.toString().isBlank()) {
             return "Пожалуйста, отправьте не пустой файл.";
         }
         String quizName = test.testName;
-        if (quizName.isBlank()){
+        if (quizName.isBlank()) {
             return "Пожайлуйста, добавьте название тесту.";
         }
         ArrayList<Question> questions = test.questions;
-        if (questions.isEmpty()){
+        if (questions.isEmpty()) {
             return "В вашем тесте нет вопросов. Исправьте это."; //fixed grammatical mistake
         }
         AtomicReference<String> flag = new AtomicReference<>("");
-        questions.forEach(x ->{
+        questions.forEach(x -> {
             String questionName = x.question;
-            if (questionName.isBlank()){
+            if (questionName.isBlank()) {
                 flag.set("У какого-то вопроса нет названия.");
             }
             HashMap<String, Boolean> map = x.answers;
-            if (map.values().stream().anyMatch(Objects::isNull)){
+            if (map.values().stream().anyMatch(Objects::isNull)) {
                 flag.set("У какого-то вопроса нет вариантов.");
             }
-            if (map.size()==1){
-                if (map.containsKey(Boolean.FALSE)){
+            if (map.size() == 1) {
+                if (map.containsKey(Boolean.FALSE)) {
                     flag.set("В вашем вопросе есть только неправильный вариант.");
                 }
             }
@@ -816,7 +827,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         if (doesUserExit == 0)
-            if(!DBManager.registerAccount(username, chatId)) {
+            if (!DBManager.registerAccount(username, chatId)) {
                 sendMessage("Произошла ошибка во время регистрации, попробуйте ещё... (/start)", chatId);
                 return;
             }
@@ -824,15 +835,15 @@ public class TelegramBot extends TelegramLongPollingBot {
         // 3 tests -> 10 tests
         // 10 classes
         sendMessage("""
-                                Здравствуйте, это бот для тестов, вот все комманды бота:
-                                 - /newclass - создать новый класс (максимум 5)
-                                 - /myclasses - просмотреть свои классы
-                                 - /deleteclass - удалить класс
-                                 - /newtest - создать новый тест (максимум 10 тестов)
-                                 - /mytests - просмотреть свои тесты
-                                 - /deletetest - удалить тест
-                                 - /startquiz - провести тестирование
-                                """, chatId);
+                Здравствуйте, это бот для тестов, вот все комманды бота:
+                 - /newclass - создать новый класс (максимум 5)
+                 - /myclasses - просмотреть свои классы
+                 - /deleteclass - удалить класс
+                 - /newtest - создать новый тест (максимум 10 тестов)
+                 - /mytests - просмотреть свои тесты
+                 - /deletetest - удалить тест
+                 - /startquiz - провести тестирование
+                """, chatId);
         users.add(new User(chatId, "default", 0, 0, -1, null)); // add user
     }
 
@@ -855,13 +866,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
         }
     }
+
     //added another sendMessage method to add buttons to messages
     private void sendMessage(String msg, long chatId, ArrayList<String> buttons, int limit) {
         var keyboard = new InlineKeyboardMarkup();
         AtomicInteger count = new AtomicInteger();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
-        buttons.forEach(x ->{
-            if (count.get()<=limit){
+        buttons.forEach(x -> {
+            if (count.get() <= limit) {
                 List<InlineKeyboardButton> row = new ArrayList<>();
                 var button = new InlineKeyboardButton();
                 button.setText(x);
