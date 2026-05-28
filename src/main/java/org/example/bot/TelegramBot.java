@@ -637,28 +637,20 @@ public class TelegramBot extends TelegramLongPollingBot {
                 if (update.hasMessage() && update.getMessage().hasText()) {
                     String userAnswer = update.getMessage().getText();
                     String correctAnswer = getCorrectAnswerForQuestion(currentQuestion);
-                    try {
-                        System.out.println("Ans");
-                        System.out.println("User answer: " + userAnswer);
-                        System.out.println("Correct answer: " + correctAnswer);
-                    } catch (Exception e) {
-                        System.out.println("Message: " + e.getMessage());
-                    }
+                    System.out.println("Ans");
+                    System.out.println("User answer: " + userAnswer);
+                    System.out.println("Correct answer: " + correctAnswer);
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
                     boolean isCorrect = userAnswer.equalsIgnoreCase(correctAnswer);
-                    newUserAnswers.put(userAnswer, isCorrect);
+                    newUserAnswers.put(user.getQuizState() + " " + userAnswer, isCorrect);
 
                     if (isCorrect)
                         user.setCorrectAnswers(user.getCorrectAnswers() + 1);
 
                     user.setUserAnswers(newUserAnswers);
-                    try {
-                        System.out.println("added new user answer. size: " + user.getUserAnswers().size());
-                        System.out.println("new user answers: " + newUserAnswers);
-                    } catch (Exception e) {
-                        System.out.println("Message: " + e.getMessage());
-                    }
+                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
+                    System.out.println("new user answers: " + newUserAnswers);
                 } else {
                     sendMessage("Пожалуйста, ответьте на вопрос словом/словами.", chatId);
                     return;
@@ -677,21 +669,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String userAnswer = keys.get(Integer.parseInt(selectedAnswer) - 1).toString();
                     boolean isCorrect = selectedAnswer.equals(correctAnswer);
 
-                    newUserAnswers.put(userAnswer, isCorrect);
+                    newUserAnswers.put(user.getQuizState() + " " + userAnswer, isCorrect);
                     if (isCorrect)
                         user.setCorrectAnswers(user.getCorrectAnswers() + 1);
 
                     user.setUserAnswers(newUserAnswers);
 
-                    try {
-                        System.out.println("Var");
-                        System.out.println("Selected answer: " + selectedAnswer);
-                        System.out.println("Correct answer: " + correctAnswer);
-                        System.out.println("added new user answer. size: " + user.getUserAnswers().size());
-                        System.out.println("new user answers: " + newUserAnswers);
-                    } catch (Exception e) {
-                        System.out.println("Message: " + e.getMessage());
-                    }
+                    System.out.println("Var");
+                    System.out.println("Selected answer: " + selectedAnswer);
+                    System.out.println("Correct answer: " + correctAnswer);
+                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
+                    System.out.println("new user answers: " + newUserAnswers);
                 } else {
                     sendMessage("Пожалуйста, нажмите на 1 из кнопок.", chatId);
                     return;
@@ -722,7 +710,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     System.out.println("User answers: " + userAnswers);
 
                     for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().questions.size(); i++) {
-                        String userAnswer = userAnswers.get(i);
+                        String userAnswer = userAnswers.get(i).split(" ")[1];
                         String correctAnswer = getCorrectAnswerForQuestion(quiz.getTest().questions.get(i));
                         System.out.println(userAnswer);
                         System.out.println(correctAnswer);
