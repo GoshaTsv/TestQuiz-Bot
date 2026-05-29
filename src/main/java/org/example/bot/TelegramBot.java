@@ -904,7 +904,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void createTest(long chatId, User user, String fileName) {
         try {
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
             BufferedReader br = new BufferedReader(new FileReader(fileName));
             String json = "";
             String line;
@@ -980,30 +979,17 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         String fileName = null;
         try {
-            // Парсим JSON для валидации
-            JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
-            String quizTitle = jsonObject.get("quiz_title").getAsString();
+            fileName = "newTest_" + chatId + "_" + chatId + ".json";
 
-            if (quizTitle == null || quizTitle.trim().isEmpty()) {
-                sendMessage("❌ Тест не имеет названия. Пожалуйста, укажите заголовок.", chatId);
-                return;
-            }
-
-            // Создаем временный файл
-            fileName = "newTest_" + chatId + "_" + System.currentTimeMillis() + ".json";
-
-            // Сохраняем JSON в файл
             try (FileWriter fileWriter = new FileWriter(fileName)) {
                 fileWriter.write(jsonData);
             }
 
             System.out.println("✅ JSON сохранен в файл: " + fileName);
 
-            // Создаем тест из файла
             createTest(chatId, user, fileName);
 
-            // Отправляем подтверждение пользователю
-            sendMessage("✅ Тест \"" + quizTitle + "\" успешно создан и сохранен!", chatId);
+            sendMessage("✅ Тест успешно создан и сохранен!", chatId);
 
         } catch (Exception e) {
             System.err.println("❌ Ошибка обработки WebApp данных: " + e.getMessage());
