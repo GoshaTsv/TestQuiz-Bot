@@ -62,7 +62,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println("!!! ОБНАРУЖЕНЫ WEBAPP DATA !!!");
             String data = message.getWebAppData().getData();
             System.out.println("Данные: " + data);
-            processWebAppData(message, null);
+            processWebAppData(message, user);
             return;
         }
 
@@ -973,7 +973,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
 
-        // Проверяем, что пользователь существует
         if (user == null) {
             sendMessage("❌ Пользователь не найден. Пожалуйста, начните с команды /start", chatId);
             return;
