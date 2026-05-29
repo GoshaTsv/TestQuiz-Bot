@@ -935,20 +935,62 @@ public class TelegramBot extends TelegramLongPollingBot {
         System.out.println("📥 Получен опрос от @" + userName + " (ID: " + userId + ")");
         System.out.println("JSON данные: " + jsonData);
 
-        String fileName;
-        try {
-            Test test = gson.fromJson(jsonData, Test.class);
-
-            fileName = "newTest" + chatId + ".json";
-            try (FileWriter fileWriter = new FileWriter(fileName)) {
-                fileWriter.write(gson.toJson(test));
-            } catch (IOException e) {
-                sendMessage("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", chatId);
-            }
-        } catch (Exception e) {
-            sendMessage("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", chatId);
+        // Проверяем, что данные не пустые
+        if (jsonData == null || jsonData.trim().isEmpty()) {
+            sendMessage("❌ Получены пустые данные. Пожалуйста, попробуйте снова.", chatId);
             return;
         }
-        createTest(chatId, user, fileName);
+
+        // Проверяем, что пользователь существует
+        if (user == null) {
+            sendMessage("❌ Пользователь не найден. Пожалуйста, начните с команды /start", chatId);
+            return;
+        }
+
+        String fileName = null;
+        try {
+            // Парсим JSON для валидации
+            JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
+            String quizTitle = jsonObject.get("quiz_title").getAsString();
+
+            if (quizTitle == null || quizTitle.trim().isEmpty()) {
+                sendMessage("❌ Тест не имеет названия. Пожалуйста, укажите заголовок.", chatId);
+                return;
+            }
+
+            // Создаем временный файл
+            fileName = "newTest_" + chatId + "_" + System.currentTimeMillis() + ".json";
+
+            // Сохраняем JSON в файл
+            try (FileWriter fileWriter = new FileWriter(fileName)) {
+                fileWriter.write(jsonData);
+            }
+
+            System.out.println("✅ JSON сохранен в файл: " + fileName);
+
+            // Создаем тест из файла
+            createTest(chatId, user, fileName);
+
+            // Отправляем подтверждение пользователю
+            sendMessage("✅ Тест \"" + quizTitle + "\" успешно создан и сохранен!", chatId);
+
+        } catch (Exception e) {
+            System.err.println("❌ Ошибка обработки WebApp данных: " + e.getMessage());
+            e.printStackTrace();
+            sendMessage("❌ Произошла ошибка при создании теста. Пожалуйста, попробуйте снова.\nОшибка: " + e.getMessage(), chatId);
+        } finally {
+            // Удаляем временный файл после обработки
+            if (fileName != null) {
+                try {
+                    File tempFile = new File(fileName);
+                    if (tempFile.exists()) {
+                        tempFile.delete();
+                        System.out.println("🗑️ Временный файл удален: " + fileName);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Не удалось удалить временный файл: " + e.getMessage());
+                }
+            }
+        }
     }
 }
