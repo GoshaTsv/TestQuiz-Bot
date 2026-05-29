@@ -14,7 +14,9 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
@@ -814,7 +816,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         // new delete commands
         // 3 tests -> 10 tests
         // 10 classes
-        sendMessage("""
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(chatId));
+        sendMessage.setText("""
                 Здравствуйте, это бот для тестов, вот все комманды бота:
                  - /newclass - создать новый класс (максимум 5)
                  - /myclasses - просмотреть свои классы
@@ -823,7 +827,30 @@ public class TelegramBot extends TelegramLongPollingBot {
                  - /mytests - просмотреть свои тесты
                  - /deletetest - удалить тест
                  - /startquiz - провести тестирование
-                """, chatId);
+                """);
+        ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+        keyboard.setResizeKeyboard(true);
+        keyboard.setOneTimeKeyboard(false);
+
+        KeyboardButton webAppButton = new KeyboardButton();
+        webAppButton.setText("Создать тест");
+
+        WebAppInfo webAppInfo = new WebAppInfo();
+        webAppInfo.setUrl(WEB_APP_URL);
+        webAppButton.setWebApp(webAppInfo);
+
+        org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow row =
+                new org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow();
+        row.add(webAppButton);
+
+        keyboard.setKeyboard(java.util.List.of(row));
+        sendMessage.setReplyMarkup(keyboard);
+
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            System.err.println("Ошибка отправки меню: " + e.getMessage());
+        }
         users.add(new User(chatId, "default", 0, 0, -1, null)); // add user
     }
 
