@@ -16,8 +16,13 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,6 +31,8 @@ import java.util.stream.IntStream;
 import static org.example.classes.User.getCorrectAnswerForQuestion;
 
 public class TelegramBot extends TelegramLongPollingBot {
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private final String WEB_APP_URL = "https://superwarden.github.io/testquizapp.github.io/index.html";
     private ArrayList<User> users = new ArrayList<>();
 
     @Override
@@ -50,13 +57,16 @@ public class TelegramBot extends TelegramLongPollingBot {
             chatId = update.getCallbackQuery().getFrom().getId();
         }
 
+        long finalChatId3 = chatId;
+        User user = users.stream().filter(x -> x.getChatId() == finalChatId3).findFirst().orElse(null);
+
+        if (message.getWebAppData() != null)
+            processWebAppData(message, user);
 
         if (!message.hasText() && !message.hasDocument() && !update.hasCallbackQuery()) {
             sendMessage("Вы можете отправлять только сообщения или файлы.", chatId); //fixed a sensical error (is that a real word?)
             return;
         }
-        long finalChatId3 = chatId;
-        User user = users.stream().filter(x -> x.getChatId() == finalChatId3).findFirst().orElse(null);
 
         if (user == null) {
             System.out.println("User is null for " + chatId);
@@ -562,51 +572,18 @@ public class TelegramBot extends TelegramLongPollingBot {
                 String fileId = update.getMessage().getDocument().getFileId();
                 GetFile getFile = new GetFile();
                 getFile.setFileId(fileId);
+
+                String fileName;
                 try {
                     String filePath = execute(getFile).getFilePath();
-                    String fileName = "newTest" + chatId + ".json";
+                    fileName = "newTest" + chatId + ".json";
                     downloadFile(filePath, new File(fileName)); //added chat id so that the bot doesnt accidentally download 2 files of the same name
-                    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                    BufferedReader br = new BufferedReader(new FileReader(fileName));
-                    String json = "";
-                    String line;
-                    while ((line = br.readLine()) != null) {
-                        json += line;
-                    }
-                    Test test = gson.fromJson(json, Test.class);
-                    test.setTestName(test.getTestName());
-
-                    ArrayList<Test> tests = DBManager.getTests(chatId);
-                    if (tests == null) {
-                        sendMessage("Не удалось получить тесты, попробуйте ещё...", chatId);
-                        return;
-                    }
-
-                    if (tests.stream().filter(t -> t.getTestName().equalsIgnoreCase(test.getTestName())).findFirst().orElse(null) != null) {
-                        sendMessage("У вас уже есть такой тест, отправьте другой.", chatId);
-                        return;
-                    }
-
-                    String response = checkForTest(test);
-                    if (!response.isBlank())
-                        sendMessage(response, chatId); //replaced .isEmpty() with .isBlank() for better understanding
-
-                    user.setState("default"); // user state
-                    if (!saveUser(user)) {
-                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                        return;
-                    }
-                    if (!DBManager.createTest(json, chatId)) {
-                        sendMessage("Тест не получилось добавить. Попробуйте ещё раз...", chatId);
-                        return;
-                    }
-                    sendMessage("Тест успешно добавлен!", chatId);
-                    user.setTestsCount(user.getTestsCount() + 1);
-
-                } catch (TelegramApiException | IOException e) {
+                } catch (TelegramApiException e) {
                     sendMessage("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", chatId);
                     return;
                 }
+
+                createTest(chatId, user, fileName);
             }
         }
         if (user.getQuizState() > -1) {
@@ -897,6 +874,49 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    private void createTest(long chatId, User user, String fileName) {
+        try {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            BufferedReader br = new BufferedReader(new FileReader(fileName));
+            String json = "";
+            String line;
+            while ((line = br.readLine()) != null) {
+                json += line;
+            }
+            Test test = gson.fromJson(json, Test.class);
+            test.setTestName(test.getTestName());
+
+            ArrayList<Test> tests = DBManager.getTests(chatId);
+            if (tests == null) {
+                sendMessage("Не удалось получить тесты, попробуйте ещё...", chatId);
+                return;
+            }
+
+            if (tests.stream().filter(t -> t.getTestName().equalsIgnoreCase(test.getTestName())).findFirst().orElse(null) != null) {
+                sendMessage("У вас уже есть такой тест, отправьте другой.", chatId);
+                return;
+            }
+
+            String response = checkForTest(test);
+            if (!response.isBlank())
+                sendMessage(response, chatId); //replaced .isEmpty() with .isBlank() for better understanding
+
+            user.setState("default"); // user state
+            if (!saveUser(user)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
+                return;
+            }
+            if (!DBManager.createTest(json, chatId)) {
+                sendMessage("Тест не получилось добавить. Попробуйте ещё раз...", chatId);
+                return;
+            }
+            sendMessage("Тест успешно добавлен!", chatId);
+            user.setTestsCount(user.getTestsCount() + 1);
+        } catch (IOException e) {
+            sendMessage("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", chatId);
+        }
+    }
+
     private boolean isNameValid(String name) {
         return name.replaceAll("\\p{Punct}", "").length() < 2;
     }
@@ -908,5 +928,31 @@ public class TelegramBot extends TelegramLongPollingBot {
             throw new RuntimeException("Users is null");
         }
         System.out.print("Loaded users: ");
+    }
+
+    private void processWebAppData(Message message, User user) {
+        long chatId = message.getChatId();
+        String jsonData = message.getWebAppData().getData();
+        Long userId = message.getFrom().getId();
+        String userName = message.getFrom().getUserName();
+
+        System.out.println("📥 Получен опрос от @" + userName + " (ID: " + userId + ")");
+        System.out.println("JSON данные: " + jsonData);
+
+        String fileName;
+        try {
+            Test test = gson.fromJson(jsonData, Test.class);
+
+            fileName = "newTest" + chatId + ".json";
+            try (FileWriter fileWriter = new FileWriter(fileName)) {
+                fileWriter.write(gson.toJson(test));
+            } catch (IOException e) {
+                sendMessage("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", chatId);
+            }
+        } catch (Exception e) {
+            sendMessage("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", chatId);
+            return;
+        }
+        createTest(chatId, user, fileName);
     }
 }
