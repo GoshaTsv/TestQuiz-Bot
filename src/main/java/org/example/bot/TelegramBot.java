@@ -616,7 +616,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
                     boolean isCorrect = userAnswer.equalsIgnoreCase(correctAnswer);
-                    newUserAnswers.put(user.getQuizState() + " " + userAnswer, isCorrect);
+                    newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, isCorrect);
 
                     if (isCorrect)
                         user.setCorrectAnswers(user.getCorrectAnswers() + 1);
@@ -642,7 +642,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String userAnswer = keys.get(Integer.parseInt(selectedAnswer) - 1).toString();
                     boolean isCorrect = selectedAnswer.equals(correctAnswer);
 
-                    newUserAnswers.put(user.getQuizState() + " " + userAnswer, isCorrect);
+                    newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, isCorrect);
                     if (isCorrect)
                         user.setCorrectAnswers(user.getCorrectAnswers() + 1);
 
@@ -683,11 +683,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                     System.out.println("User answers: " + userAnswers);
 
                     for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().questions.size(); i++) {
-                        String userAnswer = userAnswers.get(i).split(" ")[1];
+                        String userAnswer = userAnswers.get(i).split("\uD80C\uDE78")[1];
                         String correctAnswer = getCorrectAnswerForQuestion(quiz.getTest().questions.get(i));
                         System.out.println(userAnswer);
                         System.out.println(correctAnswer);
-                        sendMessage("Вопрос #" + (i + 1) + ". \nОтвет вашего ученика: " + userAnswer + "\nПравильный ответ: " + correctAnswer, quiz.getTeacherId());
+                        sendMessage("Вопрос #" + (i + 1) + ". \nОтвет вашего ученика (@"  + userName + "): " + userAnswer + "\nПравильный ответ: " + correctAnswer, quiz.getTeacherId());
 
                         try {
                             Thread.sleep(500);
