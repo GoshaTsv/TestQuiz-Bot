@@ -56,8 +56,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         long finalChatId3 = chatId;
         User user = users.stream().filter(x -> x.getChatId() == finalChatId3).findFirst().orElse(null);
 
-        if (message.getWebAppData() != null)
-            processWebAppData(message, user);
+        if (message.getWebAppData() != null) {
+            System.out.println("!!! ОБНАРУЖЕНЫ WEBAPP DATA !!!");
+            String data = message.getWebAppData().getData();
+            System.out.println("Данные: " + data);
+            processWebAppData(message, null);
+            return;
+        }
 
         if (!message.hasText() && !message.hasDocument() && !update.hasCallbackQuery()) {
             sendMessage("Вы можете отправлять только сообщения или файлы.", chatId); //fixed a sensical error (is that a real word?)
