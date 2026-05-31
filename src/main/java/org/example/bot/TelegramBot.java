@@ -521,7 +521,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.err.println("Ошибка отправки /newtest сообщения: " + e.getMessage());
                     }
                 }
-                //made the method for listing the teacher's tests (just copied the classes thing)
+
                 else if (msg.startsWith("/mytests")) {
                     ArrayList<Test> tests = DBManager.getTests(chatId);
                     if (tests == null) {
