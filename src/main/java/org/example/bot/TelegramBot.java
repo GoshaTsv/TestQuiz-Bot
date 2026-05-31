@@ -768,9 +768,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             return "Пожалуйста, отправьте не пустой файл.";
         }
         String quizName = test.testName;
-        if (quizName.isBlank()) {
+        if (quizName.isBlank())
             return "Пожайлуйста, добавьте название тесту.";
-        }
+
         ArrayList<Question> questions = test.questions;
         if (questions.isEmpty()) {
             return "В вашем тесте нет вопросов. Исправьте это."; //fixed grammatical mistake
@@ -911,11 +911,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 json += line;
             }
             Test test = gson.fromJson(json, Test.class);
-            test.setTestName(test.getTestName());
+            test.setTestName(test.getTestName().toLowerCase());
 
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
-                sendMessage("Не удалось получить тесты, попробуйте ещё...", chatId);
+                sendMessage("Не удалось получить тесты, попробуйте ещё раз...", chatId);
                 return;
             }
 
@@ -937,8 +937,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage("Тест не получилось добавить. Попробуйте ещё раз...", chatId);
                 return;
             }
-            sendMessage("Тест успешно добавлен!", chatId);
+
             user.setTestsCount(user.getTestsCount() + 1);
+            if (!saveUser(user)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
+                return;
+            }
+            sendMessage("Тест успешно добавлен!", chatId);
         } catch (IOException e) {
             sendMessage("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", chatId);
         }

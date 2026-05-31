@@ -312,7 +312,7 @@ public class DBManager {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             while (res.next()){
                 Test test = gson.fromJson(res.getString("content"), Test.class);
-                if (test.getTestName().equals(name))
+                if (test.getTestName().equalsIgnoreCase(name))
                     return res.getString("content");
             }
             return null;
@@ -323,8 +323,7 @@ public class DBManager {
     }
 
     public static int doesTestExit(long chatId, String name) {
-        Test test = getTest(chatId, name);
-//        System.out.println("Test: " + test.getTestName());
+        Test test = getTest(chatId, name.toLowerCase());
         if (test == null)
             return 2;
         if (test.getTestName() == null)
