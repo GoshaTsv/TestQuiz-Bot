@@ -968,7 +968,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
 
-        System.out.println("Получен опрос от @" + userName + " (ID: " + userId + ")");
+        System.out.println("Получен опрос от " + userName + " (ID: " + userId + ")");
         System.out.println("JSON данные: " + jsonData);
 
         if (user == null) {
