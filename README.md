@@ -10,6 +10,7 @@ Features
  - Ability to send tests to people in classes
  - Teacher callback: sending the amount of questions answered correctly by each student and their answers
  - Ability to create tests right in the bot
+ - Ability to change classes on the go
 
 Future plans
 --------------------------------------------------
