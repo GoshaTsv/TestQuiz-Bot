@@ -201,7 +201,6 @@ public class DBManager {
             ResultSet res = st.executeQuery();
 
             ArrayList<StudentClass> classes = new ArrayList<>();
-            System.out.println("Starting getting " + chatId + "'s classes");
             while (res.next()) {
                 Array studentsArray = res.getArray("students");
                 Long[] javaStudentArray = (Long[]) studentsArray.getArray(); // long -> Long
@@ -303,18 +302,14 @@ public class DBManager {
         try {
             PreparedStatement st = connection.prepareStatement("SELECT content FROM public.tests WHERE user_id = ?");
             st.setLong(1, chatId);
-            System.out.println("Getting result set");
             ResultSet res = st.executeQuery();
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             while (res.next()){
                 Test test = gson.fromJson(res.getString("content"), Test.class);
-                System.out.println("Got new test: " + test);
                 if (test.getTestName().equalsIgnoreCase(name)) {
-                    System.out.println("Test found: " + test);
                     return test;
                 }
-                System.out.println("Getting next");
             }
             System.out.println("Returning null");
             return new Test(null, null);
