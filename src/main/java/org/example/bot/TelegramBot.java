@@ -912,6 +912,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             Test test = gson.fromJson(json, Test.class);
             test.setTestName(test.getTestName().toLowerCase());
+            json = gson.toJson(test);
 
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
@@ -973,7 +974,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
 
-        System.out.println("Получен опрос от " + userName + " (ID: " + userId + ")");
+        System.out.println("Получен тест от " + userName + " (ID: " + userId + ")");
         System.out.println("JSON данные: " + jsonData);
 
         if (user == null) {
