@@ -833,7 +833,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         keyboard.setOneTimeKeyboard(false);
 
         KeyboardButton webAppButton = new KeyboardButton();
-        webAppButton.setText("Создать тест (использовать во время /newtest)");
+        webAppButton.setText("Создать тест");
 
         WebAppInfo webAppInfo = new WebAppInfo();
         webAppInfo.setUrl(WEB_APP_URL);
