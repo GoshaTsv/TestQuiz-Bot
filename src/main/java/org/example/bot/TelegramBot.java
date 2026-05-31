@@ -10,11 +10,9 @@ import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
-import org.telegram.telegrambots.meta.api.methods.menubutton.SetChatMenuButton;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.menubutton.MenuButtonWebApp;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -45,11 +43,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         return System.getenv("BOT_TOKEN");
     }
 
-    @Override
-    public void onRegister() {
-        setMenuButton();
-    }
-
     //moved all the user.setTestCount and user.setClassCount a bit lower so that it doesnt count when you get an error
     @Override
     public void onUpdateReceived(Update update) {
@@ -62,8 +55,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             chatId = update.getCallbackQuery().getFrom().getId();
         }
 
-        long finalChatId3 = chatId;
-        User user = users.stream().filter(x -> x.getChatId() == finalChatId3).findFirst().orElse(null);
+        User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
 
         if (message.getWebAppData() != null) {
             System.out.println("Получены web app data");
@@ -95,8 +87,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                long finalChatId = chatId;
-                long finalChatId2 = chatId;
                 switch (user.getState()) {
                     case "class_name" -> {
                         if (msg.startsWith("/")) {
@@ -367,13 +357,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                         Thread quizThread = new Thread(() -> {
                             synchronized (this) {
-                                sendMessage("Квиз успешно создан!", finalChatId);
-                                Quiz quiz = new Quiz(finalChatId, DBManager.getClass(user.getCurrentClassName(), finalChatId2), DBManager.getTest(finalChatId2, msg));
+                                sendMessage("Квиз успешно создан!", chatId);
+                                Quiz quiz = new Quiz(chatId, DBManager.getClass(user.getCurrentClassName(), chatId), DBManager.getTest(chatId, msg));
                                 quiz.getStudentClass().getStudents().forEach(x -> {
                                     User userCurrent = users.stream().filter(user1 -> user1.getChatId() == x).findFirst().orElse(null);
                                     if (userCurrent == null) {
                                         System.out.println("User not found in thread when starting test");
-                                        sendMessage("Что-то пошло не так. Попробуйте ещё раз...", finalChatId);
+                                        sendMessage("Что-то пошло не так. Попробуйте ещё раз...", chatId);
                                         return;
                                     }
 
@@ -384,7 +374,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                                             try {
                                                 Thread.sleep(100);
                                             } catch (InterruptedException e) {
-                                                sendMessage("Что-то пошло не так. Попробуйте ещё раз...", finalChatId);
+                                                sendMessage("Что-то пошло не так. Попробуйте ещё раз...", chatId);
                                             }
                                         }
                                         userCurrent.setQuizState(1);
@@ -502,7 +492,34 @@ public class TelegramBot extends TelegramLongPollingBot {
                         sendMessage("Не удалось обновить состояние пользователя.", chatId);
                         return;
                     }
-                    sendMessage("Пожалуйста, отправьте .json файл с тестом, создайте новый тест в мини-приложении или напишите /exit для отмены.", chatId); //edited the text to include the /exit command
+
+                    SendMessage sendMessage = new SendMessage();
+                    sendMessage.setChatId(String.valueOf(chatId));
+                    sendMessage.setText("Пожалуйста, отправьте .json файл с тестом, создайте новый тест в мини-приложении или напишите /exit для отмены.");
+
+                    ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
+                    keyboard.setResizeKeyboard(true);
+                    keyboard.setOneTimeKeyboard(false);
+
+                    KeyboardButton webAppButton = new KeyboardButton();
+                    webAppButton.setText("Создать тест");
+
+                    WebAppInfo webAppInfo = new WebAppInfo();
+                    webAppInfo.setUrl(WEB_APP_URL);
+                    webAppButton.setWebApp(webAppInfo);
+
+                    org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow row =
+                            new org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow();
+                    row.add(webAppButton);
+
+                    keyboard.setKeyboard(java.util.List.of(row));
+                    sendMessage.setReplyMarkup(keyboard);
+
+                    try {
+                        execute(sendMessage);
+                    } catch (TelegramApiException e) {
+                        System.err.println("Ошибка отправки /newtest сообщения: " + e.getMessage());
+                    }
                 }
                 //made the method for listing the teacher's tests (just copied the classes thing)
                 else if (msg.startsWith("/mytests")) {
@@ -605,8 +622,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
 
-            long finalChatId1 = chatId;
-            User userCurrent = users.stream().filter(user1 -> user1.getChatId() == finalChatId1).findFirst().orElse(null);
+            User userCurrent = users.stream().filter(user1 -> user1.getChatId() == chatId).findFirst().orElse(null);
 
             assert userCurrent != null;
             if (userCurrent.getCurrentQuiz() == null) {
@@ -688,10 +704,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             userCurrent.setQuizState(user.getQuizState() + 1);
             if (user.getQuizState() > quiz.getTest().questions.size()) {
                 System.out.println("got to start of the thread!");
-                long finalChatId4 = chatId;
                 Thread thread = new Thread(() -> {
                     System.out.println("thread launched!");
-                    sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", finalChatId4);
+                    sendMessage("Поздравляем! Вы правильно ответили на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", chatId);
                     sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + userCurrent.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nОтветы ученика:", quiz.getTeacherId());
                     List<String> userAnswers = new ArrayList<>(user.getUserAnswers().keySet());
 
@@ -719,7 +734,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     userCurrent.setUserAnswers(new LinkedHashMap<>());
 
                     if (!saveUser(userCurrent))
-                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", finalChatId1);
+                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
                 });
                 thread.start();
                 return;
@@ -728,7 +743,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             var question = quiz.getTest().questions.get(user.getQuizState() - 1);
 
             if (question.answers.size() > 1) {
-                long finalChatId5 = chatId;
                 new Thread(() -> {
                     //if the answers size is bigger than 1, it means that the question has variants of answers
                     ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
@@ -747,14 +761,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, finalChatId5, variants, variants.size());
+                    sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId, variants, variants.size());
                     userCurrent.setPrevType("var");
 
                     if (!saveUser(userCurrent))
-                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", finalChatId1);
+                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
                 }).start();
             } else {
-                long finalChatId6 = chatId;
                 new Thread(() -> {
                     try {
                         Thread.sleep(250);
@@ -762,12 +775,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                         throw new RuntimeException(e);
                     }
                     //sending a message with a question and storing the answer
-                    sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, finalChatId6);
+                    sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId);
                     userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
                     userCurrent.setPrevType("ans");
 
                     if (!saveUser(userCurrent))
-                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", finalChatId1);
+                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
                 }).start();
             }
         }
@@ -839,29 +852,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                  - /deletetest - удалить тест
                  - /startquiz - провести тестирование
                 """);
-        ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
-        keyboard.setResizeKeyboard(true);
-        keyboard.setOneTimeKeyboard(false);
-
-        KeyboardButton webAppButton = new KeyboardButton();
-        webAppButton.setText("Создать тест");
-
-        WebAppInfo webAppInfo = new WebAppInfo();
-        webAppInfo.setUrl(WEB_APP_URL);
-        webAppButton.setWebApp(webAppInfo);
-
-        org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow row =
-                new org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow();
-        row.add(webAppButton);
-
-        keyboard.setKeyboard(java.util.List.of(row));
-        sendMessage.setReplyMarkup(keyboard);
-
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            System.err.println("Ошибка отправки меню: " + e.getMessage());
-        }
         users.add(new User(chatId, "default", 0, 0, -1, null)); // add user
     }
 
@@ -938,9 +928,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             String response = checkForTest(test);
             if (!response.isBlank())
-                sendMessage(response, chatId); //replaced .isEmpty() with .isBlank() for better understanding
+                sendMessage(response, chatId);
 
-            user.setState("default"); // user state
+            user.setState("default");
             if (!saveUser(user)) {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
                 return;
@@ -963,28 +953,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private boolean isNameValid(String name) {
         return name.replaceAll("\\p{Punct}", "").length() < 2;
-    }
-
-
-    private void setMenuButton() {
-        WebAppInfo webAppInfo = WebAppInfo.builder()
-                .url(WEB_APP_URL)
-                .build();
-
-        MenuButtonWebApp menuButtonWebApp = MenuButtonWebApp.builder()
-                .text("Создать тест")
-                .webAppInfo(webAppInfo)
-                .build();
-
-        SetChatMenuButton setChatMenuButton = SetChatMenuButton.builder()
-                .menuButton(menuButtonWebApp)
-                .build();
-
-        try {
-            execute(setChatMenuButton);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException("Ошибка установки кнопки меню: " + e.getMessage());
-        }
     }
 
     private void processWebAppData(Message message, User user) {
