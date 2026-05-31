@@ -232,7 +232,7 @@ public class DBManager {
                 st.setString(1, username);
                 ResultSet res = st.executeQuery();
                 if (!res.next()) {
-                    System.out.println("User with username = " + username + " doesn't exit is database");
+                    System.out.println("User with username = " + username + " doesn't exit in the database");
                     return null;
                 }
                 ids.add(res.getLong("chat_id"));
@@ -242,6 +242,32 @@ public class DBManager {
             }
         }
         return ids;
+    }
+    public static ArrayList<String> getUsernamesByIds(ArrayList<Long> ids){
+        Connection connection = getConnection();
+        if (connection==null){
+            System.out.println("Connection became null while getting " + ids + "'s usernames");
+            return null;
+        }
+        ArrayList<String> usernames = new ArrayList<>();
+        for (Long id: ids){
+            PreparedStatement st = null;
+            try {
+                st = connection.prepareStatement("SELECT username FROM public.users WHERE chat_id = ?");
+                st.setLong(1, id);
+                ResultSet res = st.executeQuery();
+                if (!res.next()) {
+                    System.out.println("User with id = " + id + " doesn't exit in the database");
+                    return null;
+                }
+                usernames.add(res.getString("username"));
+            } catch (SQLException e) {
+                System.out.println("An exception while getting " + id + "'s username: " + e.getMessage());
+                return null;
+            }
+
+        }
+        return usernames;
     }
     //added a new method getTests(), which, well, gets tests and returns them as an arraylist of Tests
     public static ArrayList<Test> getTests(long chatId){
