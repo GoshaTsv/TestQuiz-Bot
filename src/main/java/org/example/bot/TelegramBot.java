@@ -435,6 +435,108 @@ public class TelegramBot extends TelegramLongPollingBot {
                         });
                         quizThread.start();
                     }
+                    case "deleting_student" -> {
+                        if (!update.hasCallbackQuery()){
+                            user.setState("default");
+                            if (!saveUser(user)) {
+                                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                                return;
+                            }
+                            sendMessage("Вы отменили удаление пользователя.\nЕсли вы хотели его удалить, то в следующий раз пожалуйста напишите его имя (без @).", chatId);
+                        }
+                        StudentClass chosenClass = user.getCurrentChangingClass();
+                        ArrayList<String> usernamemaybes = new ArrayList<>();
+                        usernamemaybes.add(msg);
+                        Long userId = Objects.requireNonNull(DBManager.getIdsByUsernames(usernamemaybes)).getFirst();
+                        if (userId==null || !chosenClass.getStudents().contains(userId)){
+                            sendMessage("Этого пользователя нету в вашем классе, или его в общем нету в базе данных.", chatId);
+                            user.setState("default");
+                            if (!saveUser(user)) {
+                                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                            }
+                            return;
+                        }
+                        ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
+                        newSetOfStudents.remove(userId);
+                        DBManager.deleteClass(chatId, chosenClass.getName());
+                        DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
+                        user.setCurrentChangingClass(null);
+                        return;
+                    }
+                    case "adding_student" ->{
+                        if (!update.hasCallbackQuery()){
+                            user.setState("default");
+                            if (!saveUser(user)) {
+                                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                                return;
+                            }
+                            sendMessage("Вы отменили удаление пользователя.\nЕсли вы хотели его удалить, то в следующий раз пожалуйста напишите его имя (без @).", chatId);
+                        }
+                        StudentClass chosenClass = user.getCurrentChangingClass();
+                        ArrayList<String> usernamemaybes = new ArrayList<>();
+                        usernamemaybes.add(msg);
+                        Long userId = Objects.requireNonNull(DBManager.getIdsByUsernames(usernamemaybes)).getFirst();
+                        if (userId==null){
+                            sendMessage("Этого пользователя нету в базе данных", chatId);
+                            user.setState("default");
+                            if (!saveUser(user)) {
+                                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                            }
+                            return;
+                        }
+                        if (chosenClass.getStudents().contains(userId)){
+                            sendMessage("Этого пользователя уже есть в вашем классе!", chatId);
+                            user.setState("default");
+                            if (!saveUser(user)) {
+                                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                            }
+                            return;
+                        }
+                        ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
+                        newSetOfStudents.add(userId);
+                        DBManager.deleteClass(chatId, chosenClass.getName());
+                        DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
+                        user.setCurrentChangingClass(null);
+                        return;
+                    }
+                    case "change_classes" -> {
+                        System.out.println("changing class");
+                        if (!update.hasCallbackQuery()){
+                            user.setState("default");
+                            if (!saveUser(user)) {
+                                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                                return;
+                            }
+                            sendMessage("Вы отменили изменение класса.\nЕсли вы хотели его изменить, то в следующий раз пожалуйста нажмите на кнопку.", chatId);
+                        }
+                        String data = update.getCallbackQuery().getData();
+                        String result = data.replaceAll("test_", "");
+                        try {
+                            execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
+                        } catch (TelegramApiException e) {
+                            throw new RuntimeException(e);
+                        }
+                        StudentClass chosenClass = user.getCurrentChangingClass();
+                        if (result.equalsIgnoreCase("1")){
+                            if (chosenClass.getStudents().size()<=2){
+                                sendMessage("Вы не можете больше удалять учеников, минимум - 2 ученика.", chatId);
+                                return;
+                            }
+                            sendMessage("Пожалуйста, введите имя ученика, которого хотите убрать из класса (без @).", chatId);
+                            user.setState("deleting_student");
+                            if (!saveUser(user)) {
+                                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                                return;
+                            }
+                            return;
+                        }
+                        sendMessage("Пожалуйста, введите имя ученика, которого хотите добавить в класс (без @).", chatId);
+                        user.setState("adding_student");
+                        if (!saveUser(user)) {
+                            sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                            return;
+                        }
+                    }
                     case "view_classes" -> {
                         System.out.println("viewing classes");
                         if (!update.hasCallbackQuery()){
@@ -456,7 +558,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                             throw new RuntimeException(e);
                         }
                         StringBuilder classString = new StringBuilder();
-                        classString.append(String.format("Название класса: %s\nУченики: \n", chosenClass.getName()));
+                        classString.append(String.format("Название класса: \"%s\"\nУченики: \n", chosenClass.getName()));
                         ArrayList<String> userUsernames = DBManager.getUsernamesByIds(chosenClass.getStudents());
                         assert userUsernames != null;
                         for (String username: userUsernames){
@@ -469,6 +571,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         options.add("Добавить ученика");
                         sendMessage(classString.toString(), chatId, options, options.size());
                         user.setState("change_classes");
+                        user.setCurrentChangingClass(chosenClass);
                         if (!saveUser(user)) {
                             sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
                             return;
