@@ -461,6 +461,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                         DBManager.deleteClass(chatId, chosenClass.getName());
                         DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
                         user.setCurrentChangingClass(null);
+                        user.setState("default");
+                        if (!saveUser(user)) {
+                            sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                        }
                         return;
                     }
                     case "adding_student" ->{
@@ -497,6 +501,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                         DBManager.deleteClass(chatId, chosenClass.getName());
                         DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
                         user.setCurrentChangingClass(null);
+                        user.setState("default");
+                        if (!saveUser(user)) {
+                            sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                        }
                         return;
                     }
                     case "change_classes" -> {
