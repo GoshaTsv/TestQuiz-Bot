@@ -458,7 +458,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                             classString.append("- @").append(username).append("\n");
                         }
                         System.out.println(userUsernames);
-                        System.out.println(classString.toString());
+                        System.out.println(classString);
                         ArrayList<String> options = new ArrayList<>();
                         options.add("Удалить ученика");
                         options.add("Добавить ученика");
