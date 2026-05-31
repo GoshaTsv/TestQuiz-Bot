@@ -9,8 +9,10 @@ public class Main {
     public static void main(String[] args) throws TelegramApiException, InterruptedException {
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
         TelegramBot bot = new TelegramBot();
-        bot.loadUsers(); // load users
+        bot.loadUsers();
         botsApi.registerBot(bot);
+        Thread.sleep(5);
+        bot.setMenuButton();
         Thread.currentThread().join();
     }
 }

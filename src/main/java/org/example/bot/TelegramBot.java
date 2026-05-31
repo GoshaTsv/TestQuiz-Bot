@@ -10,9 +10,11 @@ import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
+import org.telegram.telegrambots.meta.api.methods.menubutton.SetChatMenuButton;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.menubutton.MenuButtonWebApp;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -46,7 +48,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     //moved all the user.setTestCount and user.setClassCount a bit lower so that it doesnt count when you get an error
     @Override
     public void onUpdateReceived(Update update) {
-        long chatId = 0;
+        long chatId;
         Message message = new Message();
         if (update.hasMessage()) {
             message = update.getMessage();
@@ -59,7 +61,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = users.stream().filter(x -> x.getChatId() == finalChatId3).findFirst().orElse(null);
 
         if (message.getWebAppData() != null) {
-            System.out.println("!!! ОБНАРУЖЕНЫ WEBAPP DATA !!!");
+            System.out.println("Получены web app data");
             String data = message.getWebAppData().getData();
             System.out.println("Данные: " + data);
             processWebAppData(message, user);
@@ -954,13 +956,28 @@ public class TelegramBot extends TelegramLongPollingBot {
         return name.replaceAll("\\p{Punct}", "").length() < 2;
     }
 
-    public void loadUsers() { // new method load users
-        users = DBManager.getUsers();
-        if (users == null) {
-            System.out.println("An error while getting users: users is null");
-            throw new RuntimeException("Users is null");
+
+    public boolean setMenuButton() {
+        WebAppInfo webAppInfo = WebAppInfo.builder()
+                .url(WEB_APP_URL)
+                .build();
+
+        MenuButtonWebApp menuButtonWebApp = MenuButtonWebApp.builder()
+                .text("Создать тест")
+                .webAppInfo(webAppInfo)
+                .build();
+
+        SetChatMenuButton setChatMenuButton = SetChatMenuButton.builder()
+                .menuButton(menuButtonWebApp)
+                .build();
+
+        try {
+            execute(setChatMenuButton);
+            return true;
+        } catch (TelegramApiException e) {
+            System.err.println("Ошибка установки кнопки меню: " + e.getMessage());
+            return false;
         }
-        System.out.print("Loaded users: ");
     }
 
     private void processWebAppData(Message message, User user) {
@@ -1009,5 +1026,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 System.err.println("Не удалось удалить временный файл: " + e.getMessage());
             }
         }
+    }
+    public void loadUsers() { // new method load users
+        users = DBManager.getUsers();
+        if (users == null) {
+            System.out.println("An error while getting users: users is null");
+            throw new RuntimeException("Users is null");
+        }
+        System.out.print("Loaded users: ");
     }
 }
