@@ -503,6 +503,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                         classesStrings.add(String.format(" - %s (%d учеников).\n", studentClass.getName(), studentClass.getStudents().size()));
 
                     sendMessage((String.format("Ваши классы (%d): \n", classes.size())), chatId, classesStrings, classesStrings.size());
+                    user.setState("view_classes");
+                    if (!saveUser(user)) {
+                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
+                        return;
+                    }
                 } else if (msg.startsWith("/deleteclass")) { // new command
                     ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
                     if (classes == null) {
@@ -578,7 +583,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                         msgBuilder.append(String.format(" - %s (%d вопросов).\n", test.testName, test.questions.size()));
 
                     sendMessage(msgBuilder.toString(), chatId);
-                    user.setState("view_classes");
                     if (!saveUser(user)) {
                         sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
                         return;
