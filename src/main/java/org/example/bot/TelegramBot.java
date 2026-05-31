@@ -432,6 +432,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         quizThread.start();
                     }
                     case "view_classes" -> {
+                        System.out.println("viewing classes");
                         if (!update.hasCallbackQuery()){
                             user.setState("default");
                             if (!saveUser(user)) {
@@ -456,6 +457,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                         for (String username: userUsernames){
                             classString.append("- @").append(username).append("\n");
                         }
+                        System.out.println(userUsernames);
+                        System.out.println(classString.toString());
                         ArrayList<String> options = new ArrayList<>();
                         options.add("Удалить ученика");
                         options.add("Добавить ученика");
