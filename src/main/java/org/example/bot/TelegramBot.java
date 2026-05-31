@@ -82,12 +82,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         if (user.getQuizState() == -1) {
             if (message.hasText() || update.hasCallbackQuery()) {
-                String msg = message.getText();
+                String msg = "";
+                if (message.hasText()) msg = message.getText();
+                if (update.hasCallbackQuery()) msg = update.getCallbackQuery().getData();
+
                 if (msg.trim().isEmpty()) {
                     sendMessage("Вы не можете отправлять пустые сообщения.", chatId);
                     return;
                 }
 
+                String finalMsg = msg;
                 switch (user.getState()) {
                     case "class_name" -> {
                         if (msg.startsWith("/")) {
@@ -359,7 +363,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         Thread quizThread = new Thread(() -> {
                             synchronized (this) {
                                 sendMessage("Квиз успешно создан!", chatId);
-                                Quiz quiz = new Quiz(chatId, DBManager.getClass(user.getCurrentClassName(), chatId), DBManager.getTest(chatId, msg));
+                                Quiz quiz = new Quiz(chatId, DBManager.getClass(user.getCurrentClassName(), chatId), DBManager.getTest(chatId, finalMsg));
                                 quiz.getStudentClass().getStudents().forEach(x -> {
                                     User userCurrent = users.stream().filter(user1 -> user1.getChatId() == x).findFirst().orElse(null);
                                     if (userCurrent == null) {
