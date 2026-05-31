@@ -284,7 +284,7 @@ public class DBManager {
             while (res.next()){
                 Test test = gson.fromJson(res.getString("content"), Test.class);
                 System.out.println("Got new test: " + test);
-                if (test.getTestName().equals(name)) {
+                if (test.getTestName().equalsIgnoreCase(name)) {
                     System.out.println("Test found: " + test);
                     return test;
                 }
