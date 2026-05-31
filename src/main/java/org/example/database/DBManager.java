@@ -379,8 +379,6 @@ public class DBManager {
                     return null;
                 }
 
-                System.out.println(res.getLong("chat_id") + "'s tests: " + tests);
-                System.out.println(res.getLong("chat_id") + "'s classes: " + classes);
 
                 users.add(new User(res.getLong("chat_id"), "default", classes.size(), tests.size(), -1, null));
             }
