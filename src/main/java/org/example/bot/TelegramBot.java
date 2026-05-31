@@ -502,7 +502,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     keyboard.setOneTimeKeyboard(false);
 
                     KeyboardButton webAppButton = new KeyboardButton();
-                    webAppButton.setText("Создать тест");
+                    webAppButton.setText("Создать тест (использовать во время /newtest)");
 
                     WebAppInfo webAppInfo = new WebAppInfo();
                     webAppInfo.setUrl(WEB_APP_URL);
@@ -686,7 +686,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     System.out.println("Correct answer: " + correctAnswer);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                     System.out.println("new user answers: " + newUserAnswers);
-                    answer.setText("we can work it out");
                     try {
                         execute(answer);
                     } catch (TelegramApiException e) {
