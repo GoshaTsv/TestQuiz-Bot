@@ -37,7 +37,7 @@ public class DBManager {
         try {
             PreparedStatement st = connection.prepareStatement("SELECT * FROM public.classes WHERE name = ? AND teacher_id = ?");
 
-            st.setString(1, name);
+            st.setString(1, name.toLowerCase());
             st.setLong(2, teacherId);
 
             ResultSet res = st.executeQuery();
@@ -76,7 +76,7 @@ public class DBManager {
         try {
             PreparedStatement st = connection.prepareStatement("INSERT INTO public.classes (name, teacher_id, students) VALUES (?, ?, ?)");
 
-            st.setString(1, name);
+            st.setString(1, name.toLowerCase());
             st.setLong(2, teacherId);
             st.setArray(3, connection.createArrayOf("BIGINT", students.toArray()));
 
