@@ -431,7 +431,43 @@ public class TelegramBot extends TelegramLongPollingBot {
                         });
                         quizThread.start();
                     }
+                    case "view_classes" -> {
+                        if (!update.hasCallbackQuery()){
+                            user.setState("default");
+                            if (!saveUser(user)) {
+                                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                                return;
+                            }
+                            sendMessage("Вы отменили просмотр классов.\nЕсли вы хотели их просмотреть, то в следующий раз пожалуйста нажмите на кнопку.", chatId);
+                        }
+                        String data = update.getCallbackQuery().getData();
+                        String result = data.replaceAll("test_", "");
+                        ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
+                        StudentClass chosenClass = classes.get(Integer.parseInt(result)-1);
+                        try {
+                            execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
+                        } catch (TelegramApiException e) {
+                            throw new RuntimeException(e);
+                        }
+                        StringBuilder classString = new StringBuilder();
+                        classString.append(String.format("Название класса: %s\nУченики: \n", chosenClass.getName()));
+                        ArrayList<String> userUsernames = DBManager.getUsernamesByIds(chosenClass.getStudents());
+                        assert userUsernames != null;
+                        for (String username: userUsernames){
+                            classString.append("- @").append(username).append("\n");
+                        }
+                        ArrayList<String> options = new ArrayList<>();
+                        options.add("Удалить ученика");
+                        options.add("Добавить ученика");
+                        sendMessage(classString.toString(), chatId, options, options.size());
+                        user.setState("change_classes");
+                        if (!saveUser(user)) {
+                            sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
+                            return;
+                        }
+                    }
                 }
+
                 //added a check for not being startquiz so that it doesn't activate when starting a quiz
                 if (msg.startsWith("/start") && !(msg.startsWith("/startquiz")))
                     startRegistration(update, chatId);
@@ -535,11 +571,15 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     StringBuilder msgBuilder = new StringBuilder();
                     msgBuilder.append(String.format("Ваши тесты (%d): \n", tests.size()));
-
                     for (Test test : tests)
                         msgBuilder.append(String.format(" - %s (%d вопросов).\n", test.testName, test.questions.size()));
 
                     sendMessage(msgBuilder.toString(), chatId);
+                    user.setState("view_classes");
+                    if (!saveUser(user)) {
+                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
+                        return;
+                    }
                 } else if (msg.startsWith("/deletetest")) { // new command
                     ArrayList<Test> tests = DBManager.getTests(chatId);
                     if (tests == null) {
