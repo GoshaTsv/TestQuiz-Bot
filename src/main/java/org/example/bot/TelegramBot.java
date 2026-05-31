@@ -436,7 +436,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         quizThread.start();
                     }
                     case "deleting_student" -> {
-                        if (!update.hasCallbackQuery()){
+                        if (!update.getMessage().hasText()){
                             user.setState("default");
                             if (!saveUser(user)) {
                                 sendMessage("Не удалось обновить состояние пользователя.", chatId);
@@ -465,10 +465,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                         if (!saveUser(user)) {
                             sendMessage("Не удалось обновить состояние пользователя.", chatId);
                         }
+                        sendMessage("Пользователь успешно удалён!", chatId);
                         return;
                     }
                     case "adding_student" ->{
-                        if (!update.hasCallbackQuery()){
+                        if (!update.getMessage().hasText()){
                             user.setState("default");
                             if (!saveUser(user)) {
                                 sendMessage("Не удалось обновить состояние пользователя.", chatId);
@@ -505,6 +506,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         if (!saveUser(user)) {
                             sendMessage("Не удалось обновить состояние пользователя.", chatId);
                         }
+                        sendMessage("Пользователь успешно добавлен!", chatId);
                         return;
                     }
                     case "change_classes" -> {
