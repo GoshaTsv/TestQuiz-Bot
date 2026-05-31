@@ -614,7 +614,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage("Произошла ошибка, попробуйте ещё раз...", chatId);
             }
             Quiz quiz = userCurrent.getCurrentQuiz();
-            Question currentQuestion = quiz.getTest().questions.get(user.getQuizState() - 1);
+            Test test = quiz.getTest();
+            Question currentQuestion = test.questions.get(user.getQuizState() - 1);
 
             if (!(update.hasMessage() || update.hasCallbackQuery())) {
                 sendMessage("Пожалуйста, отправьте ответ на вопрос.", chatId);
@@ -697,11 +698,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                     System.out.println("User answers: " + userAnswers);
 
                     for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().questions.size(); i++) {
+                        String question = test.questions.get(i).question;
                         String userAnswer = userAnswers.get(i).split("\uD80C\uDE78")[1];
                         String correctAnswer = getCorrectAnswerForQuestion(quiz.getTest().questions.get(i));
-                        System.out.println(userAnswer);
-                        System.out.println(correctAnswer);
-                        sendMessage("Вопрос #" + (i + 1) + ". \nОтвет вашего ученика (@"  + userName + "): " + userAnswer + "\nПравильный ответ: " + correctAnswer, quiz.getTeacherId());
+
+                        System.out.println("Question: " + question);
+                        System.out.println("User answer: " + userAnswer);
+                        System.out.println("Correct answer: " + correctAnswer);
+                        sendMessage("Вопрос #" + (i + 1) + ": " + question + " \nОтвет вашего ученика (@"  + userName + "): " + userAnswer + "\nПравильный ответ: " + correctAnswer, quiz.getTeacherId());
 
                         try {
                             Thread.sleep(500);
