@@ -81,7 +81,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
         if (user.getQuizState() == -1) {
-            if (message.hasText()) {
+            if (message.hasText() || update.hasCallbackQuery()) {
                 String msg = message.getText();
                 if (msg.trim().isEmpty()) {
                     sendMessage("Вы не можете отправлять пустые сообщения.", chatId);
