@@ -173,7 +173,7 @@ public class DBManager {
         try {
             PreparedStatement st = connection.prepareStatement("SELECT * FROM public.classes WHERE teacher_id = ? and name = ?");
             st.setLong(1, teacherId);
-            st.setString(2, name);
+            st.setString(2, name.toLowerCase());
 
             ResultSet res = st.executeQuery();
             if (!res.next())

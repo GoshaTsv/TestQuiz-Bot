@@ -1000,6 +1000,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
     }
+
     public void loadUsers() { // new method load users
         users = DBManager.getUsers();
         if (users == null) {
