@@ -30,7 +30,7 @@ import static org.example.classes.User.getCorrectAnswerForQuestion;
 
 public class TelegramBot extends TelegramLongPollingBot {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private final String WEB_APP_URL = "https://superwarden.github.io/testquizapp.github.io/index.html";
+    private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
     private ArrayList<User> users = new ArrayList<>();
 
     @Override
@@ -495,7 +495,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         sendMessage("Не удалось обновить состояние пользователя.", chatId);
                         return;
                     }
-                    sendMessage("Пожалуйста, отправьте .json файл с тестом, или напишите /exit для отмены.", chatId); //edited the text to include the /exit command
+                    sendMessage("Пожалуйста, отправьте .json файл с тестом, создайте новый тест в мини-приложении или напишите /exit для отмены.", chatId); //edited the text to include the /exit command
                 }
                 //made the method for listing the teacher's tests (just copied the classes thing)
                 else if (msg.startsWith("/mytests")) {
@@ -833,7 +833,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         keyboard.setOneTimeKeyboard(false);
 
         KeyboardButton webAppButton = new KeyboardButton();
-        webAppButton.setText("Создать тест");
+        webAppButton.setText("Создать тест (использовать во время /newtest)");
 
         WebAppInfo webAppInfo = new WebAppInfo();
         webAppInfo.setUrl(WEB_APP_URL);
@@ -963,17 +963,16 @@ public class TelegramBot extends TelegramLongPollingBot {
         Long userId = message.getFrom().getId();
         String userName = message.getFrom().getUserName();
 
-        System.out.println("📥 Получен опрос от @" + userName + " (ID: " + userId + ")");
-        System.out.println("JSON данные: " + jsonData);
-
-        // Проверяем, что данные не пустые
-        if (jsonData == null || jsonData.trim().isEmpty()) {
-            sendMessage("❌ Получены пустые данные. Пожалуйста, попробуйте снова.", chatId);
+        if (jsonData.trim().isEmpty()) {
+            sendMessage("Получены пустые данные. Пожалуйста, попробуйте ещё раз...", chatId);
             return;
         }
 
+        System.out.println("Получен опрос от @" + userName + " (ID: " + userId + ")");
+        System.out.println("JSON данные: " + jsonData);
+
         if (user == null) {
-            sendMessage("❌ Пользователь не найден. Пожалуйста, начните с команды /start", chatId);
+            sendMessage("Пользователь не найден. Пожалуйста, введите команду /start", chatId);
             return;
         }
 
@@ -985,28 +984,23 @@ public class TelegramBot extends TelegramLongPollingBot {
                 fileWriter.write(jsonData);
             }
 
-            System.out.println("✅ JSON сохранен в файл: " + fileName);
+            System.out.println("JSON сохранен в файл: " + fileName);
 
             createTest(chatId, user, fileName);
-
-            sendMessage("✅ Тест успешно создан и сохранен!", chatId);
-
         } catch (Exception e) {
-            System.err.println("❌ Ошибка обработки WebApp данных: " + e.getMessage());
-            e.printStackTrace();
-            sendMessage("❌ Произошла ошибка при создании теста. Пожалуйста, попробуйте снова.\nОшибка: " + e.getMessage(), chatId);
+            System.err.println("Ошибка обработки данных: " + e.getMessage());
+            sendMessage("Произошла ошибка при создании теста. Пожалуйста, попробуйте ещё раз...", chatId);
         } finally {
-            // Удаляем временный файл после обработки
-            if (fileName != null) {
-                try {
-                    File tempFile = new File(fileName);
-                    if (tempFile.exists()) {
-                        tempFile.delete();
-                        System.out.println("🗑️ Временный файл удален: " + fileName);
-                    }
-                } catch (Exception e) {
-                    System.err.println("Не удалось удалить временный файл: " + e.getMessage());
+            try {
+                File tempFile = new File(fileName);
+                if (tempFile.exists()) {
+                    boolean hasDeleted = tempFile.delete();
+                    if (hasDeleted)
+                        System.out.println("Временный файл удален: " + fileName);
+                    else throw new RuntimeException("File hasn't deleted");
                 }
+            } catch (Exception e) {
+                System.err.println("Не удалось удалить временный файл: " + e.getMessage());
             }
         }
     }
