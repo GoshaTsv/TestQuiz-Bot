@@ -9,6 +9,7 @@ import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -662,6 +663,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (userCurrent.getPrevType().equalsIgnoreCase("var")) {
                 if (update.hasCallbackQuery()) {
                     String callbackData = update.getCallbackQuery().getData();
+                    AnswerCallbackQuery answer = new AnswerCallbackQuery();
+                    answer.setCallbackQueryId(update.getCallbackQuery().getId());
 
                     // call back
                     String selectedAnswer = callbackData.replace("test_", "");
@@ -683,6 +686,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     System.out.println("Correct answer: " + correctAnswer);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                     System.out.println("new user answers: " + newUserAnswers);
+                    answer.setText("we can work it out");
+                    try {
+                        execute(answer);
+                    } catch (TelegramApiException e) {
+                        e.printStackTrace();
+                    }
                 } else {
                     sendMessage("Пожалуйста, нажмите на 1 из кнопок.", chatId);
                     return;
