@@ -840,9 +840,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         // new delete commands
         // 3 tests -> 10 tests
         // 10 classes
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(String.valueOf(chatId));
-        sendMessage.setText("""
+        sendMessage("""
                 Здравствуйте, это бот для тестов, вот все комманды бота:
                  - /newclass - создать новый класс (максимум 5)
                  - /myclasses - просмотреть свои классы
@@ -851,7 +849,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                  - /mytests - просмотреть свои тесты
                  - /deletetest - удалить тест
                  - /startquiz - провести тестирование
-                """);
+                """, chatId);
         users.add(new User(chatId, "default", 0, 0, -1, null)); // add user
     }
 
