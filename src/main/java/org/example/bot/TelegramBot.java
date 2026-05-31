@@ -45,6 +45,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         return System.getenv("BOT_TOKEN");
     }
 
+    @Override
+    public void onRegister() {
+        setMenuButton();
+    }
+
     //moved all the user.setTestCount and user.setClassCount a bit lower so that it doesnt count when you get an error
     @Override
     public void onUpdateReceived(Update update) {
@@ -957,7 +962,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
-    public boolean setMenuButton() {
+    private void setMenuButton() {
         WebAppInfo webAppInfo = WebAppInfo.builder()
                 .url(WEB_APP_URL)
                 .build();
@@ -973,10 +978,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         try {
             execute(setChatMenuButton);
-            return true;
         } catch (TelegramApiException e) {
-            System.err.println("Ошибка установки кнопки меню: " + e.getMessage());
-            return false;
+            throw new RuntimeException("Ошибка установки кнопки меню: " + e.getMessage());
         }
     }
 

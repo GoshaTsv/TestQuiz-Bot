@@ -11,8 +11,6 @@ public class Main {
         TelegramBot bot = new TelegramBot();
         bot.loadUsers();
         botsApi.registerBot(bot);
-        Thread.sleep(5);
-        bot.setMenuButton();
         Thread.currentThread().join();
     }
 }
