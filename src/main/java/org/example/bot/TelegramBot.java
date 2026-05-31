@@ -457,13 +457,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                         return;
                     }
 
-                    StringBuilder msgBuilder = new StringBuilder();
-                    msgBuilder.append(String.format("Ваши классы (%d): \n", classes.size()));
+                    ArrayList<String> classesStrings = new ArrayList<>();
 
                     for (StudentClass studentClass : classes)
-                        msgBuilder.append(String.format(" - %s (%d учеников).\n", studentClass.getName(), studentClass.getStudents().size()));
+                        classesStrings.add(String.format(" - %s (%d учеников).\n", studentClass.getName(), studentClass.getStudents().size()));
 
-                    sendMessage(msgBuilder.toString(), chatId);
+                    sendMessage((String.format("Ваши классы (%d): \n", classes.size())), chatId, classesStrings, classesStrings.size());
                 } else if (msg.startsWith("/deleteclass")) { // new command
                     ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
                     if (classes == null) {
