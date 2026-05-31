@@ -444,6 +444,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         String data = update.getCallbackQuery().getData();
                         String result = data.replaceAll("test_", "");
                         ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
+                        assert classes != null;
                         StudentClass chosenClass = classes.get(Integer.parseInt(result)-1);
                         try {
                             execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
