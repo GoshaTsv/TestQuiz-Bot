@@ -985,12 +985,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             for (JsonNode questionNode : questions) {
                 if (!questionNode.isObject()) {
-                    return "Неправильная структура вопросов!1";
+                    return "Неправильная структура вопросов!";
                 }
 
                 JsonNode questionText = questionNode.get("question");
                 if (questionText == null || !questionText.isTextual()) {
-                    return "Неправильная структура вопросов!2";
+                    return "Неправильная структура вопросов!";
                 }
 
                 JsonNode answers = questionNode.get("answers");
@@ -1028,8 +1028,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 //            if (map.values().stream().anyMatch(Objects::isNull)) {
 //                flag.set("У какого-то вопроса нет вариантов.");
 //            }
-            if (!map.containsKey(Boolean.TRUE))
-                return "Неправильная структура вопросов!3";
+            if (!map.containsValue(Boolean.TRUE))
+                return "Неправильная структура вопросов!";
         }
         return "";
     }
