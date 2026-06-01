@@ -979,7 +979,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             JsonNode questions = root.get("questions");
-            if (questions == null || !questions.isArray() || questions.isEmpty()) {
+            if (questions == null || !questions.isArray() || questions.isEmpty() || questions.size() > 30) {
                 return "Неправильная структура вопросов!";
             }
 
@@ -994,7 +994,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
 
                 JsonNode answers = questionNode.get("answers");
-                if (answers == null || !answers.isObject() || answers.isEmpty()) {
+                if (answers == null || !answers.isObject() || answers.isEmpty() || answers.size() > 8) {
                     return "Неправильная структура ответов!";
                 }
 
@@ -1014,21 +1014,20 @@ public class TelegramBot extends TelegramLongPollingBot {
 //        if (questions.isEmpty()) {
 //            return "В вашем тесте нет вопросов!";
 //        }
-        AtomicReference<String> flag = new AtomicReference<>("");
-        questions.forEach(x -> {
+
+        for (Question question : questions) {
 //            String questionName = x.question;
 //            if (questionName.isBlank()) {
 //                flag.set("У какого-то вопроса нет названия.");
 //            }
-            HashMap<String, Boolean> map = x.answers;
+            HashMap<String, Boolean> map = question.answers;
 //            if (map.values().stream().anyMatch(Objects::isNull)) {
 //                flag.set("У какого-то вопроса нет вариантов.");
 //            }
-            if (!map.containsKey(Boolean.TRUE)) {
-                flag.set("Неправильная структура вопросов!");
-            }
-        });
-        return flag.get();
+            if (!map.containsKey(Boolean.TRUE))
+                return "Неправильная структура вопросов!";
+        }
+        return "";
     }
 
     private void startRegistration(Update update, long chatId) {
@@ -1138,6 +1137,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             String response = checkForTest(json, test);
+            System.out.println("Checked test: " + response);
             if (!response.isBlank()) {
                 sendMessage(response, chatId);
                 return;
