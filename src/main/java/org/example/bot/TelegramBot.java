@@ -1103,6 +1103,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     //added another sendMessage method to add buttons to messages
     private void sendMessage(String msg, long chatId, ArrayList<String> buttons, ArrayList<String> callbacks) {
+        System.out.println("Buttons: " + buttons);
+        System.out.println("Callbacks: " + callbacks);
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
         AtomicInteger count = new AtomicInteger();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
@@ -1259,6 +1261,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         for (int i = 0; i < classes.size(); i++)
             callbacks.add("class_" + i);
+
+        System.out.println("Callbacks: " + callbacks);
 
         sendMessage((String.format("Ваши классы (%d): \n", classes.size())), chatId, classesStrings, callbacks);
         user.setState("view_classes");
