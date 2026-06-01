@@ -17,6 +17,15 @@ public class User {
     private String prevType;
     private int correctAnswers;
     private LinkedHashMap<String, Boolean> userAnswers;
+    private StudentClass currentChangingClass;
+
+    public StudentClass getCurrentChangingClass() {
+        return currentChangingClass;
+    }
+
+    public void setCurrentChangingClass(StudentClass currentChangingClass) {
+        this.currentChangingClass = currentChangingClass;
+    }
 
     public LinkedHashMap<String, Boolean> getUserAnswers() {
         return userAnswers;
