@@ -395,13 +395,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                                         int count = 1;
                                         for (int i = 0; i < quiz.getTest().questions.size(); i++) {
-                                            var question = quiz.getTest().questions.get(i);
+                                            Question question = quiz.getTest().questions.get(i);
 
-                                            if (question.answers.size() > 1) { //if the answers size is bigger than 1, it means that the question has variants of answers
-                                                ArrayList<String> variants = new ArrayList<>(question.answers.keySet()); //getting variants
+                                            if (question.answers.size() > 1) {
+                                                ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
                                                 int rightVar = 1;
                                                 Boolean[] answers = question.answers.values().toArray(new Boolean[0]);
-                                                //finding the right answer and storing it
+
                                                 for (int j = 0; j < answers.length; j++) {
                                                     if (answers[j]) {
                                                         rightVar = j;
@@ -409,20 +409,24 @@ public class TelegramBot extends TelegramLongPollingBot {
                                                     }
                                                 }
 
-                                                sendMessage("Вопрос #" + count + ": " + question.question, x, variants, variants.size());
+                                                ArrayList<String> callbacks = new ArrayList<>();
+
+                                                for (int j = 0; j < variants.size(); j++)
+                                                    callbacks.add("ans_" + i);
+
+                                                sendMessage("Вопрос #" + count + ": " + question.question, x, variants, callbacks);
                                                 count++;
-                                                user.setCorrectAnswer(String.valueOf(rightVar));
+                                                userCurrent.setCorrectAnswer(String.valueOf(rightVar));
                                                 userCurrent.setPrevType("var");
                                                 return;
                                             } else {
-                                                //sending a message with a question and storing the answer
                                                 sendMessage("Вопрос #" + count + ": " + question.question, x);
                                                 userCurrent.setPrevType("ans");
-                                                user.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
+                                                userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
                                             }
 
                                             try {
-                                                Thread.sleep(1000); // 1 second delay between questions
+                                                Thread.sleep(1000);
                                             } catch (InterruptedException e) {
                                                 Thread.currentThread().interrupt();
                                                 break;
@@ -676,7 +680,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     sendMessage("Введите название класса для запуска квиза.", chatId);
                 }
             }
-            if (update.hasCallbackQuery()){
+            if (update.hasCallbackQuery()) {
                 switch(user.getState()){
                     case "change_classes" -> {
                         System.out.println("changing class");
@@ -689,15 +693,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                             sendMessage("Вы отменили изменение класса.\nЕсли вы хотели его изменить, то в следующий раз пожалуйста нажмите на кнопку.", chatId);
                         }
                         String data = update.getCallbackQuery().getData();
-                        String result = data.replaceAll("test_", "");
+                        String result = data.replaceAll("class_", "");
                         try {
                             execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
                         } catch (TelegramApiException e) {
                             throw new RuntimeException(e);
                         }
                         StudentClass chosenClass = user.getCurrentChangingClass();
-                        if (result.equalsIgnoreCase("1")){
-                            if (chosenClass.getStudents().size()<=2){
+                        if (result.equalsIgnoreCase("delete")){
+                            if (chosenClass.getStudents().size() <= 2){
                                 sendMessage("Вы не можете больше удалять учеников, минимум - 2 ученика.", chatId);
                                 return;
                             }
@@ -727,10 +731,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                             sendMessage("Вы отменили просмотр классов.\nЕсли вы хотели их просмотреть, то в следующий раз пожалуйста нажмите на кнопку.", chatId);
                         }
                         String data = update.getCallbackQuery().getData();
-                        String result = data.replaceAll("test_", "");
+                        String result = data.replaceAll("class_", "");
                         ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
                         assert classes != null;
-                        StudentClass chosenClass = classes.get(Integer.parseInt(result)-1);
+                        StudentClass chosenClass = classes.get(Integer.parseInt(result)); // deleted -1
                         try {
                             execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
                         } catch (TelegramApiException e) {
@@ -748,7 +752,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                         ArrayList<String> options = new ArrayList<>();
                         options.add("Удалить ученика");
                         options.add("Добавить ученика");
-                        sendMessage(classString.toString(), chatId, options, options.size());
+
+                        ArrayList<String> callbacks = new ArrayList<>();
+                        callbacks.add("class_delete");
+                        callbacks.add("class_add");
+
+                        sendMessage(classString.toString(), chatId, options, callbacks);
                         user.setState("change_classes");
                         user.setCurrentChangingClass(chosenClass);
                         if (!saveUser(user)) {
@@ -788,7 +797,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             } else {
                 userName = update.getCallbackQuery().getFrom().getUserName();
             }
-
 
             User userCurrent = users.stream().filter(user1 -> user1.getChatId() == chatId).findFirst().orElse(null);
 
@@ -835,12 +843,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     answer.setCallbackQueryId(update.getCallbackQuery().getId());
 
                     // call back
-                    String selectedAnswer = callbackData.replace("test_", "");
+                    String selectedAnswer = callbackData.replace("ans_", "");
                     List<String> keys = new ArrayList<>(quiz.getTest().questions.get(user.getQuizState() - 1).answers.keySet());
                     String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion)) + 1);
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
-                    String userAnswer = keys.get(Integer.parseInt(selectedAnswer) - 1).toString();
+                    String userAnswer = keys.get(Integer.parseInt(selectedAnswer)); // removed -1
                     boolean isCorrect = selectedAnswer.equals(correctAnswer);
 
                     newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, isCorrect);
@@ -857,7 +865,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     try {
                         execute(answer);
                     } catch (TelegramApiException e) {
-                        e.printStackTrace();
+                        System.out.println("Exception while processing variant answer: " + e.getMessage());
                     }
                 } else {
                     sendMessage("Пожалуйста, нажмите на 1 из кнопок.", chatId);
@@ -915,14 +923,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            var question = quiz.getTest().questions.get(user.getQuizState() - 1);
+            Question question = quiz.getTest().questions.get(user.getQuizState() - 1);
 
             if (question.answers.size() > 1) {
                 new Thread(() -> {
-                    //if the answers size is bigger than 1, it means that the question has variants of answers
                     ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
 
-                    //dasjdas
                     String correctAnswer = null;
                     for (Map.Entry<String, Boolean> entry : question.answers.entrySet()) {
                         if (entry.getValue()) {
@@ -936,7 +942,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId, variants, variants.size());
+
+                    ArrayList<String> callbacks = new ArrayList<>();
+
+                    for (int i = 0; i < variants.size(); i++)
+                        callbacks.add("ans_" + i);
+
+                    sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId, variants, callbacks);
                     userCurrent.setPrevType("var");
 
                     if (!saveUser(userCurrent))
@@ -1090,20 +1102,18 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     //added another sendMessage method to add buttons to messages
-    private void sendMessage(String msg, long chatId, ArrayList<String> buttons, int limit) {
-        var keyboard = new InlineKeyboardMarkup();
+    private void sendMessage(String msg, long chatId, ArrayList<String> buttons, ArrayList<String> callbacks) {
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
         AtomicInteger count = new AtomicInteger();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         buttons.forEach(x -> {
-            if (count.get() <= limit) {
-                List<InlineKeyboardButton> row = new ArrayList<>();
-                var button = new InlineKeyboardButton();
-                button.setText(x);
-                count.getAndIncrement();
-                button.setCallbackData("test_" + count.get());
-                row.add(button);
-                rows.add(row);
-            }
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            InlineKeyboardButton button = new InlineKeyboardButton();
+            button.setText(x);
+            count.getAndIncrement();
+            button.setCallbackData(callbacks.get(count.get()));
+            row.add(button);
+            rows.add(row);
         });
         keyboard.setKeyboard(rows);
         SendMessage sendMessage = new SendMessage();
@@ -1243,9 +1253,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         ArrayList<String> classesStrings = new ArrayList<>();
 
         for (StudentClass studentClass : classes)
-            classesStrings.add(String.format(" - %s (%d учеников).\n", studentClass.getName(), studentClass.getStudents().size()));
+            classesStrings.add(String.format("%s (%d учеников)\n", studentClass.getName(), studentClass.getStudents().size()));
 
-        sendMessage((String.format("Ваши классы (%d): \n", classes.size())), chatId, classesStrings, classesStrings.size());
+        ArrayList<String> callbacks = new ArrayList<>();
+
+        for (int i = 0; i < classes.size(); i++)
+            callbacks.add("class_" + i);
+
+        sendMessage((String.format("Ваши классы (%d): \n", classes.size())), chatId, classesStrings, callbacks);
         user.setState("view_classes");
         if (!saveUser(user)) {
             sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
