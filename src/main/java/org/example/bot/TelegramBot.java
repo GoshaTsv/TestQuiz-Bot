@@ -457,17 +457,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                         StudentClass chosenClass = user.getCurrentChangingClass();
                         ArrayList<String> usernamemaybes = new ArrayList<>();
                         usernamemaybes.add(msg);
-                        Long userId = DBManager.getIdsByUsernames(usernamemaybes).getFirst();
+                        ArrayList<Long> userId = DBManager.getIdsByUsernames(usernamemaybes);
                         if (userId==null){
                             sendMessage("Этого пользователя нету в базе данных", chatId);
                             return;
                         }
-                        if (!chosenClass.getStudents().contains(userId)){
+                        if (!chosenClass.getStudents().contains(userId.getFirst())){
                             sendMessage("Этого пользователя нету в вашем классе!", chatId);
                             return;
                         }
                         ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
-                        newSetOfStudents.remove(userId);
+                        newSetOfStudents.remove(userId.getFirst());
                         DBManager.deleteClass(chatId, chosenClass.getName());
                         DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
                         user.setCurrentChangingClass(null);
@@ -500,17 +500,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                         StudentClass chosenClass = user.getCurrentChangingClass();
                         ArrayList<String> usernamemaybes = new ArrayList<>();
                         usernamemaybes.add(msg);
-                        Long userId = DBManager.getIdsByUsernames(usernamemaybes).getFirst();
+                        ArrayList<Long> userId = DBManager.getIdsByUsernames(usernamemaybes);
                         if (userId==null){
                             sendMessage("Этого пользователя нету в базе данных", chatId);
                             return;
                         }
-                        if (chosenClass.getStudents().contains(userId)){
-                            sendMessage("Этого пользователя уже есть в вашем классе!", chatId);
+                        if (!chosenClass.getStudents().contains(userId.getFirst())){
+                            sendMessage("Этого пользователя нету в вашем классе!", chatId);
                             return;
                         }
                         ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
-                        newSetOfStudents.add(userId);
+                        newSetOfStudents.add(userId.getFirst());
                         DBManager.deleteClass(chatId, chosenClass.getName());
                         DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
                         user.setCurrentChangingClass(null);
