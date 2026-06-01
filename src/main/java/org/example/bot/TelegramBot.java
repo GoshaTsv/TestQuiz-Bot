@@ -457,9 +457,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                         StudentClass chosenClass = user.getCurrentChangingClass();
                         ArrayList<String> usernamemaybes = new ArrayList<>();
                         usernamemaybes.add(msg);
-                        Long userId = Objects.requireNonNull(DBManager.getIdsByUsernames(usernamemaybes)).getFirst();
-                        if (userId==null || !chosenClass.getStudents().contains(userId)){
-                            sendMessage("Этого пользователя нету в вашем классе, или его в общем нету в базе данных.", chatId);
+                        Long userId = DBManager.getIdsByUsernames(usernamemaybes).getFirst();
+                        if (userId==null){
+                            sendMessage("Этого пользователя нету в базе данных", chatId);
+                            return;
+                        }
+                        if (!chosenClass.getStudents().contains(userId)){
+                            sendMessage("Этого пользователя нету в вашем классе!", chatId);
                             return;
                         }
                         ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
@@ -496,7 +500,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         StudentClass chosenClass = user.getCurrentChangingClass();
                         ArrayList<String> usernamemaybes = new ArrayList<>();
                         usernamemaybes.add(msg);
-                        Long userId = Objects.requireNonNull(DBManager.getIdsByUsernames(usernamemaybes)).getFirst();
+                        Long userId = DBManager.getIdsByUsernames(usernamemaybes).getFirst();
                         if (userId==null){
                             sendMessage("Этого пользователя нету в базе данных", chatId);
                             return;
