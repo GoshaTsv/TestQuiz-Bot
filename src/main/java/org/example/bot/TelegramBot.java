@@ -962,7 +962,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     //changed all JsonObject to Test
-    private String checkForTest(String json, @MonotonicNonNull Test test) {
+    private String checkForTest(String json) {
         if (json == null || json.isBlank()) {
             return "Ваш тест пустой!";
         }
@@ -1009,6 +1009,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (Exception e) {
             return "Некорректный формат теста!";
         }
+
+        System.out.println("Starting checking questions 2");
+
+        Test test = gson.fromJson(json, Test.class);
 
         ArrayList<Question> questions = test.questions;
 //        if (questions.isEmpty()) {
@@ -1121,6 +1125,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             while ((line = br.readLine()) != null) {
                 json += line;
             }
+
+            String response = checkForTest(json);
+            System.out.println("Checked test: " + response);
+            if (!response.isBlank()) {
+                sendMessage(response, chatId);
+                return;
+            }
+
             Test test = gson.fromJson(json, Test.class);
             test.setTestName(test.getTestName().toLowerCase());
             json = gson.toJson(test);
@@ -1133,13 +1145,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             if (tests.stream().filter(t -> t.getTestName().equalsIgnoreCase(test.getTestName())).findFirst().orElse(null) != null) {
                 sendMessage("У вас уже есть такой тест, отправьте другой.", chatId);
-                return;
-            }
-
-            String response = checkForTest(json, test);
-            System.out.println("Checked test: " + response);
-            if (!response.isBlank()) {
-                sendMessage(response, chatId);
                 return;
             }
 
