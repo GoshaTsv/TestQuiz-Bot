@@ -201,7 +201,6 @@ public class DBManager {
             ResultSet res = st.executeQuery();
 
             ArrayList<StudentClass> classes = new ArrayList<>();
-            System.out.println("Starting getting " + chatId + "'s classes");
             while (res.next()) {
                 Array studentsArray = res.getArray("students");
                 Long[] javaStudentArray = (Long[]) studentsArray.getArray(); // long -> Long
@@ -232,7 +231,7 @@ public class DBManager {
                 st.setString(1, username);
                 ResultSet res = st.executeQuery();
                 if (!res.next()) {
-                    System.out.println("User with username = " + username + " doesn't exit is database");
+                    System.out.println("User with username = " + username + " doesn't exit in the database");
                     return null;
                 }
                 ids.add(res.getLong("chat_id"));
@@ -242,6 +241,32 @@ public class DBManager {
             }
         }
         return ids;
+    }
+    public static ArrayList<String> getUsernamesByIds(ArrayList<Long> ids){
+        Connection connection = getConnection();
+        if (connection==null){
+            System.out.println("Connection became null while getting " + ids + "'s usernames");
+            return null;
+        }
+        ArrayList<String> usernames = new ArrayList<>();
+        for (Long id: ids){
+            PreparedStatement st = null;
+            try {
+                st = connection.prepareStatement("SELECT username FROM public.users WHERE chat_id = ?");
+                st.setLong(1, id);
+                ResultSet res = st.executeQuery();
+                if (!res.next()) {
+                    System.out.println("User with id = " + id + " doesn't exit in the database");
+                    return null;
+                }
+                usernames.add(res.getString("username"));
+            } catch (SQLException e) {
+                System.out.println("An exception while getting " + id + "'s username: " + e.getMessage());
+                return null;
+            }
+
+        }
+        return usernames;
     }
     //added a new method getTests(), which, well, gets tests and returns them as an arraylist of Tests
     public static ArrayList<Test> getTests(long chatId){
@@ -277,18 +302,14 @@ public class DBManager {
         try {
             PreparedStatement st = connection.prepareStatement("SELECT content FROM public.tests WHERE user_id = ?");
             st.setLong(1, chatId);
-            System.out.println("Getting result set");
             ResultSet res = st.executeQuery();
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             while (res.next()){
                 Test test = gson.fromJson(res.getString("content"), Test.class);
-                System.out.println("Got new test: " + test);
                 if (test.getTestName().equalsIgnoreCase(name)) {
-                    System.out.println("Test found: " + test);
                     return test;
                 }
-                System.out.println("Getting next");
             }
             System.out.println("Returning null");
             return new Test(null, null);
@@ -358,8 +379,6 @@ public class DBManager {
                     return null;
                 }
 
-                System.out.println(res.getLong("chat_id") + "'s tests: " + tests);
-                System.out.println(res.getLong("chat_id") + "'s classes: " + classes);
 
                 users.add(new User(res.getLong("chat_id"), "default", classes.size(), tests.size(), -1, null));
             }
