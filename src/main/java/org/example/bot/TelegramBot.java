@@ -1112,8 +1112,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(x);
-            count.getAndIncrement();
             button.setCallbackData(callbacks.get(count.get()));
+            count.getAndIncrement();
             row.add(button);
             rows.add(row);
         });
