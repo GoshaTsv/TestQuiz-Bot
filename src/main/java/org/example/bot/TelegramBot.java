@@ -1,5 +1,7 @@
 package org.example.bot;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.example.classes.Quiz;
@@ -29,6 +31,7 @@ import java.util.stream.IntStream;
 import static org.example.classes.User.getCorrectAnswerForQuestion;
 
 public class TelegramBot extends TelegramLongPollingBot {
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
     private ArrayList<User> users = new ArrayList<>();
@@ -787,32 +790,70 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     //changed all JsonObject to Test
-    private String checkForTest(@MonotonicNonNull Test test) {
-        if (test.toString().isBlank()) {
-            return "Пожалуйста, отправьте не пустой файл.";
+    private String checkForTest(String json, @MonotonicNonNull Test test) {
+        if (json == null || json.isBlank()) {
+            return "Ваш тест пустой!";
         }
-        String quizName = test.testName;
-        if (quizName.isBlank())
-            return "Пожайлуйста, добавьте название тесту.";
+
+        try {
+            JsonNode root = objectMapper.readTree(json);
+            if (!root.isObject()) {
+                return "Некорректный формат теста!";
+            }
+
+            JsonNode quizName = root.get("quizName");
+            if (quizName == null || !quizName.isTextual()) {
+                return "Неправильный заголовок теста!";
+            }
+
+            JsonNode questions = root.get("questions");
+            if (questions == null || !questions.isArray() || questions.isEmpty()) {
+                return "Неправильная структура вопросов!";
+            }
+
+            for (JsonNode questionNode : questions) {
+                if (!questionNode.isObject()) {
+                    return "Неправильная структура вопросов!";
+                }
+
+                JsonNode questionText = questionNode.get("question");
+                if (questionText == null || !questionText.isTextual()) {
+                    return "Неправильная структура вопросов!";
+                }
+
+                JsonNode answers = questionNode.get("answers");
+                if (answers == null || !answers.isObject() || answers.isEmpty()) {
+                    return "Неправильная структура ответов!";
+                }
+
+                var fields = answers.fields();
+                while (fields.hasNext()) {
+                    var field = fields.next();
+                    if (!field.getValue().isBoolean()) {
+                        return "Неправильная структура ответов!";
+                    }
+                }
+            }
+        } catch (Exception e) {
+            return "Некорректный формат теста!";
+        }
 
         ArrayList<Question> questions = test.questions;
-        if (questions.isEmpty()) {
-            return "В вашем тесте нет вопросов. Исправьте это."; //fixed grammatical mistake
-        }
+//        if (questions.isEmpty()) {
+//            return "В вашем тесте нет вопросов!";
+//        }
         AtomicReference<String> flag = new AtomicReference<>("");
         questions.forEach(x -> {
-            String questionName = x.question;
-            if (questionName.isBlank()) {
-                flag.set("У какого-то вопроса нет названия.");
-            }
+//            String questionName = x.question;
+//            if (questionName.isBlank()) {
+//                flag.set("У какого-то вопроса нет названия.");
+//            }
             HashMap<String, Boolean> map = x.answers;
-            if (map.values().stream().anyMatch(Objects::isNull)) {
-                flag.set("У какого-то вопроса нет вариантов.");
-            }
-            if (map.size() == 1) {
-                if (map.containsKey(Boolean.FALSE)) {
-                    flag.set("В вашем вопросе есть только неправильный вариант.");
-                }
+//            if (map.values().stream().anyMatch(Objects::isNull)) {
+//                flag.set("У какого-то вопроса нет вариантов.");
+//            }
+            if (!map.containsKey(Boolean.TRUE)) {
+                flag.set("Неправильная структура вопросов!");
             }
         });
         return flag.get();
@@ -924,9 +965,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            String response = checkForTest(test);
-            if (!response.isBlank())
+            String response = checkForTest(json, test);
+            if (!response.isBlank()) {
                 sendMessage(response, chatId);
+                return;
+            }
 
             user.setState("default");
             if (!saveUser(user)) {
