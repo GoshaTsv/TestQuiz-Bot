@@ -476,6 +476,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                             sendMessage("Не удалось обновить состояние пользователя.", chatId);
                         }
                         sendMessage("Пользователь успешно удалён!", chatId);
+                        sendClasses(chatId, user);
                         return;
                     }
                     case "adding_student" ->{
@@ -519,6 +520,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                             sendMessage("Не удалось обновить состояние пользователя.", chatId);
                         }
                         sendMessage("Пользователь успешно добавлен!", chatId);
+                        sendClasses(chatId, user);
                         return;
                     }
                 }
@@ -540,27 +542,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     sendMessage("Введите название класса.", chatId);
                 } else if (msg.startsWith("/myclasses")) {
-                    ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
-                    if (classes == null) {
-                        sendMessage("Не удалось получить классы пользователя...", chatId);
-                        return;
-                    }
-                    if (classes.isEmpty()) {
-                        sendMessage("У вас нет классов!", chatId);
-                        return;
-                    }
-
-                    ArrayList<String> classesStrings = new ArrayList<>();
-
-                    for (StudentClass studentClass : classes)
-                        classesStrings.add(String.format(" - %s (%d учеников).\n", studentClass.getName(), studentClass.getStudents().size()));
-
-                    sendMessage((String.format("Ваши классы (%d): \n", classes.size())), chatId, classesStrings, classesStrings.size());
-                    user.setState("view_classes");
-                    if (!saveUser(user)) {
-                        sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                        return;
-                    }
+                    sendClasses(chatId, user);
                 } else if (msg.startsWith("/deleteclass")) { // new command
                     ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
                     if (classes == null) {
@@ -1198,5 +1180,28 @@ public class TelegramBot extends TelegramLongPollingBot {
             throw new RuntimeException("Users is null");
         }
         System.out.print("Loaded users: ");
+    }
+    public void sendClasses(long chatId, User user){
+        ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
+        if (classes == null) {
+            sendMessage("Не удалось получить классы пользователя...", chatId);
+            return;
+        }
+        if (classes.isEmpty()) {
+            sendMessage("У вас нет классов!", chatId);
+            return;
+        }
+
+        ArrayList<String> classesStrings = new ArrayList<>();
+
+        for (StudentClass studentClass : classes)
+            classesStrings.add(String.format(" - %s (%d учеников).\n", studentClass.getName(), studentClass.getStudents().size()));
+
+        sendMessage((String.format("Ваши классы (%d): \n", classes.size())), chatId, classesStrings, classesStrings.size());
+        user.setState("view_classes");
+        if (!saveUser(user)) {
+            sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
+            return;
+        }
     }
 }
