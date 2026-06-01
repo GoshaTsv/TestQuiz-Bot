@@ -96,7 +96,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     case "class_name" -> {
                         if (msg.startsWith("/")) {
                             if (msg.startsWith("/exit")) {
-                                sendMessage("Создания класса отменено.", chatId);
+                                sendMessage("Создание класса отменено.", chatId);
                                 user.setState("default");
                                 saveUser(user);
                                 return;
@@ -444,6 +444,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                             }
                             sendMessage("Вы отменили удаление пользователя.\nЕсли вы хотели его удалить, то в следующий раз пожалуйста напишите его имя (без @).", chatId);
                         }
+                        if (msg.startsWith("/")) {
+                            if (msg.startsWith("/exit")) {
+                                sendMessage("Изменение класса отменено.", chatId);
+                                user.setState("default");
+                                saveUser(user);
+                                return;
+                            }
+                            sendMessage("Вы не можете отправлять команды во время изменения класса (/exit для отмены изменения класса).", chatId);
+                            return;
+                        }
                         StudentClass chosenClass = user.getCurrentChangingClass();
                         ArrayList<String> usernamemaybes = new ArrayList<>();
                         usernamemaybes.add(msg);
@@ -476,6 +486,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                                 return;
                             }
                             sendMessage("Вы отменили удаление пользователя.\nЕсли вы хотели его удалить, то в следующий раз пожалуйста напишите его имя (без @).", chatId);
+                        }
+                        if (msg.startsWith("/")) {
+                            if (msg.startsWith("/exit")) {
+                                sendMessage("Изменение класса отменено.", chatId);
+                                user.setState("default");
+                                saveUser(user);
+                                return;
+                            }
+                            sendMessage("Вы не можете отправлять команды во время изменения класса (/exit для отмены изменения класса).", chatId);
+                            return;
                         }
                         StudentClass chosenClass = user.getCurrentChangingClass();
                         ArrayList<String> usernamemaybes = new ArrayList<>();
@@ -587,7 +607,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     keyboard.setOneTimeKeyboard(false);
 
                     KeyboardButton webAppButton = new KeyboardButton();
-                    webAppButton.setText("Создать тест (использовать во время /newtest)");
+                    webAppButton.setText("Создать тест");
 
                     WebAppInfo webAppInfo = new WebAppInfo();
                     webAppInfo.setUrl(WEB_APP_URL);
