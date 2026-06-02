@@ -31,7 +31,6 @@ import java.util.stream.IntStream;
 import static org.example.classes.User.getCorrectAnswerForQuestion;
 
 public class TelegramBot extends TelegramLongPollingBot {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
     private ArrayList<User> users = new ArrayList<>();
@@ -92,7 +91,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                processMessageStates(msg, user, chatId);
+                user.processMessageStates(this, msg, chatId, users);
                 processCommands(update, msg, chatId, user);
             }
             if (update.hasCallbackQuery()) {
@@ -173,7 +172,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     AnswerCallbackQuery answer = new AnswerCallbackQuery();
                     answer.setCallbackQueryId(update.getCallbackQuery().getId());
 
-                    // call back
                     String selectedAnswer = callbackData.replace("ans_", "");
                     List<String> keys = new ArrayList<>(quiz.getTest().questions.get(user.getQuizState() - 1).answers.keySet());
                     String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion)) + 1);
@@ -214,7 +212,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            // move to the next answer
             userCurrent.setQuizState(user.getQuizState() + 1);
             if (user.getQuizState() > quiz.getTest().questions.size()) {
                 System.out.println("got to start of the thread!");
@@ -292,7 +289,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    //sending a message with a question and storing the answer
+
                     sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId);
                     userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
                     userCurrent.setPrevType("ans");
@@ -302,69 +299,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }).start();
             }
         }
-    }
-
-    //changed all JsonObject to Test
-    private String checkForTest(String json) {
-        if (json == null || json.isBlank()) {
-            return "Ваш тест пустой!";
-        }
-
-        try {
-            JsonNode root = objectMapper.readTree(json);
-            if (!root.isObject()) {
-                return "Некорректный формат теста!";
-            }
-
-            JsonNode quizName = root.get("quizName");
-            if (quizName == null || !quizName.isTextual()) {
-                return "Неправильный заголовок теста!";
-            }
-
-            JsonNode questions = root.get("questions");
-            if (questions == null || !questions.isArray() || questions.isEmpty() || questions.size() > 30) {
-                return "Неправильная структура вопросов!";
-            }
-
-            for (JsonNode questionNode : questions) {
-                if (!questionNode.isObject()) {
-                    return "Неправильная структура вопросов!";
-                }
-
-                JsonNode questionText = questionNode.get("question");
-                if (questionText == null || !questionText.isTextual()) {
-                    return "Неправильная структура вопросов!";
-                }
-
-                JsonNode answers = questionNode.get("answers");
-                if (answers == null || !answers.isObject() || answers.isEmpty() || answers.size() > 8) {
-                    return "Неправильная структура ответов!";
-                }
-
-                var fields = answers.fields();
-                while (fields.hasNext()) {
-                    var field = fields.next();
-                    if (!field.getValue().isBoolean()) {
-                        return "Неправильная структура ответов!";
-                    }
-                }
-            }
-        } catch (Exception e) {
-            return "Некорректный формат теста!";
-        }
-
-        System.out.println("Starting checking questions 2");
-
-        Test test = gson.fromJson(json, Test.class);
-
-        ArrayList<Question> questions = test.questions;
-
-        for (Question question : questions) {
-            HashMap<String, Boolean> map = question.answers;
-            if (!map.containsValue(Boolean.TRUE))
-                return "Неправильная структура вопросов!";
-        }
-        return "";
     }
 
     private void startRegistration(Update update, long chatId) {
@@ -386,9 +320,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage("Произошла ошибка во время регистрации, попробуйте ещё... (/start)", chatId);
                 return;
             }
-        // new delete commands
-        // 3 tests -> 10 tests
-        // 10 classes
+
         sendMessage("""
                 Здравствуйте, это бот для тестов, вот все комманды бота:
                  - /newclass - создать новый класс (максимум 5)
@@ -399,10 +331,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                  - /deletetest - удалить тест
                  - /startquiz - провести тестирование
                 """, chatId);
-        users.add(new User(chatId, "default", 0, 0, -1, null)); // add user
+        users.add(new User(chatId, "default", 0, 0, -1, null));
     }
 
-    private boolean saveUser(User user) {
+    public boolean saveUser(User user) {
         int index = IntStream.range(0, users.size()).filter(i -> users.get(i).getChatId() == user.getChatId()).findFirst().orElse(-1);
         if (index == -1)
             return false;
@@ -411,7 +343,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         return true;
     }
 
-    private void sendMessage(String msg, long chatId) {
+    public void sendMessage(String msg, long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
         sendMessage.setText(msg);
@@ -422,8 +354,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    //added another sendMessage method to add buttons to messages
-    private void sendMessage(String msg, long chatId, ArrayList<String> buttons, ArrayList<String> callbacks) {
+    public void sendMessage(String msg, long chatId, ArrayList<String> buttons, ArrayList<String> callbacks) {
         System.out.println("Buttons: " + buttons);
         System.out.println("Callbacks: " + callbacks);
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
@@ -453,22 +384,21 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void createTest(long chatId, User user, String fileName) {
         try {
             BufferedReader br = new BufferedReader(new FileReader(fileName));
-            String json = "";
+            StringBuilder json = new StringBuilder();
             String line;
-            while ((line = br.readLine()) != null) {
-                json += line;
-            }
+            while ((line = br.readLine()) != null)
+                json.append(line);
 
-            String response = checkForTest(json);
+            String response = Test.checkForTest(json.toString());
             System.out.println("Checked test: " + response);
             if (!response.isBlank()) {
                 sendMessage(response, chatId);
                 return;
             }
 
-            Test test = gson.fromJson(json, Test.class);
+            Test test = gson.fromJson(json.toString(), Test.class);
             test.setTestName(test.getTestName().toLowerCase());
-            json = gson.toJson(test);
+            json = new StringBuilder(gson.toJson(test));
 
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
@@ -486,7 +416,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
                 return;
             }
-            if (!DBManager.createTest(json, chatId)) {
+            if (!DBManager.createTest(json.toString(), chatId)) {
                 sendMessage("Тест не получилось добавить. Попробуйте ещё раз...", chatId);
                 return;
             }
@@ -502,7 +432,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private boolean isNameValid(String name) {
+    public boolean isNameValid(String name) {
         return name.replaceAll("\\p{Punct}", "").length() < 2;
     }
 
@@ -614,344 +544,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             user.setCurrentChangingClass(chosenClass);
             if (!saveUser(user)) {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
-            }
-        }
-    }
-
-    private void processMessageStates(String msg, User user, long chatId) {
-        switch (user.getState()) {
-            case "class_name" -> {
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        sendMessage("Создание класса отменено.", chatId);
-                        user.setState("default");
-                        saveUser(user);
-                        return;
-                    }
-                    sendMessage("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", chatId);
-                    return;
-                }
-
-                if (msg.replaceAll("\\p{Punct}", "").length() < 2) {
-                    sendMessage("Введите корректное имя класса (минимум 2 символа без знаков препинания и пробелов).", chatId);
-                    return;
-                }
-
-                int doesClassExit = DBManager.doesClassExit(chatId, msg);
-                if (doesClassExit == 2) {
-                    sendMessage("Произошла ошибка во время проверки имени класса, попробуйте ещё...", chatId);
-                    return;
-                }
-                if (doesClassExit == 1) {
-                    sendMessage("У вас уже существует класс с таким именем.", chatId);
-                    return;
-                }
-
-                user.setState("class_students");
-                user.setCurrentClassName(msg);
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя.", chatId);
-                    return;
-                }
-
-                sendMessage("Перечислите через пробел username'ы учеников без @ (например: ivan victor test).", chatId);
-            }
-            case "class_students" -> {
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        sendMessage("Создания класса отменено.", chatId);
-                        user.setState("default");
-                        saveUser(user);
-                        return;
-                    }
-                    sendMessage("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", chatId);
-                    return;
-                }
-                ArrayList<String> usernames = new ArrayList<>(Arrays.asList(msg.split(" ")));
-                if (usernames.size() < 2) {
-                    sendMessage("Класс должен состоять минимум из 2-х учеников.", chatId);
-                    return;
-                }
-
-                user.setState("default");
-
-                sendMessage("Создание класса...", chatId);
-
-                ArrayList<Long> students = DBManager.getIdsByUsernames(usernames);
-
-                if (students == null || students.size() != usernames.size()) {
-                    sendMessage("Не удалось получить учеников, возможно они не зарегистрированы в боте.", chatId);
-                    return;
-                }
-
-                if (!DBManager.createClass(user.getCurrentClassName(), chatId, students)) {
-                    sendMessage("Не удалось создать класс, попробуйте снова...", chatId);
-                    return;
-                }
-                user.setClassCount(user.getClassCount() + 1);
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя.", chatId);
-                    return;
-                }
-
-                sendMessage("Класс успешно создан!", chatId);
-            }
-            case "delete_class" -> {
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        sendMessage("Удаление класса отменено.", chatId);
-                        user.setState("default");
-                        saveUser(user);
-                        return;
-                    }
-                    sendMessage("Вы не можете отправлять команды во время удаления класса (/exit для отмены удаления класса).", chatId);
-                    return;
-                }
-
-                if (msg.replaceAll("\\p{Punct}", "").length() < 2) {
-                    sendMessage("Введите корректное имя класса (минимум 2 символа без знаков препинания и пробелов).", chatId);
-                    return;
-                }
-
-                int doesClassExit = DBManager.doesClassExit(chatId, msg);
-
-                if (doesClassExit == 2) {
-                    sendMessage("Произошла ошибка во время проверки имени класса, попробуйте ещё...", chatId);
-                    return;
-                }
-                if (doesClassExit == 0) {
-                    sendMessage("У вас нету класса с таким именем.", chatId);
-                    return;
-                }
-
-                user.setState("default");
-                if (!DBManager.deleteClass(chatId, msg)) {
-                    sendMessage("Не удалось удалить класс, попробуйте ещё...", chatId);
-                    return;
-                }
-                user.setClassCount(user.getClassCount() - 1);
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                    return;
-                }
-
-
-                sendMessage("Класс успешно удалён!", chatId);
-            }
-            //sent most of the logic of case "create_test" outside the if-clause as for it to be activated the message needs to have text
-            case "create_test" -> {
-                 /* added an if-clause to check for any command and the /exit command specifically
-                if the user sent just a command, the bot tells them they can exit using /exit
-                * the bot sends a message telling the person that they have cancelled the import of the test
-                * then it sets the state to default, checks for it being done and goes back to the start
-                also added an if-clause for checking the state
-                * */
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        sendMessage("Вы отменили загрузку теста.", chatId);
-                        user.setState("default");
-                        if (!saveUser(user)) {
-                            sendMessage("Не удалось обновить состояние пользователя.", chatId);
-                        }
-                        return;
-                    }
-                    sendMessage("Вы можете отменить загрузку файла с помощью команды /exit.", chatId);
-                    return;
-                }
-
-                sendMessage("Пожалуйста, отправьте файл.", chatId);
-            }
-            case "delete_test" -> {
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        sendMessage("Удаление теста отменено.", chatId);
-                        user.setState("default");
-                        saveUser(user);
-                        return;
-                    }
-                    sendMessage("Вы не можете отправлять команды во время удаления теста (/exit для отмены удаления теста).", chatId);
-                    return;
-                }
-
-                if (msg.replaceAll("\\p{Punct}", "").length() < 2) {
-                    sendMessage("Введите корректное имя теста (минимум 2 символа без знаков препинания и пробелов).", chatId);
-                    return;
-                }
-
-                int doesTestExit = DBManager.doesTestExit(chatId, msg);
-                if (doesTestExit == 2) {
-                    sendMessage("Произошла ошибка во время проверки имени теста, попробуйте ещё...", chatId);
-                    return;
-                }
-                if (doesTestExit == 0) {
-                    sendMessage("У вас нету теста с таким именем.", chatId);
-                    return;
-                }
-
-                user.setState("default");
-
-                if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, msg))) {
-                    sendMessage("Не удалось удалить тест, попробуйте ещё...", chatId);
-                    return;
-                }
-                user.setTestsCount(user.getTestsCount() - 1);
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                    return;
-                }
-
-                sendMessage("Тест успешно удалён!", chatId);
-            }
-            case "quiz_start" -> {
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        sendMessage("Создания квиза отменено.", chatId);
-                        user.setState("default");
-                        saveUser(user);
-                        return;
-                    }
-                    sendMessage("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", chatId);
-                    return;
-                }
-
-                if (msg.replaceAll("\\p{Punct}", "").length() < 2) {
-                    sendMessage("Введите корректное имя класса (минимум 2 символа без знаков препинания и пробелов).", chatId);
-                    return;
-                }
-
-                int doesClassExit = DBManager.doesClassExit(chatId, msg);
-                if (doesClassExit == 2) {
-                    sendMessage("Произошла ошибка во время проверки имени класса, попробуйте ещё...", chatId);
-                    return;
-                }
-                if (doesClassExit == 0) {
-                    sendMessage("У вас нету класса с таким именем.", chatId);
-                    return;
-                }
-
-                user.setState("quiz_test");
-                user.setCurrentClassName(msg);
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя.", chatId);
-                    return;
-                }
-
-                sendMessage("Введите название теста для начала квиза.", chatId);
-                return;
-            }
-            case "quiz_test" -> {
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        sendMessage("Создание квиза отменено.", chatId);
-                        user.setState("default");
-                        saveUser(user);
-                        return;
-                    }
-                    sendMessage("Вы не можете отправлять команды во время удаления теста (/exit для отмены удаления теста).", chatId);
-                    return;
-                }
-
-                if (isNameValid(msg)) {
-                    sendMessage("Введите корректное имя теста (минимум 2 символа без знаков препинания и пробелов).", chatId);
-                    return;
-                }
-
-                System.out.println("Checking the existence of the test");
-                int doesTestExit = DBManager.doesTestExit(chatId, msg);
-                System.out.println("Does test exit: " + doesTestExit);
-                if (doesTestExit == 2) {
-                    sendMessage("Произошла ошибка во время проверки имени теста, попробуйте ещё...", chatId);
-                    return;
-                }
-                if (doesTestExit == 0) {
-                    sendMessage("У вас нету теста с таким именем.", chatId);
-                    return;
-                }
-
-                user.setState("default");
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                    return;
-                }
-
-                sendMessage("Создание квиза...", chatId);
-
-                Thread quizThread = new Thread(() -> {
-                    synchronized (this) {
-                        startQuiz(msg, chatId, user);
-                    }
-                });
-                quizThread.start();
-            }
-            case "deleting_student" -> {
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        sendMessage("Изменение класса отменено.", chatId);
-                        user.setState("default");
-                        saveUser(user);
-                        return;
-                    }
-                    sendMessage("Вы не можете отправлять команды во время изменения класса (/exit для отмены изменения класса).", chatId);
-                    return;
-                }
-                StudentClass chosenClass = user.getCurrentChangingClass();
-                ArrayList<String> usernamemaybes = new ArrayList<>();
-                usernamemaybes.add(msg);
-                ArrayList<Long> userId = DBManager.getIdsByUsernames(usernamemaybes);
-                if (userId==null){
-                    sendMessage("Этого пользователя нету в базе данных.", chatId);
-                    return;
-                }
-                if (!chosenClass.getStudents().contains(userId.getFirst())){
-                    sendMessage("Этого пользователя нету в вашем классе!", chatId);
-                    return;
-                }
-                ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
-                newSetOfStudents.remove(userId.getFirst());
-                DBManager.deleteClass(chatId, chosenClass.getName());
-                DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
-                user.setCurrentChangingClass(null);
-                user.setState("default");
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя.", chatId);
-                }
-                sendMessage("Пользователь успешно удалён!", chatId);
-                sendClasses(chatId, user);
-            }
-            case "adding_student" -> {
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        sendMessage("Изменение класса отменено.", chatId);
-                        user.setState("default");
-                        saveUser(user);
-                        return;
-                    }
-                    sendMessage("Вы не можете отправлять команды во время изменения класса (/exit для отмены изменения класса).", chatId);
-                    return;
-                }
-                StudentClass chosenClass = user.getCurrentChangingClass();
-                ArrayList<String> usernamemaybes = new ArrayList<>();
-                usernamemaybes.add(msg);
-                ArrayList<Long> userId = DBManager.getIdsByUsernames(usernamemaybes);
-                if (userId == null){
-                    sendMessage("Этого пользователя нету в базе данных.", chatId);
-                    return;
-                }
-                if (chosenClass.getStudents().contains(userId.getFirst())){
-                    sendMessage("Этого пользователя уже есть в вашем классе!", chatId);
-                    return;
-                }
-                ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
-                newSetOfStudents.add(userId.getFirst());
-                DBManager.deleteClass(chatId, chosenClass.getName());
-                DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
-                user.setCurrentChangingClass(null);
-                user.setState("default");
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя.", chatId);
-                }
-                sendMessage("Пользователь успешно добавлен!", chatId);
-                sendClasses(chatId, user);
             }
         }
     }
@@ -1103,80 +695,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void startQuiz(String msg, long chatId, User user) {
-        sendMessage("Квиз успешно создан!", chatId);
-        Quiz quiz = new Quiz(chatId, DBManager.getClass(user.getCurrentClassName(), chatId), DBManager.getTest(chatId, msg));
-        quiz.getStudentClass().getStudents().forEach(x -> {
-            User userCurrent = users.stream().filter(user1 -> user1.getChatId() == x).findFirst().orElse(null);
-            if (userCurrent == null) {
-                System.out.println("User not found in thread when starting test");
-                sendMessage("Что-то пошло не так. Попробуйте ещё раз...", chatId);
-                return;
-            }
-
-            new Thread(() -> {
-                while (userCurrent.getQuizState() != -1) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        sendMessage("Что-то пошло не так. Попробуйте ещё раз...", chatId);
-                    }
-                }
-                userCurrent.setQuizState(1);
-                userCurrent.setCurrentQuiz(quiz);
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-
-                int count = 1;
-                for (int i = 0; i < quiz.getTest().questions.size(); i++) {
-                    Question question = quiz.getTest().questions.get(i);
-
-                    if (question.answers.size() > 1) {
-                        ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
-                        int rightVar = 1;
-                        Boolean[] answers = question.answers.values().toArray(new Boolean[0]);
-
-                        for (int j = 0; j < answers.length; j++) {
-                            if (answers[j]) {
-                                rightVar = j;
-                                break;
-                            }
-                        }
-
-                        ArrayList<String> callbacks = new ArrayList<>();
-
-                        for (int j = 0; j < variants.size(); j++)
-                            callbacks.add("ans_" + i);
-
-                        sendMessage("1Вопрос #" + count + ": " + question.question, x, variants, callbacks);
-                        count++;
-                        userCurrent.setCorrectAnswer(String.valueOf(rightVar));
-                        userCurrent.setPrevType("var");
-                        return;
-                    } else {
-                        sendMessage("1Вопрос #" + count + ": " + question.question, x);
-                        userCurrent.setPrevType("ans");
-                        userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
-                    }
-
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
-
-                    count++;
-                    return;
-                }
-            }).start();
-        });
-    }
-
-    public void loadUsers() { // new method load users
+    public void loadUsers() {
         users = DBManager.getUsers();
         if (users == null) {
             System.out.println("An error while getting users: users is null");
