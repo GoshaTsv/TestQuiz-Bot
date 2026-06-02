@@ -86,7 +86,7 @@ public class Quiz {
 
                     System.out.println("Callbacks: " + callbacks);
 
-                    bot.sendMessage("1Вопрос #1: " + question.question, x, variants, callbacks);
+                    bot.sendMessage("Вопрос #1: " + question.question, x, variants, callbacks, null);
                     userCurrent.setCorrectAnswer(String.valueOf(rightVar));
                     userCurrent.setPrevType("var");
                     return;

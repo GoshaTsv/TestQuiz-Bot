@@ -15,7 +15,7 @@ public class User {
     private String state;
     private long chatId;
     private String currentClassName;
-    private int classCount; // new val
+    private int classCount;
     private int testsCount;
     private int quizState;
     private Quiz currentQuiz;
@@ -24,6 +24,7 @@ public class User {
     private int correctAnswers;
     private LinkedHashMap<String, Boolean> userAnswers;
     private StudentClass currentChangingClass;
+    private Integer currentMyClassesMessageId;
 
     public StudentClass getCurrentChangingClass() {
         return currentChangingClass;
@@ -81,7 +82,11 @@ public class User {
         this.currentQuiz = currentQuiz;
     }
 
-    public User(long chatId, String state, int classCount, int testsCount, int quizState, Quiz currentQuiz) { // new constructor
+    public void setCurrentMyClassesMessageId(Integer currentMyClassesMessageId) {
+        this.currentMyClassesMessageId = currentMyClassesMessageId;
+    }
+
+    public User(long chatId, String state, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
         this.chatId = chatId;
         this.state = state;
         this.classCount = classCount;
@@ -131,6 +136,10 @@ public class User {
 
     public void setTestsCount(int testsCount) {
         this.testsCount = testsCount;
+    }
+
+    public Integer getCurrentMyClassesMessageId() {
+        return currentMyClassesMessageId;
     }
 
     @Override
