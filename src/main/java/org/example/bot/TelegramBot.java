@@ -25,7 +25,6 @@ import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static org.example.classes.User.getCorrectAnswerForQuestion;
@@ -491,8 +490,23 @@ public class TelegramBot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
+
+        if (data.startsWith("delete_test")) {
+            String name = data.replaceAll("delete_test_", "");
+            if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, name))) {
+                sendMessage("Не удалось удалить тест, попробуйте ещё...", chatId);
+                return;
+            }
+            user.setTestsCount(user.getTestsCount() - 1);
+            if (!saveUser(user)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
+                return;
+            }
+
+            sendMessage("Тест успешно удалён!", chatId);
+        }
         if (data.startsWith("delete_student")){
-            System.out.println("changing class");
+            System.out.println("Changing class");
 
             StudentClass chosenClass = user.getCurrentChangingClass();
             if (chosenClass.getStudents().size() <= 2){
@@ -514,10 +528,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         else if (data.startsWith("view_classes")) {
             System.out.println("viewing classes");
-            String result = data.replaceAll("view_classes_", "");
+            String classId = data.replaceAll("view_classes_", "");
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
             assert classes != null;
-            StudentClass chosenClass = classes.get(Integer.parseInt(result)); // deleted -1
+            StudentClass chosenClass = classes.get(Integer.parseInt(classId));
             try {
                 execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
             } catch (TelegramApiException e) {
@@ -655,13 +669,23 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            user.setState("delete_test");
+//            user.setState("delete_test");
             if (!saveUser(user)) {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
                 return;
             }
 
-            sendMessage("Введите название теста", chatId);
+            ArrayList<String> testButtons = new ArrayList<>();
+
+            for (Test test: tests)
+                testButtons.add(test.getTestName());
+
+            ArrayList<String> callbacks = new ArrayList<>();
+
+            for (String name: testButtons)
+                callbacks.add("delete_test_" + name);
+
+            sendMessage("Выберете тест для удаления.", chatId, testButtons, callbacks);
         } else if (msg.startsWith("/startquiz")) {
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
             if (classes == null) {
