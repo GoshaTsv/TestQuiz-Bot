@@ -13,6 +13,7 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -344,6 +345,18 @@ public class TelegramBot extends TelegramLongPollingBot {
         return true;
     }
 
+    public void deleteMessage(Integer deleteMessageId, long chatId) {
+        DeleteMessage deleteMessage = new DeleteMessage();
+        deleteMessage.setChatId(String.valueOf(chatId));
+        deleteMessage.setMessageId(deleteMessageId);
+
+        try {
+            execute(deleteMessage);
+        } catch (TelegramApiException e) {
+            System.out.println("An exception while deleting message: " + e.getMessage());
+        }
+    }
+
     public Integer sendMessage(String msg, long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
@@ -616,6 +629,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             sendMessage("Введите название класса.", chatId);
         } else if (msg.startsWith("/myclasses")) {
+            deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
             user.setCurrentMyClassesMessageId(null);
             if (!saveUser(user)) {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
