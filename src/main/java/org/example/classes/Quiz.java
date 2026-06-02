@@ -86,6 +86,8 @@ public class Quiz {
                         for (int j = 0; j < variants.size(); j++)
                             callbacks.add("ans_" + i);
 
+                        System.out.println("Callbacks: " + callbacks);
+
                         bot.sendMessage("1Вопрос #" + count + ": " + question.question, x, variants, callbacks);
                         count++;
                         userCurrent.setCorrectAnswer(String.valueOf(rightVar));
