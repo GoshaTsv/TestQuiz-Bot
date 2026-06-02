@@ -66,48 +66,40 @@ public class Quiz {
                     Thread.currentThread().interrupt();
                 }
 
-                int count = 1;
-                for (int i = 0; i < quiz.getTest().questions.size(); i++) {
-                    Question question = quiz.getTest().questions.get(i);
-                    if (question.answers.size() > 1) {
-                        ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
-                        int rightVar = 1;
-                        Boolean[] answers = question.answers.values().toArray(new Boolean[0]);
+                Question question = quiz.getTest().questions.getFirst();
+                if (question.answers.size() > 1) {
+                    ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
+                    int rightVar = 1;
+                    Boolean[] answers = question.answers.values().toArray(new Boolean[0]);
 
-                        for (int j = 0; j < answers.length; j++) {
-                            if (answers[j]) {
-                                rightVar = j;
-                                break;
-                            }
+                    for (int j = 0; j < answers.length; j++) {
+                        if (answers[j]) {
+                            rightVar = j;
+                            break;
                         }
-
-                        ArrayList<String> callbacks = new ArrayList<>();
-
-                        for (int j = 0; j < variants.size(); j++)
-                            callbacks.add("ans_" + j);
-
-                        System.out.println("Callbacks: " + callbacks);
-
-                        bot.sendMessage("1Вопрос #" + count + ": " + question.question, x, variants, callbacks);
-                        count++;
-                        userCurrent.setCorrectAnswer(String.valueOf(rightVar));
-                        userCurrent.setPrevType("var");
-                        return;
-                    } else {
-                        bot.sendMessage("1Вопрос #" + count + ": " + question.question, x);
-                        userCurrent.setPrevType("ans");
-                        userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
                     }
 
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        break;
-                    }
+                    ArrayList<String> callbacks = new ArrayList<>();
 
-                    count++;
+                    for (int j = 0; j < variants.size(); j++)
+                        callbacks.add("ans_" + j);
+
+                    System.out.println("Callbacks: " + callbacks);
+
+                    bot.sendMessage("1Вопрос #1: " + question.question, x, variants, callbacks);
+                    userCurrent.setCorrectAnswer(String.valueOf(rightVar));
+                    userCurrent.setPrevType("var");
                     return;
+                } else {
+                    bot.sendMessage("1Вопрос #1: " + question.question, x);
+                    userCurrent.setPrevType("ans");
+                    userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             }).start();
         });
