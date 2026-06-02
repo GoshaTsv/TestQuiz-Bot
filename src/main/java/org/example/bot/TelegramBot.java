@@ -174,7 +174,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     String selectedAnswer = callbackData.replace("ans_", "");
                     List<String> keys = new ArrayList<>(quiz.getTest().questions.get(user.getQuizState() - 1).answers.keySet());
-                    String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion)) + 1);
+                    String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion))); // removed -1
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
                     String userAnswer = keys.get(Integer.parseInt(selectedAnswer)); // removed -1
