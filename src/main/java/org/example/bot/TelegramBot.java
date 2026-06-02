@@ -310,7 +310,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
 
-        int doesUserExit = DBManager.doesUserExist(username); // Checking the existence of the user
+        int doesUserExit = DBManager.doesUserExist(username);
         if (doesUserExit == 2) {
             sendMessage("Произошла ошибка во время проверки пользователя на существование, попробуйте ещё...", chatId);
             return;
@@ -344,23 +344,27 @@ public class TelegramBot extends TelegramLongPollingBot {
         return true;
     }
 
-    public void sendMessage(String msg, long chatId) {
+    public Integer sendMessage(String msg, long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
         sendMessage.setText(msg);
+
+        Integer messageId = null;
         try {
-            execute(sendMessage);
+            messageId = execute(sendMessage).getMessageId();
         } catch (TelegramApiException e) {
             System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
         }
+        return messageId;
     }
 
     public Integer sendMessage(String msg, long chatId, ArrayList<String> buttons, ArrayList<String> callbacks, Integer editMessageId) {
         System.out.println("Buttons: " + buttons);
         System.out.println("Callbacks: " + callbacks);
 
+        InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks);
         if (editMessageId == null) {
-            InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks);
+            System.out.println("Edit message id = null");
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(chatId));
             sendMessage.setReplyMarkup(keyboard);
@@ -374,7 +378,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             return messageId;
         } else {
-            InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks);
+            System.out.println("Edit message id: " + editMessageId);
             EditMessageText editMessage = new EditMessageText();
             editMessage.setChatId(String.valueOf(chatId));
             editMessage.setMessageId(editMessageId);
@@ -606,12 +610,18 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             user.setState("class_name");
             if (!saveUser(user)) {
-                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
                 return;
             }
 
             sendMessage("Введите название класса.", chatId);
         } else if (msg.startsWith("/myclasses")) {
+            user.setCurrentMyClassesMessageId(null);
+            if (!saveUser(user)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
             sendClasses(chatId, user);
         } else if (msg.startsWith("/deleteclass")) {
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
