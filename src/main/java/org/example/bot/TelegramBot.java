@@ -391,7 +391,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
             }
 
-            return null;
+            return -1;
         }
     }
 
@@ -796,6 +796,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId);
             return;
         }
+
+        if (messageId == -1)
+            return;
 
         user.setCurrentMyClassesMessageId(messageId);
         if (!saveUser(user))
