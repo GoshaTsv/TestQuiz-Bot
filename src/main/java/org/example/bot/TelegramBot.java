@@ -406,16 +406,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (tests.stream().filter(t -> t.getTestName().equalsIgnoreCase(test.getTestName())).findFirst().orElse(null) != null) {
-                sendMessage("У вас уже есть такой тест, отправьте другой.", chatId);
-                return;
-            }
-
             user.setState("default");
             if (!saveUser(user)) {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
                 return;
             }
+
+            if (tests.stream().filter(t -> t.getTestName().equalsIgnoreCase(test.getTestName())).findFirst().orElse(null) != null) {
+                sendMessage("У вас уже есть такой тест, отправьте другой.", chatId);
+                return;
+            }
+
             if (!DBManager.createTest(json.toString(), chatId)) {
                 sendMessage("Тест не получилось добавить. Попробуйте ещё раз...", chatId);
                 return;
@@ -540,7 +541,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             callbacks.add("add_student");
 
             sendMessage(classString.toString(), chatId, options, callbacks);
-//            user.setState("change_classes");
             user.setCurrentChangingClass(chosenClass);
             if (!saveUser(user)) {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
