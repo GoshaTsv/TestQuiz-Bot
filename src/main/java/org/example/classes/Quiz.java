@@ -84,7 +84,7 @@ public class Quiz {
                         ArrayList<String> callbacks = new ArrayList<>();
 
                         for (int j = 0; j < variants.size(); j++)
-                            callbacks.add("ans_" + i);
+                            callbacks.add("ans_" + j);
 
                         System.out.println("Callbacks: " + callbacks);
 
