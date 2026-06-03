@@ -679,7 +679,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             webAppButton.setText("Создать тест");
 
             WebAppInfo webAppInfo = new WebAppInfo();
-            webAppInfo.setUrl(WEB_APP_URL);
+            webAppInfo.setUrl(WEB_APP_URL + "?chat_id" + chatId);
             webAppButton.setWebApp(webAppInfo);
 
             org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow row =
