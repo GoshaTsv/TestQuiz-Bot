@@ -14,7 +14,7 @@ import java.util.*;
 public class User {
     private String state;
     private long chatId;
-    private String currentClassName;
+    private StudentClass currentClass;
     private int classCount;
     private int testsCount;
     private int quizState;
@@ -27,6 +27,8 @@ public class User {
     private Test currentChangingTest;
     private Integer currentMyClassesMessageId;
     private Integer currentMyTestsMessageId;
+    private Integer currentStartQuizClassMessageId;
+    private Integer currentStartQuizTestMessageId;
 
     public StudentClass getCurrentChangingClass() {
         return currentChangingClass;
@@ -96,6 +98,14 @@ public class User {
         this.currentChangingTest = currentChangingTest;
     }
 
+    public void setCurrentStartQuizClassMessageId(Integer currentStartQuizClassMessageId) {
+        this.currentStartQuizClassMessageId = currentStartQuizClassMessageId;
+    }
+
+    public void setCurrentStartQuizTestMessageId(Integer currentStartQuizTestMessageId) {
+        this.currentStartQuizTestMessageId = currentStartQuizTestMessageId;
+    }
+
     public User(long chatId, String state, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
         this.chatId = chatId;
         this.state = state;
@@ -116,8 +126,8 @@ public class User {
         return chatId;
     }
 
-    public String getCurrentClassName() {
-        return currentClassName;
+    public StudentClass getCurrentClass() {
+        return currentClass;
     }
 
     public int getClassCount() {
@@ -136,8 +146,8 @@ public class User {
         this.chatId = chatId;
     }
 
-    public void setCurrentClassName(String currentClassName) {
-        this.currentClassName = currentClassName;
+    public void setCurrentClass(StudentClass currentClass) {
+        this.currentClass = currentClass;
     }
 
     public void setClassCount(int classCount) {
@@ -160,12 +170,20 @@ public class User {
         return currentChangingTest;
     }
 
+    public Integer getCurrentStartQuizClassMessageId() {
+        return currentStartQuizClassMessageId;
+    }
+
+    public Integer getCurrentStartQuizTestMessageId() {
+        return currentStartQuizTestMessageId;
+    }
+
     @Override
     public String toString() {
         return "User{" +
                 "state='" + state + '\'' +
                 ", chatId=" + chatId +
-                ", currentClassName='" + currentClassName + '\'' +
+                ", currentClassName='" + currentClass + '\'' +
                 ", classCount=" + classCount +
                 ", testsCount=" + testsCount +
                 ", quizState=" + quizState +
@@ -217,7 +235,7 @@ public class User {
                 }
 
                 user.setState("class_students");
-                user.setCurrentClassName(msg);
+//                user.setCurrentClass(msg);
                 if (!bot.saveUser(user)) {
                     bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     return;
@@ -253,7 +271,7 @@ public class User {
                     return;
                 }
 
-                if (!DBManager.createClass(user.getCurrentClassName(), chatId, students)) {
+                if (!DBManager.createClass(user.getCurrentClass().getName(), chatId, students)) {
                     bot.sendMessage("Не удалось создать класс, попробуйте снова...", chatId);
                     return;
                 }
@@ -262,6 +280,18 @@ public class User {
                     bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     return;
                 }
+
+                if (user.getCurrentStartQuizClassMessageId() != null)
+                    bot.deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
+
+                if (user.getCurrentMyClassesMessageId() != null)
+                    bot.deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
+
+                if (user.getCurrentStartQuizTestMessageId() != null)
+                    bot.deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
+
+                if (user.getCurrentMyTestsMessageId() != null)
+                    bot.deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
 
                 bot.sendMessage("Класс успешно создан!", chatId);
             }
@@ -399,14 +429,13 @@ public class User {
                 }
 
                 user.setState("quiz_test");
-                user.setCurrentClassName(msg);
+//                user.setCurrentClass(msg);
                 if (!bot.saveUser(user)) {
                     bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     return;
                 }
 
                 bot.sendMessage("Введите название теста для начала квиза.", chatId);
-                return;
             }
             case "quiz_test" -> {
                 if (msg.startsWith("/")) {
@@ -448,7 +477,7 @@ public class User {
                 Thread quizThread = new Thread(() -> {
                     synchronized (this) {
                         bot.sendMessage("Квиз успешно создан!", chatId);
-                        Quiz quiz = new Quiz(chatId, DBManager.getClass(user.getCurrentClassName(), chatId), DBManager.getTest(chatId, msg));
+                        Quiz quiz = new Quiz(chatId, user.getCurrentClass(), DBManager.getTest(chatId, msg));
                         quiz.startQuiz(bot, users, chatId);
                     }
                 });
