@@ -88,8 +88,9 @@ public class Test {
 
         for (Question question : questions) {
             HashMap<String, Boolean> map = question.answers;
-            if (!map.containsValue(Boolean.TRUE))
+            if ((!map.containsValue(Boolean.TRUE) && map.size()==1)) {
                 return "Неправильная структура вопросов!";
+            }
         }
         return "";
     }
