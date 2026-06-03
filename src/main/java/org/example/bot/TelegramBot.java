@@ -30,6 +30,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
 import java.io.*;
+import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
@@ -361,6 +363,23 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+    public void sendTextAsDocument(String content, String fileName, long chatId) {
+        try {
+            SendDocument sendDocument = new SendDocument();
+            sendDocument.setChatId(chatId);
+
+            byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+            InputFile inputFile = new InputFile(new java.io.ByteArrayInputStream(bytes), fileName);
+
+            sendDocument.setDocument(inputFile);
+            sendDocument.setCaption("Вот ваш файл!");
+
+            execute(sendDocument);
+        } catch (TelegramApiException e) {
+            System.out.println("An exception while sending document: " + e.getMessage());
+        }
+    }
+
     public Integer sendMessage(String msg, long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
@@ -541,20 +560,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             throw new RuntimeException(e);
         }
 
-        if (data.startsWith("delete_test")) {
-            String name = data.replaceAll("delete_test_", "");
-            if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, name))) {
-                sendMessage("Не удалось удалить тест, попробуйте ещё...", chatId);
-                return;
-            }
-            user.setTestsCount(user.getTestsCount() - 1);
-            if (!saveUser(user)) {
-                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                return;
-            }
-
-            sendMessage("Тест успешно удалён!", chatId);
-        }
         if (data.startsWith("delete_student")) {
             System.out.println("Changing class");
 
@@ -592,8 +597,24 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             sendClasses(chatId, user);
-//            sendMessage("Класс успешно удалён!", chatId);
         }
+        else if (data.startsWith("delete_test")) {
+            if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, user.getCurrentChangingTest().getTestName()))) {
+                sendMessage("Не удалось удалить тест, попробуйте ещё...", chatId);
+                return;
+            }
+            user.setTestsCount(user.getTestsCount() - 1);
+            if (!saveUser(user)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
+                return;
+            }
+
+            sendMessage("Тест успешно удалён!", chatId);
+        }
+        else if (data.startsWith("view_test_back"))
+            sendTests(chatId, user);
+        else if (data.startsWith("download_test"))
+            sendTextAsDocument(gson.toJson(user.getCurrentChangingTest()), user.getCurrentChangingTest().getTestName() + ".json", chatId);
         else if (data.startsWith("view_classes")) {
             System.out.println("Viewing classes");
             String classId = data.replaceAll("view_classes_", "");
@@ -623,6 +644,31 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             sendMessage(classString.toString(), chatId, options, callbacks, user.getCurrentMyClassesMessageId());
             user.setCurrentChangingClass(chosenClass);
+            if (!saveUser(user))
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+        }
+        else if (data.startsWith("view_tests")) {
+            System.out.println("Viewing tests");
+            String testId = data.replaceAll("view_tests_", "");
+
+            ArrayList<Test> tests = DBManager.getTests(chatId);
+            assert tests != null;
+            Test chosenTest = tests.get(Integer.parseInt(testId));
+
+            ArrayList<String> options = new ArrayList<>();
+            options.add("Изменить тест");
+            options.add("Скачать тест");
+            options.add("Назад");
+            options.add("Удалить тест");
+
+            ArrayList<String> callbacks = new ArrayList<>();
+            callbacks.add("change_test");
+            callbacks.add("download_test");
+            callbacks.add("view_test_back");
+            callbacks.add("delete_test");
+
+            sendMessage(String.format("Название теста: \"%s\"", chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyClassesMessageId());
+            user.setCurrentChangingTest(chosenTest);
             if (!saveUser(user))
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
         }
@@ -712,6 +758,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         else if (msg.startsWith("/mytests")) {
+            sendTests(chatId, user);
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
                 sendMessage("Не удалось получить тесты пользователя...", chatId);
@@ -799,6 +846,43 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         System.out.print("Loaded users: ");
     }
+
+    public void sendTests(long chatId, User user) {
+        ArrayList<Test> tests = DBManager.getTests(chatId);
+        if (tests == null) {
+            sendMessage("Не удалось получить тесты пользователя...", chatId);
+            return;
+        }
+        if (tests.isEmpty()) {
+            sendMessage("У вас нет тестов!", chatId);
+            return;
+        }
+
+        ArrayList<String> testsStrings = new ArrayList<>();
+        //append(String.format("Ваши тесты (%d): \n", tests.size()));
+        for (Test test : tests)
+            testsStrings.add(String.format(" - %s (%d вопросов).\n", test.testName, test.questions.size()));
+
+        ArrayList<String> callbacks = new ArrayList<>();
+
+        for (int i = 0; i < tests.size(); i++)
+            callbacks.add("view_tests_" + i);
+
+        Integer messageId = sendMessage(String.format("Ваши тесты (%d): \n", tests.size()), chatId, testsStrings, callbacks, user.getCurrentMyTestsMessageId());
+
+        if (messageId == null) {
+            sendMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId);
+            return;
+        }
+
+        if (messageId == -1)
+            return;
+
+        user.setCurrentMyClassesMessageId(messageId);
+        if (!saveUser(user))
+            sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+    }
+
     public void sendClasses(long chatId, User user){
         ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
         if (classes == null) {
