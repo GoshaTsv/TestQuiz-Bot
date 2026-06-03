@@ -821,7 +821,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (!saveUser(user))
             sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
     }
-    @GetMapping("/")
+    @GetMapping("/health")
     public String index(){
         return "Hello, sufferings!";
     }
