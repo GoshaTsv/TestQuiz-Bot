@@ -843,6 +843,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         String request = req.getRequest();
         long chatId = Long.parseLong(req.getUserId());
         String jsonData = req.getContent();
+        System.out.println("jsonData: " + jsonData);
         User user = users.stream()
                 .filter(x -> x.getChatId() == chatId)
                 .findFirst()
@@ -867,6 +868,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                execute(sendDocument);
             } catch (TelegramApiException e) {
                 System.err.println("An exception while sending document: \" " + inputFile.getMediaName() + "\" to " + chatId);
+                e.printStackTrace();
             }
          }
         }
