@@ -858,7 +858,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         System.out.println("JSON сохранен в файл: " + fileName);
         if (request.isEmpty()){
-            createTest(chatId, user, fileName);
+            createTest(chatId, user, writtenFile.getName());
         } else if (request.equals("exportJSON")) {
             InputFile inputFile = new InputFile();
             inputFile.setMedia(writtenFile);
