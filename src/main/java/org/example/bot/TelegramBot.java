@@ -838,10 +838,12 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void sendTests(long chatId, User user) {
         ArrayList<Test> tests = DBManager.getTests(chatId);
         if (tests == null) {
+            deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
             sendMessage("Не удалось получить тесты пользователя...", chatId);
             return;
         }
         if (tests.isEmpty()) {
+            deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
             sendMessage("У вас нет тестов!", chatId);
             return;
         }
