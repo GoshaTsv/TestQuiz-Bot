@@ -578,17 +578,28 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         else if (data.startsWith("view_class_back"))
             sendClasses(chatId, user);
+        else if (data.startsWith("delete_class")) {
+            user.setState("default");
+
+            if (!DBManager.deleteClass(chatId, user.getCurrentChangingClass().getName())) {
+                sendMessage("Не удалось удалить класс, попробуйте ещё...", chatId);
+                return;
+            }
+            user.setClassCount(user.getClassCount() - 1);
+            if (!saveUser(user)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
+                return;
+            }
+
+            sendClasses(chatId, user);
+//            sendMessage("Класс успешно удалён!", chatId);
+        }
         else if (data.startsWith("view_classes")) {
             System.out.println("Viewing classes");
             String classId = data.replaceAll("view_classes_", "");
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
             assert classes != null;
             StudentClass chosenClass = classes.get(Integer.parseInt(classId));
-            try {
-                execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
-            } catch (TelegramApiException e) {
-                throw new RuntimeException(e);
-            }
             StringBuilder classString = new StringBuilder();
             classString.append(String.format("Название класса: \"%s\"\nУченики: \n", chosenClass.getName()));
             ArrayList<String> userUsernames = DBManager.getUsernamesByIds(chosenClass.getStudents());
