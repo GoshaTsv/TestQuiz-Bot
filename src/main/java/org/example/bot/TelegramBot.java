@@ -864,6 +864,8 @@ public class TelegramBot extends TelegramLongPollingBot {
        System.out.println("Clean JSON to write: " + cleanJson);
         try (FileWriter fileWriter = new FileWriter(writtenFile)) {
             fileWriter.write(cleanJson);
+            fileWriter.flush();
+            fileWriter.close();
             BufferedReader br = new BufferedReader(new FileReader(writtenFile));
             String line;
             System.out.println("reading file:");
