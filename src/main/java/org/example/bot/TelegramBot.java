@@ -838,7 +838,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
    public void handleQuizFromServer(org.example.spring.Message req) throws IOException {
-
         System.out.println("Got a message: " + req.toString());
         String request = req.getRequest();
         long chatId = Long.parseLong(req.getUserId());
@@ -854,8 +853,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         String fileName = "newTest_" + chatId + "_" + chatId + ".json";
         File writtenFile = new File(fileName);
+        String cleanJson;
+        try {
+            JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
+            cleanJson = new GsonBuilder().setPrettyPrinting().create().toJson(jsonObject);
+        } catch (Exception e) {
+            cleanJson = jsonData;
+        }
+
+       System.out.println("Clean JSON to write: " + cleanJson);
         try (FileWriter fileWriter = new FileWriter(writtenFile)) {
-            fileWriter.write(jsonData);
+            fileWriter.write(cleanJson);
 
         System.out.println("JSON сохранен в файл: " + fileName);
         if (request.isEmpty()){
