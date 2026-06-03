@@ -7,9 +7,7 @@ import org.example.classes.User;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -717,7 +715,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage(msgBuilder.toString(), chatId);
             if (!saveUser(user)) {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                return;
             }
         } else if (msg.startsWith("/deletetest")) { // new command
             ArrayList<Test> tests = DBManager.getTests(chatId);
@@ -825,7 +822,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     public String index(){
         return "Hello, sufferings!";
     }
-    @GetMapping("/api/messages")
+    @CrossOrigin(origins = "*")
+    @PostMapping("/api/messages")
     public void addClassFromWeb(@RequestBody org.example.spring.Message req) throws IOException {
         String request = req.getRequest();
         long chatId = Long.parseLong(req.getUserId());
@@ -844,7 +842,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             fileWriter.write(jsonData);
 
         System.out.println("JSON сохранен в файл: " + fileName);
-        if (request.equals("")){
+        if (request.isEmpty()){
             createTest(chatId, user, fileName);
         } else if (request.equals("exportJSON")) {
             InputFile inputFile = new InputFile();
