@@ -666,7 +666,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             callbacks.add("view_test_back");
             callbacks.add("delete_test");
 
-            sendMessage(String.format("Название теста: \"%s\"", chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyClassesMessageId());
+            sendMessage(String.format("Название теста: \"%s\"", chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyTestsMessageId());
             user.setCurrentChangingTest(chosenTest);
             if (!saveUser(user))
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
