@@ -709,7 +709,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             StudentClass chosenClass = classes.get(Integer.parseInt(classId));
 
-            user.setCurrentClass(chosenClass);
+            user.setCurrentStartQuizClass(chosenClass);
             if (!saveUser(user)) {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
                 return;
@@ -761,7 +761,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             Thread quizThread = new Thread(() -> {
                 synchronized (this) {
                     sendMessage("Квиз успешно создан!", chatId);
-                    Quiz quiz = new Quiz(chatId, user.getCurrentClass(), chosenTest);
+                    Quiz quiz = new Quiz(chatId, user.getCurrentStartQuizClass(), chosenTest);
                     quiz.startQuiz(this, users, chatId);
                 }
             });

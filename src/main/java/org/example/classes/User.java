@@ -1,9 +1,5 @@
 package org.example.classes;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.example.bot.TelegramBot;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
@@ -14,7 +10,8 @@ import java.util.*;
 public class User {
     private String state;
     private long chatId;
-    private StudentClass currentClass;
+    private StudentClass currentStartQuizClass;
+    private String currentNewClassName;
     private int classCount;
     private int testsCount;
     private int quizState;
@@ -106,6 +103,10 @@ public class User {
         this.currentStartQuizTestMessageId = currentStartQuizTestMessageId;
     }
 
+    public void setCurrentNewClassName(String currentNewClassName) {
+        this.currentNewClassName = currentNewClassName;
+    }
+
     public User(long chatId, String state, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
         this.chatId = chatId;
         this.state = state;
@@ -126,8 +127,8 @@ public class User {
         return chatId;
     }
 
-    public StudentClass getCurrentClass() {
-        return currentClass;
+    public StudentClass getCurrentStartQuizClass() {
+        return currentStartQuizClass;
     }
 
     public int getClassCount() {
@@ -146,8 +147,8 @@ public class User {
         this.chatId = chatId;
     }
 
-    public void setCurrentClass(StudentClass currentClass) {
-        this.currentClass = currentClass;
+    public void setCurrentStartQuizClass(StudentClass currentStartQuizClass) {
+        this.currentStartQuizClass = currentStartQuizClass;
     }
 
     public void setClassCount(int classCount) {
@@ -178,12 +179,16 @@ public class User {
         return currentStartQuizTestMessageId;
     }
 
+    public String getCurrentNewClassName() {
+        return currentNewClassName;
+    }
+
     @Override
     public String toString() {
         return "User{" +
                 "state='" + state + '\'' +
                 ", chatId=" + chatId +
-                ", currentClassName='" + currentClass + '\'' +
+                ", currentClassName='" + currentStartQuizClass + '\'' +
                 ", classCount=" + classCount +
                 ", testsCount=" + testsCount +
                 ", quizState=" + quizState +
@@ -235,7 +240,7 @@ public class User {
                 }
 
                 user.setState("class_students");
-//                user.setCurrentClass(msg);
+                user.setCurrentNewClassName(msg);
                 if (!bot.saveUser(user)) {
                     bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     return;
@@ -271,11 +276,12 @@ public class User {
                     return;
                 }
 
-                if (!DBManager.createClass(user.getCurrentClass().getName(), chatId, students)) {
+                if (!DBManager.createClass(user.getCurrentNewClassName(), chatId, students)) {
                     bot.sendMessage("Не удалось создать класс, попробуйте снова...", chatId);
                     return;
                 }
                 user.setClassCount(user.getClassCount() + 1);
+                user.setCurrentNewClassName(null);
                 if (!bot.saveUser(user)) {
                     bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     return;
