@@ -242,7 +242,7 @@ public class User {
                 user.setState("class_students");
                 user.setCurrentNewClassName(msg);
                 if (!bot.saveUser(user)) {
-                    bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
                     return;
                 }
 
@@ -283,7 +283,7 @@ public class User {
                 user.setClassCount(user.getClassCount() + 1);
                 user.setCurrentNewClassName(null);
                 if (!bot.saveUser(user)) {
-                    bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
                     return;
                 }
 
@@ -314,7 +314,7 @@ public class User {
                         bot.sendMessage("Вы отменили загрузку теста.", chatId);
                         user.setState("default");
                         if (!bot.saveUser(user)) {
-                            bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                            bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
                         }
                         return;
                     }
@@ -354,7 +354,7 @@ public class User {
                 user.setCurrentChangingClass(null);
                 user.setState("default");
                 if (!bot.saveUser(user)) {
-                    bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
                 }
                 bot.sendMessage("Пользователь успешно удалён!", chatId);
                 bot.sendClasses(chatId, user);
@@ -389,7 +389,7 @@ public class User {
                 user.setCurrentChangingClass(null);
                 user.setState("default");
                 if (!bot.saveUser(user)) {
-                    bot.sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
                 }
                 bot.sendMessage("Пользователь успешно добавлен!", chatId);
                 bot.sendClasses(chatId, user);
