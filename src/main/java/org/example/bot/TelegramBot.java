@@ -699,6 +699,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (user.getCurrentStartQuizTestMessageId() != null)
                 deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
 
+            if (user.getCurrentStartQuizClassMessageId() != null)
+                deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
+
             String classId = data.replaceAll("start_quiz_class_", "");
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
             if (classes == null) {
@@ -743,8 +746,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
         }
         else if (data.startsWith("start_quiz_test")) {
-            if (user.getCurrentStartQuizClassMessageId() != null)
-                deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
+            if (user.getCurrentStartQuizTestMessageId() != null)
+                deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
 
             String testId = data.replaceAll("start_quiz_test_", "");
             ArrayList<Test> tests = DBManager.getTests(chatId);
