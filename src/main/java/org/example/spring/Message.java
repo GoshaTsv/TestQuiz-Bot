@@ -21,6 +21,15 @@ public class Message {
         this.content = content;
     }
 
+    @Override
+    public String toString() {
+        return "Message{" +
+                "content='" + content + '\'' +
+                ", userId='" + userId + '\'' +
+                ", request='" + request + '\'' +
+                '}';
+    }
+
     public String getUserId() {
         return userId;
     }
