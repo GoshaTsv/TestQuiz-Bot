@@ -757,28 +757,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
 
-        else if (msg.startsWith("/mytests")) {
+        else if (msg.startsWith("/mytests"))
             sendTests(chatId, user);
-            ArrayList<Test> tests = DBManager.getTests(chatId);
-            if (tests == null) {
-                sendMessage("Не удалось получить тесты пользователя...", chatId);
-                return;
-            }
-            if (tests.isEmpty()) {
-                sendMessage("У вас нет тестов!", chatId);
-                return;
-            }
-
-            StringBuilder msgBuilder = new StringBuilder();
-            msgBuilder.append(String.format("Ваши тесты (%d): \n", tests.size()));
-            for (Test test : tests)
-                msgBuilder.append(String.format(" - %s (%d вопросов).\n", test.testName, test.questions.size()));
-
-            sendMessage(msgBuilder.toString(), chatId);
-            if (!saveUser(user)) {
-                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-            }
-        } else if (msg.startsWith("/deletetest")) { // new command
+        else if (msg.startsWith("/deletetest")) { // new command
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
                 sendMessage("Произошла ошибка во время загрузки тестов, попробуйте ещё...", chatId);
@@ -878,7 +859,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (messageId == -1)
             return;
 
-        user.setCurrentMyClassesMessageId(messageId);
+        user.setCurrentMyTestsMessageId(messageId);
         if (!saveUser(user))
             sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
     }
