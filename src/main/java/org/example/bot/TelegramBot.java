@@ -1,7 +1,5 @@
 package org.example.bot;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
 import org.example.classes.Quiz;
 import org.example.classes.StudentClass;
@@ -9,12 +7,17 @@ import org.example.classes.User;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
+import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -25,13 +28,12 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static org.example.classes.User.getCorrectAnswerForQuestion;
-
+@RestController
 public class TelegramBot extends TelegramLongPollingBot {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
@@ -818,5 +820,52 @@ public class TelegramBot extends TelegramLongPollingBot {
         user.setCurrentMyClassesMessageId(messageId);
         if (!saveUser(user))
             sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+    }
+    @GetMapping("/")
+    public String index(){
+        return "Hello, sufferings!";
+    }
+    @GetMapping("/api/messages")
+    public void addClassFromWeb(@RequestBody org.example.spring.Message req) throws IOException {
+        String request = req.getRequest();
+        long chatId = Long.parseLong(req.getUserId());
+        String jsonData = req.getContent();
+        User user = users.stream()
+                .filter(x -> x.getChatId() == chatId)
+                .findFirst()
+                .orElse(null);
+        if (user==null){
+            sendMessage("Не получилось найти пользователя...", chatId);
+            return;
+        }
+        String fileName = "newTest_" + chatId + "_" + chatId + ".json";
+        File writtenFile = new File(fileName);
+        try (FileWriter fileWriter = new FileWriter(writtenFile)) {
+            fileWriter.write(jsonData);
+
+        System.out.println("JSON сохранен в файл: " + fileName);
+        if (request.equals("")){
+            createTest(chatId, user, fileName);
+        } else if (request.equals("exportJSON")) {
+            InputFile inputFile = new InputFile();
+            inputFile.setMedia(writtenFile);
+            SendDocument sendDocument = new SendDocument(String.valueOf(chatId), inputFile);
+            try {
+               execute(sendDocument);
+            } catch (TelegramApiException e) {
+                System.err.println("An exception while sending document: \" " + inputFile.getMediaName() + "\" to " + chatId);
+            }
+         }
+        }
+        finally{
+            if (writtenFile.exists()) {
+                boolean deleted = writtenFile.delete();
+                if (!deleted) {
+                    System.err.println("Не удалось удалить файл: " + fileName);
+                    writtenFile.deleteOnExit();
+                }
+            }
+        }
+
     }
 }
