@@ -371,7 +371,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             InputFile inputFile = new InputFile(new java.io.ByteArrayInputStream(bytes), fileName);
 
             sendDocument.setDocument(inputFile);
-            sendDocument.setCaption("Вот ваш файл!");
 
             execute(sendDocument);
         } catch (TelegramApiException e) {
@@ -608,7 +607,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            sendMessage("Тест успешно удалён!", chatId);
+            sendTests(chatId, user);
         }
         else if (data.startsWith("view_test_back"))
             sendTests(chatId, user);
