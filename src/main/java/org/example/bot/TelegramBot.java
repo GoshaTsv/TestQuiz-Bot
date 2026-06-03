@@ -329,13 +329,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
         sendMessage("""
-                Здравствуйте, это бот для тестов, вот все комманды бота:
-                 - /newclass - создать новый класс (максимум 5)
+                Здравствуйте, это бот для тестов, вот все команды бота:
+                 - /newclass - создать новый класс (максимум 5 классов)
                  - /myclasses - просмотреть свои классы
-                 - /deleteclass - удалить класс
                  - /newtest - создать новый тест (максимум 10 тестов)
                  - /mytests - просмотреть свои тесты
-                 - /deletetest - удалить тест
                  - /startquiz - провести тестирование
                 """, chatId);
         users.add(new User(chatId, "default", 0, 0, -1, null));
@@ -796,24 +794,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             sendClasses(chatId, user);
-        } else if (msg.startsWith("/deleteclass")) {
-            ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
-            if (classes == null) {
-                sendMessage("Произошла ошибка во время загрузки классов, попробуйте ещё...", chatId);
-                return;
-            }
-            if (classes.isEmpty()) {
-                sendMessage("У вас ещё нет классов.", chatId);
-                return;
-            }
-
-            user.setState("delete_class");
-            if (!saveUser(user)) {
-                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                return;
-            }
-
-            sendMessage("Введите название класса", chatId);
         } else if (msg.startsWith("/newtest")) {
             if (user.getTestsCount() >= 10) {
                 sendMessage("Вы больше не можете создавать тесты! Лимит - 10 тестов", chatId);
@@ -865,34 +845,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             sendTests(chatId, user);
         }
-        else if (msg.startsWith("/deletetest")) { // new command
-            ArrayList<Test> tests = DBManager.getTests(chatId);
-            if (tests == null) {
-                sendMessage("Произошла ошибка во время загрузки тестов, попробуйте ещё...", chatId);
-                return;
-            }
-            if (tests.isEmpty()) {
-                sendMessage("У вас ещё нет тестов.", chatId);
-                return;
-            }
-
-            if (!saveUser(user)) {
-                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                return;
-            }
-
-            ArrayList<String> testButtons = new ArrayList<>();
-
-            for (Test test: tests)
-                testButtons.add(test.getTestName());
-
-            ArrayList<String> callbacks = new ArrayList<>();
-
-            for (String name: testButtons)
-                callbacks.add("delete_test_" + name);
-
-            sendMessage("Выберете тест для удаления.", chatId, testButtons, callbacks, null);
-        } else if (msg.startsWith("/startquiz")) {
+        else if (msg.startsWith("/startquiz")) {
             if (user.getCurrentStartQuizClassMessageId() != null)
                 deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
 
