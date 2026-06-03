@@ -7,7 +7,10 @@ import org.example.classes.User;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -822,6 +825,17 @@ public class TelegramBot extends TelegramLongPollingBot {
     public String index(){
         return "Hello, sufferings!";
     }
+    @Configuration
+    public class CorsConfig implements WebMvcConfigurer {
+        @Override
+        public void addCorsMappings(CorsRegistry registry) {
+            registry.addMapping("/**")
+                    .allowedOrigins("*")
+                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                    .allowedHeaders("*");
+        }
+    }
+
     @CrossOrigin(origins = "*")
     @PostMapping("/api/messages")
     public void addClassFromWeb(@RequestBody org.example.spring.Message req) throws IOException {
