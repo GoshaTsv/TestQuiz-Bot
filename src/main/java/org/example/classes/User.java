@@ -24,7 +24,9 @@ public class User {
     private int correctAnswers;
     private LinkedHashMap<String, Boolean> userAnswers;
     private StudentClass currentChangingClass;
+    private Test currentChangingTest;
     private Integer currentMyClassesMessageId;
+    private Integer currentMyTestsMessageId;
 
     public StudentClass getCurrentChangingClass() {
         return currentChangingClass;
@@ -86,6 +88,14 @@ public class User {
         this.currentMyClassesMessageId = currentMyClassesMessageId;
     }
 
+    public void setCurrentMyTestsMessageId(Integer currentMyTestsMessageId) {
+        this.currentMyTestsMessageId = currentMyTestsMessageId;
+    }
+
+    public void setCurrentChangingTest(Test currentChangingTest) {
+        this.currentChangingTest = currentChangingTest;
+    }
+
     public User(long chatId, String state, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
         this.chatId = chatId;
         this.state = state;
@@ -140,6 +150,14 @@ public class User {
 
     public Integer getCurrentMyClassesMessageId() {
         return currentMyClassesMessageId;
+    }
+
+    public Integer getCurrentMyTestsMessageId() {
+        return currentMyTestsMessageId;
+    }
+
+    public Test getCurrentChangingTest() {
+        return currentChangingTest;
     }
 
     @Override
