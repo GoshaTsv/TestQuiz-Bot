@@ -839,6 +839,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     @CrossOrigin(origins = "*")
     @PostMapping("/api/messages")
     public void addClassFromWeb(@RequestBody org.example.spring.Message req) throws IOException {
+        System.out.println("Got a message: " + req.toString());
         String request = req.getRequest();
         long chatId = Long.parseLong(req.getUserId());
         String jsonData = req.getContent();
