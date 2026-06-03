@@ -743,6 +743,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
         }
         else if (data.startsWith("start_quiz_test")) {
+            if (user.getCurrentStartQuizClassMessageId() != null)
+                deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
+
             String testId = data.replaceAll("start_quiz_test_", "");
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
