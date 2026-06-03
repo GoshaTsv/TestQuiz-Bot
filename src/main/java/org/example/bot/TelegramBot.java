@@ -493,6 +493,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
                 return;
             }
+
+            if (user.getCurrentStartQuizClassMessageId() != null)
+                deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
+
+            if (user.getCurrentMyClassesMessageId() != null)
+                deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
+
+            if (user.getCurrentStartQuizTestMessageId() != null)
+                deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
+
+            if (user.getCurrentMyTestsMessageId() != null)
+                deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
+
             sendMessage("Тест успешно добавлен!", chatId);
         } catch (IOException e) {
             sendMessage("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", chatId);
@@ -617,12 +630,20 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println("Viewing classes");
             String classId = data.replaceAll("view_classes_", "");
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
-            assert classes != null;
+            if (classes == null) {
+                sendMessage("Не удалось получить классы пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
             StudentClass chosenClass = classes.get(Integer.parseInt(classId));
             StringBuilder classString = new StringBuilder();
             classString.append(String.format("Название класса: \"%s\"\nУченики: \n", chosenClass.getName()));
             ArrayList<String> userUsernames = DBManager.getUsernamesByIds(chosenClass.getStudents());
-            assert userUsernames != null;
+            if (userUsernames == null) {
+                sendMessage("Не удалось получить пользователей класса, попробуйте ещё раз...", chatId);
+                return;
+            }
+
             for (String username: userUsernames)
                 classString.append("- @").append(username).append("\n");
 
@@ -650,7 +671,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             String testId = data.replaceAll("view_tests_", "");
 
             ArrayList<Test> tests = DBManager.getTests(chatId);
-            assert tests != null;
+            if (tests == null) {
+                sendMessage("Не удалось получить тесты пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
             Test chosenTest = tests.get(Integer.parseInt(testId));
 
             ArrayList<String> options = new ArrayList<>();
@@ -669,6 +694,74 @@ public class TelegramBot extends TelegramLongPollingBot {
             user.setCurrentChangingTest(chosenTest);
             if (!saveUser(user))
                 sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+        }
+        else if (data.startsWith("start_quiz_class")) {
+            if (user.getCurrentStartQuizTestMessageId() != null)
+                deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
+
+            String classId = data.replaceAll("start_quiz_class_", "");
+            ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
+            if (classes == null) {
+                sendMessage("Не удалось получить классы пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
+            StudentClass chosenClass = classes.get(Integer.parseInt(classId));
+
+            user.setCurrentClass(chosenClass);
+            if (!saveUser(user)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
+            ArrayList<Test> tests = DBManager.getTests(chatId);
+
+            if (tests == null) {
+                sendMessage("Не удалось получить тесты пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
+            ArrayList<String> testsStrings = new ArrayList<>();
+            for (Test test: tests)
+                testsStrings.add(test.getTestName());
+
+            ArrayList<String> callbacks = new ArrayList<>();
+            for (int i = 0; i < tests.size(); i++)
+                callbacks.add("start_quiz_test_" + i);
+
+            Integer messageId = sendMessage("Выберете тест для начала квиза.", chatId, testsStrings, callbacks, user.getCurrentMyClassesMessageId());
+            if (messageId == null) {
+                sendMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId);
+                return;
+            }
+
+            if (messageId == -1)
+                return;
+
+            user.setCurrentStartQuizTestMessageId(messageId);
+            if (!saveUser(user))
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+        }
+        else if (data.startsWith("start_quiz_test")) {
+            String testId = data.replaceAll("start_quiz_test_", "");
+            ArrayList<Test> tests = DBManager.getTests(chatId);
+            if (tests == null) {
+                sendMessage("Не удалось получить тесты пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
+            Test chosenTest = tests.get(Integer.parseInt(testId));
+
+            sendMessage("Создание квиза...", chatId);
+
+            Thread quizThread = new Thread(() -> {
+                synchronized (this) {
+                    sendMessage("Квиз успешно создан!", chatId);
+                    Quiz quiz = new Quiz(chatId, user.getCurrentClass(), chosenTest);
+                    quiz.startQuiz(this, users, chatId);
+                }
+            });
+            quizThread.start();
         }
     }
 
@@ -794,6 +887,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             sendMessage("Выберете тест для удаления.", chatId, testButtons, callbacks, null);
         } else if (msg.startsWith("/startquiz")) {
+            if (user.getCurrentStartQuizClassMessageId() != null)
+                deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
+
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
             if (classes == null) {
                 sendMessage("Не удалось получить ваши классы, попробуйте ещё...", chatId);
@@ -816,13 +912,28 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            user.setState("quiz_start");
-            if (!saveUser(user)) {
-                sendMessage("Не удалось обновить состояние пользователя.", chatId);
+            ArrayList<String> classesStrings = new ArrayList<>();
+            for (StudentClass studentClass: classes)
+                classesStrings.add(studentClass.getName());
+
+            ArrayList<String> callbacks = new ArrayList<>();
+
+            for (int i = 0; i < classes.size(); i++)
+                callbacks.add("start_quiz_class_" + i);
+
+            Integer messageId = sendMessage("Выберете класс для запуска квиза.", chatId, classesStrings, callbacks, null);
+
+            if (messageId == null) {
+                sendMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId);
                 return;
             }
 
-            sendMessage("Введите название класса для запуска квиза.", chatId);
+            if (messageId == -1)
+                return;
+
+            user.setCurrentStartQuizClassMessageId(messageId);
+            if (!saveUser(user))
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
         }
     }
 
@@ -934,7 +1045,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 .filter(x -> x.getChatId() == chatId)
                 .findFirst()
                 .orElse(null);
-        if (user==null){
+        if (user == null){
             sendMessage("Не получилось найти пользователя...", chatId);
             return;
         }
@@ -972,7 +1083,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                execute(sendDocument);
             } catch (TelegramApiException e) {
                 System.err.println("An exception while sending document: \" " + inputFile.getMediaName() + "\" to " + chatId);
-                e.printStackTrace();
             }
          }
         }
