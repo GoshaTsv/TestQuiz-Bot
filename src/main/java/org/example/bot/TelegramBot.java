@@ -30,7 +30,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -757,8 +756,17 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
 
-        else if (msg.startsWith("/mytests"))
+        else if (msg.startsWith("/mytests")) {
+            if (user.getCurrentMyClassesMessageId() != null)
+                deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
+            user.setCurrentMyClassesMessageId(null);
+            if (!saveUser(user)) {
+                sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
+                return;
+            }
+
             sendTests(chatId, user);
+        }
         else if (msg.startsWith("/deletetest")) { // new command
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
