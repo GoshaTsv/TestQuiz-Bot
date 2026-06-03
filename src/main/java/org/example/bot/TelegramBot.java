@@ -8,6 +8,7 @@ import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -34,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static org.example.classes.User.getCorrectAnswerForQuestion;
-@RestController
+@Component
 public class TelegramBot extends TelegramLongPollingBot {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
@@ -836,9 +837,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    @CrossOrigin(origins = "*")
-    @PostMapping("/api/messages")
-    public void addClassFromWeb(@RequestBody org.example.spring.Message req) throws IOException {
+   public void handleQuizFromServer(org.example.spring.Message req) throws IOException {
+
         System.out.println("Got a message: " + req.toString());
         String request = req.getRequest();
         long chatId = Long.parseLong(req.getUserId());
