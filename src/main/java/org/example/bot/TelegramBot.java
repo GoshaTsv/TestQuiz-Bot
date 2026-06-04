@@ -853,7 +853,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
-        else if(data.startsWith("changingAutoDeletion")){
+        else if(data.startsWith("autoDelete")){
             switch(data){
                 case "autoDeleteOn" -> user.setAutoDeleting("autoDeleteOn");
                 case "autoDeleteUser" -> user.setAutoDeleting("autoDeleteUser");
