@@ -472,9 +472,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                 WebAppInfo webAppInfo = new WebAppInfo();
                 webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
                 button.setWebApp(webAppInfo);
+                User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().get();
+                webReqs.add(new WebRequest(user.getCurrentChangingTest(), new ButtonDTO("change_test", chatId)));
+
                 System.out.println(button.getWebApp().toString());
             }
-            button.setCallbackData(callbacks.get(count.get()));
+            else{
+                button.setCallbackData(callbacks.get(count.get()));
+            }
             count.getAndIncrement();
             row.add(button);
             rows.add(row);
@@ -608,10 +613,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             sendTests(chatId, user);
         }
-        else if (data.startsWith("view_test_back"))
+        else if (data.startsWith("view_test_back")){
             sendTests(chatId, user);
-        else if (data.startsWith("change_test")) {
-            webReqs.add(new WebRequest(user.getCurrentChangingTest(), new ButtonDTO("change_test", chatId)));
         } else if (data.startsWith("download_test"))
             sendTextAsDocument(gson.toJson(user.getCurrentChangingTest()), user.getCurrentChangingTest().getTestName() + ".json", chatId);
         else if (data.startsWith("view_classes")) {
