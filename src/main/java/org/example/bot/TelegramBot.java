@@ -467,14 +467,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(x);
-            button.setCallbackData(callbacks.get(count.get()));
-            if (button.getCallbackData().equalsIgnoreCase("change_test")){
+            if (callbacks.get(count.get()).equalsIgnoreCase("change_test")){
                 System.out.println("found change_test");
                 WebAppInfo webAppInfo = new WebAppInfo();
                 webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
                 button.setWebApp(webAppInfo);
                 System.out.println(button.getWebApp().toString());
             }
+            button.setCallbackData(callbacks.get(count.get()));
             count.getAndIncrement();
             row.add(button);
             rows.add(row);
