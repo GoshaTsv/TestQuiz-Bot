@@ -406,7 +406,17 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     public Integer alertMessage(String msg, long chatId, long length, User user) {
-        Integer messageId = sendMessage(msg, chatId);
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(chatId));
+        sendMessage.setText(msg);
+        Integer messageId;
+        try {
+            messageId = execute(sendMessage).getMessageId();
+        }
+        catch (TelegramApiException e){
+            e.printStackTrace();
+            return -255;
+        }
         System.out.println(user.getChatId()==chatId);
         System.out.println(chatId);
         if(user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
