@@ -65,19 +65,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             chatId = update.getCallbackQuery().getFrom().getId();
         }
 
-        messageId = message.getMessageId();
-        if (messageId != null) {
-            new Thread(() -> {
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    System.out.println("An exception in auto delete user's messages: " + e.getMessage());
-                }
-                deleteMessage(messageId, chatId);
-            }).start();
-        }
 
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
+
 
         if (!message.hasText() && !message.hasDocument() && !update.hasCallbackQuery()) {
             alertMessage("Вы можете отправлять только сообщения или файлы.", chatId, 10000, user);
@@ -91,6 +81,18 @@ public class TelegramBot extends TelegramLongPollingBot {
             else
                 alertMessage("Напишите /start для регистрации.", chatId, 20000, user);
             return;
+        }
+        messageId = message.getMessageId();
+        if (messageId != null) {
+            if (user.isAutoDeleting())
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(60000);
+                    } catch (InterruptedException e) {
+                        System.out.println("An exception in auto delete user's messages: " + e.getMessage());
+                    }
+                    deleteMessage(messageId, chatId);
+                }).start();
         }
         if (user.getQuizState() == -1) {
             if (message.hasText()) {
