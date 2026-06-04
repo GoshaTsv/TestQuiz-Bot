@@ -31,13 +31,12 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
-import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 import static org.example.classes.User.getCorrectAnswerForQuestion;
 @Component
@@ -389,19 +388,21 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             Integer messageId = execute(sendDocument).getMessageId();
             execute(sendDocument);
-            DeleteMessage deleteMessage = new DeleteMessage();
-            deleteMessage.setChatId(String.valueOf(chatId));
-            Thread.sleep(60000);
-            deleteMessage.setMessageId(messageId);
-            try {
-                execute(deleteMessage);
-            } catch (TelegramApiException e) {
-                System.out.println("An exception while deleting message: " + e.getMessage());
-            }
+            new Thread(() -> {
+                DeleteMessage deleteMessage = new DeleteMessage();
+                deleteMessage.setChatId(String.valueOf(chatId));
+                deleteMessage.setMessageId(messageId);
+                try {
+                    Thread.sleep(60000);
+                    execute(deleteMessage);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                } catch (TelegramApiException e) {
+                    System.out.println("An exception while deleting message: " + e.getMessage());
+                }
+            }).start();
         } catch (TelegramApiException e) {
             System.out.println("An exception while sending document: " + e.getMessage());
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -436,25 +437,26 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     public Integer sendMessage(String msg, long chatId) {
-        Integer messageId = null;
+        AtomicReference<Integer> messageId = new AtomicReference<>();
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
         if (user == null){
             alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
             return -1;
         }
         if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
-            messageId = alertMessage(msg, chatId, 60000, user);
-            return messageId;
+            new Thread(() -> messageId.set(alertMessage(msg, chatId, 60000, user)));
+
+            return messageId.get();
         }
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
         sendMessage.setText(msg);
         try {
-            messageId = execute(sendMessage).getMessageId();
+            messageId.set(execute(sendMessage).getMessageId());
         } catch (TelegramApiException e) {
             System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
         }
-        return messageId;
+        return messageId.get();
     }
 
     public Integer sendMessage(String msg, long chatId, ArrayList<String> buttons, ArrayList<String> callbacks, Integer editMessageId) {
@@ -474,12 +476,20 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage.setText(msg);
 
             Integer messageId = null;
-            if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
-                messageId = alertMessage(msg, chatId, 60000, user);
-                return messageId;
-            }
             try {
                 messageId = execute(sendMessage).getMessageId();
+                if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
+                    Integer finalMessageId = messageId;
+                    new Thread(() ->{
+                        DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), finalMessageId);
+                        try {
+                            Thread.sleep(60000);
+                            execute(deleteMessage);
+                        } catch (TelegramApiException | InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }).start();
+                }
             } catch (TelegramApiException e) {
                 System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
             }
@@ -495,7 +505,16 @@ public class TelegramBot extends TelegramLongPollingBot {
             try {
                 execute(editMessage);
                 if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
-                    alertMessage(msg, chatId, 60000, user);
+                    Integer finalMessageId = editMessageId;
+                    new Thread(() ->{
+                        DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), finalMessageId);
+                        try {
+                            Thread.sleep(60000);
+                            execute(deleteMessage);
+                        } catch (TelegramApiException | InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }).start();
                 }
             } catch (TelegramApiException e) {
                 System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
