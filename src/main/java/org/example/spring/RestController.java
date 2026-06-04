@@ -1,6 +1,7 @@
 package org.example.spring;
 
 import org.example.bot.TelegramBot;
+import org.example.classes.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
@@ -35,8 +36,9 @@ public class RestController {
         telegramBot.handleQuizFromServer(req);
     }
     @GetMapping("/api/importquiz")
-    public ResponseEntity<WebRequest> importClassToWeb(){
-        WebRequest presses = telegramBot.getLastWebReq();
+    public ResponseEntity<WebRequest> importClassToWeb(@RequestParam("chat_id") long chatId){
+        User neededUser = telegramBot.getUsers().stream().filter(x -> x.getChatId() == chatId).findFirst().get();
+        WebRequest presses = neededUser.getLastWebReqFromUser(neededUser);
         return ResponseEntity.ok(presses);
     }
 

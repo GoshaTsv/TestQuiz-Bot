@@ -44,8 +44,11 @@ import static org.example.classes.User.getCorrectAnswerForQuestion;
 public class TelegramBot extends TelegramLongPollingBot {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
-    private WebRequest lastWebReq = new WebRequest();
     private ArrayList<User> users = new ArrayList<>();
+
+    public ArrayList<User> getUsers() {
+        return users;
+    }
 
     @Override
     public String getBotUsername() {
@@ -473,8 +476,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
                 button.setWebApp(webAppInfo);
                 User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().get();
-                lastWebReq = new WebRequest(user.getCurrentChangingTest(), new ButtonDTO("change_test", chatId));
-                System.out.println(lastWebReq);
+                user.setLastWebReq(new WebRequest(user.getCurrentChangingTest(), new ButtonDTO("change_test", chatId)));
                 System.out.println(button.getWebApp().toString());
             }
             else{
@@ -1093,8 +1095,5 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
-    }
-    public WebRequest getLastWebReq() {
-        return lastWebReq;
     }
 }
