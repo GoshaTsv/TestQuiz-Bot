@@ -39,6 +39,7 @@ public class RestController {
     public ResponseEntity<WebRequest> importClassToWeb(@RequestParam("chat_id") long chatId){
         User neededUser = telegramBot.getUsers().stream().filter(x -> x.getChatId() == chatId).findFirst().get();
         WebRequest presses = neededUser.getLastWebReqFromUser(neededUser);
+        neededUser.setLastWebReq(null);
         return ResponseEntity.ok(presses);
     }
 
