@@ -385,6 +385,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public void alertMessage(String msg, long chatId, long length, User user) {
         Integer messageId = sendMessage(msg, chatId);
+        System.out.println(user.getChatId()==chatId);
+        System.out.println(chatId);
         if(user.isAutoDeleting()){
             new Thread(() -> {
                 System.out.println("Alert thread started");
