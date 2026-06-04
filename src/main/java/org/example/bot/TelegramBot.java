@@ -16,6 +16,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
+import org.telegram.telegrambots.meta.api.methods.ForwardMessage;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -366,6 +367,15 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     public void deleteMessage(Integer deleteMessageId, long chatId) {
+        ForwardMessage forward = new ForwardMessage();
+        forward.setChatId(String.valueOf(chatId));
+        forward.setFromChatId(String.valueOf(chatId));
+        forward.setMessageId(deleteMessageId);
+        try {
+            execute(forward);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
         DeleteMessage deleteMessage = new DeleteMessage();
         deleteMessage.setChatId(String.valueOf(chatId));
         deleteMessage.setMessageId(deleteMessageId);
@@ -606,20 +616,50 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (user.getLastMessageId() != null)
+            if (user.getLastMessageId() != null) {
                 deleteMessage(user.getLastMessageId(), chatId);
+                user.setLastMessageId(null);
+                if (!saveUser(user)) {
+                    alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId, 10000, user);
+                    return;
+                }
+            }
 
-            if (user.getCurrentStartQuizClassMessageId() != null)
+            if (user.getCurrentStartQuizClassMessageId() != null) {
                 deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
+                user.setCurrentStartQuizClass(null);
+                if (!saveUser(user)) {
+                    alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId, 10000, user);
+                    return;
+                }
+            }
 
-            if (user.getCurrentMyClassesMessageId() != null)
+            if (user.getCurrentMyClassesMessageId() != null) {
                 deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
+                user.setCurrentMyClassesMessageId(null);
+                if (!saveUser(user)) {
+                    alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId, 10000, user);
+                    return;
+                }
+            }
 
-            if (user.getCurrentStartQuizTestMessageId() != null)
+            if (user.getCurrentStartQuizTestMessageId() != null) {
                 deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
+                user.setCurrentStartQuizTestMessageId(null);
+                if (!saveUser(user)) {
+                    alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId, 10000, user);
+                    return;
+                }
+            }
 
-            if (user.getCurrentMyTestsMessageId() != null)
+            if (user.getCurrentMyTestsMessageId() != null) {
                 deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
+                user.setCurrentMyTestsMessageId(null);
+                if (!saveUser(user)) {
+                    alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId, 10000, user);
+                    return;
+                }
+            }
 
             alertMessage("Тест успешно добавлен!", chatId, 15000, user);
         } catch (IOException e) {
