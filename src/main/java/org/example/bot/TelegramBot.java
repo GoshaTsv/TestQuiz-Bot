@@ -930,8 +930,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
             alertMessage("Поведение автоудаления успешно изменено!", chatId, 15000, user);
-            user.setState("default");
-            if (!saveUser(user)) alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+            sendAutoDeleteSettings(chatId, user);
         }
     }
 
@@ -1087,25 +1086,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                 alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
         }
         else if (msg.startsWith("/setautodelete")) {
-            ArrayList<String> options = new ArrayList<>();
-            options.add("Настроить поведение");
-            options.add("Настроить время");
-            ArrayList<String> callbacks = new ArrayList<>();
-            callbacks.add("changeAutoDelete");
-            callbacks.add("changeAutoDeleteDelay");
-
-            Integer messageId = sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, null);
-            if (messageId == null) {
-                alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
+            if (user.getAutoDeleteSetMessageId() != null)
+                deleteMessage(user.getAutoDeleteSetMessageId(), chatId);
+            user.setAutoDeleteSetMessageId(null);
+            if (!saveUser(user)) {
+                alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                 return;
             }
 
-            if (messageId == -1)
-                return;
-
-            user.setAutoDeleteSetMessageId(messageId);
-            if (!saveUser(user))
-                alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+            sendAutoDeleteSettings(chatId, user);
         }
     }
 
@@ -1158,6 +1147,28 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         sendMessage(classString.toString(), chatId, options, callbacks, user.getCurrentMyClassesMessageId());
+    }
+
+    public void sendAutoDeleteSettings(long chatId, User user) {
+        ArrayList<String> options = new ArrayList<>();
+        options.add("Настроить поведение");
+        options.add("Настроить время");
+        ArrayList<String> callbacks = new ArrayList<>();
+        callbacks.add("changeAutoDelete");
+        callbacks.add("changeAutoDeleteDelay");
+
+        Integer messageId = sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, null);
+        if (messageId == null) {
+            alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
+            return;
+        }
+
+        if (messageId == -1)
+            return;
+
+        user.setAutoDeleteSetMessageId(messageId);
+        if (!saveUser(user))
+            alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
     }
 
     public void sendTests(long chatId, User user) {
