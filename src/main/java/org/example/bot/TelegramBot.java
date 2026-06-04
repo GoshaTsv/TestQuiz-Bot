@@ -385,17 +385,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public void alertMessage(String msg, long chatId, long length, User user) {
         Integer messageId = sendMessage(msg, chatId);
-
-        new Thread(() -> {
-            System.out.println("Alert thread started");
-            try {
-                Thread.sleep(length);
-            } catch (InterruptedException e) {
-                System.out.println("An exception in alert thread: " + e.getMessage());
-            }
-            deleteMessage(messageId, chatId);
-            System.out.println("Deleting alert message");
-        }).start();
+        if(user.isAutoDeleting()){
+            new Thread(() -> {
+                System.out.println("Alert thread started");
+                try {
+                    Thread.sleep(length);
+                } catch (InterruptedException e) {
+                    System.out.println("An exception in alert thread: " + e.getMessage());
+                }
+                deleteMessage(messageId, chatId);
+                System.out.println("Deleting alert message");
+            }).start();
+        }
+        System.out.println("User: " + user.getChatId() + " isn't auto deleting.");
     }
 
     public Integer sendMessage(String msg, long chatId) {
