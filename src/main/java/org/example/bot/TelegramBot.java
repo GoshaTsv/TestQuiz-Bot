@@ -473,6 +473,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 WebAppInfo webAppInfo = new WebAppInfo();
                 webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
                 button.setWebApp(webAppInfo);
+                System.out.println(button.getWebApp().toString());
             }
             count.getAndIncrement();
             row.add(button);
