@@ -8,24 +8,37 @@ import org.example.database.DBManager;
 import java.util.*;
 
 public class User {
+    // user data
     private String state;
     private long chatId;
-    private StudentClass currentStartQuizClass;
-    private String currentNewClassName;
+    private boolean autoDeleting;
+
+    // statistic (max 5 classes, 10 tests)
     private int classCount;
     private int testsCount;
+
+    // quiz vars
     private int quizState;
     private Quiz currentQuiz;
     private String correctAnswer;
     private String prevType;
     private int correctAnswers;
     private LinkedHashMap<String, Boolean> userAnswers;
+
+    // change classes/tests
     private StudentClass currentChangingClass;
     private Test currentChangingTest;
+
+    // callbacks' currents
     private Integer currentMyClassesMessageId;
     private Integer currentMyTestsMessageId;
     private Integer currentStartQuizClassMessageId;
     private Integer currentStartQuizTestMessageId;
+
+    // interim vars for new class (new test) / start quiz
+    private StudentClass currentStartQuizClass;
+    private String currentNewClassName;
+    private Integer lastMessageId;
 
     public StudentClass getCurrentChangingClass() {
         return currentChangingClass;
@@ -107,6 +120,14 @@ public class User {
         this.currentNewClassName = currentNewClassName;
     }
 
+    public void setLastMessageId(Integer lastMessageId) {
+        this.lastMessageId = lastMessageId;
+    }
+
+    public boolean isAutoDeleting() {
+        return autoDeleting;
+    }
+
     public User(long chatId, String state, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
         this.chatId = chatId;
         this.state = state;
@@ -117,6 +138,7 @@ public class User {
         prevType = "";
         correctAnswers = 0;
         userAnswers = new LinkedHashMap<>();
+        this.autoDeleting = true;
     }
 
     public String getState() {
@@ -183,6 +205,14 @@ public class User {
         return currentNewClassName;
     }
 
+    public Integer getLastMessageId() {
+        return lastMessageId;
+    }
+
+    public void setAutoDeleting(boolean autoDeleting) {
+        this.autoDeleting = autoDeleting;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -215,53 +245,68 @@ public class User {
             case "class_name" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.sendMessage("Создание класса отменено.", chatId);
+                        bot.alertMessage("Создание класса отменено.", chatId, 10000, user);
                         user.setState("default");
                         bot.saveUser(user);
                         return;
                     }
-                    bot.sendMessage("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", chatId);
+                    bot.alertMessage("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", chatId, 20000, user);
                     return;
                 }
 
                 if (msg.replaceAll("\\p{Punct}", "").length() < 2) {
-                    bot.sendMessage("Введите корректное имя класса (минимум 2 символа без знаков препинания и пробелов).", chatId);
+                    bot.alertMessage("Введите корректное имя класса (минимум 2 символа без знаков препинания и пробелов).", chatId, 15000, user);
                     return;
                 }
 
                 int doesClassExit = DBManager.doesClassExit(chatId, msg);
                 if (doesClassExit == 2) {
-                    bot.sendMessage("Произошла ошибка во время проверки имени класса, попробуйте ещё...", chatId);
+                    bot.alertMessage("Произошла ошибка во время проверки имени класса, попробуйте ещё...", chatId, 10000, user);
                     return;
                 }
                 if (doesClassExit == 1) {
-                    bot.sendMessage("У вас уже существует класс с таким именем.", chatId);
+                    bot.alertMessage("У вас уже существует класс с таким именем.", chatId, 10000, user);
                     return;
                 }
 
                 user.setState("class_students");
                 user.setCurrentNewClassName(msg);
                 if (!bot.saveUser(user)) {
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                     return;
                 }
 
-                bot.sendMessage("Перечислите через пробел username'ы учеников без @ (например: ivan victor test).", chatId);
+                if (user.getLastMessageId() != null)
+                    bot.deleteMessage(user.getLastMessageId(), chatId);
+
+                Integer messageId = bot.sendMessage("Перечислите через пробел username'ы учеников без @ (например: ivan victor test).", chatId);
+
+                if (messageId == null) {
+                    bot.alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
+                    return;
+                }
+
+                if (messageId == -1)
+                    return;
+
+                user.setLastMessageId(messageId);
+                if (!bot.saveUser(user))
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
             }
             case "class_students" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.sendMessage("Создания класса отменено.", chatId);
+                        bot.alertMessage("Создания класса отменено.", chatId, 10000, user);
                         user.setState("default");
                         bot.saveUser(user);
                         return;
                     }
-                    bot.sendMessage("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", chatId);
+                    bot.alertMessage("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", chatId, 20000, user);
                     return;
                 }
                 ArrayList<String> usernames = new ArrayList<>(Arrays.asList(msg.split(" ")));
                 if (usernames.size() < 2) {
-                    bot.sendMessage("Класс должен состоять минимум из 2-х учеников.", chatId);
+                    bot.alertMessage("Класс должен состоять минимум из 2-х учеников.", chatId, 15000, user);
                     return;
                 }
 
@@ -272,21 +317,23 @@ public class User {
                 ArrayList<Long> students = DBManager.getIdsByUsernames(usernames);
 
                 if (students == null || students.size() != usernames.size()) {
-                    bot.sendMessage("Не удалось получить учеников, возможно они не зарегистрированы в боте.", chatId);
+                    bot.alertMessage("Не удалось получить учеников, возможно они не зарегистрированы в боте.", chatId, 20000, user);
                     return;
                 }
 
                 if (!DBManager.createClass(user.getCurrentNewClassName(), chatId, students)) {
-                    bot.sendMessage("Не удалось создать класс, попробуйте снова...", chatId);
+                    bot.alertMessage("Не удалось создать класс, попробуйте снова...", chatId, 10000, user);
                     return;
                 }
                 user.setClassCount(user.getClassCount() + 1);
                 user.setCurrentNewClassName(null);
                 if (!bot.saveUser(user)) {
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                     return;
                 }
 
+                if (user.getLastMessageId() != null)
+                    bot.deleteMessage(user.getLastMessageId(), chatId);
                 if (user.getCurrentStartQuizClassMessageId() != null)
                     bot.deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
 
@@ -311,11 +358,10 @@ public class User {
                 * */
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.sendMessage("Вы отменили загрузку теста.", chatId);
+                        bot.alertMessage("Вы отменили загрузку теста.", chatId, 10000, user);
                         user.setState("default");
-                        if (!bot.saveUser(user)) {
-                            bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
-                        }
+                        if (!bot.saveUser(user))
+                            bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                         return;
                     }
                     bot.sendMessage("Вы можете отменить загрузку файла с помощью команды /exit.", chatId);
@@ -327,7 +373,7 @@ public class User {
             case "deleting_student" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.sendMessage("Изменение класса отменено.", chatId);
+                        bot.alertMessage("Изменение класса отменено.", chatId, 10000, user);
                         user.setState("default");
                         bot.saveUser(user);
                         return;
@@ -336,10 +382,10 @@ public class User {
                     return;
                 }
                 StudentClass chosenClass = user.getCurrentChangingClass();
-                ArrayList<String> usernamemaybes = new ArrayList<>();
-                usernamemaybes.add(msg);
-                ArrayList<Long> userId = DBManager.getIdsByUsernames(usernamemaybes);
-                if (userId==null){
+                ArrayList<String> username = new ArrayList<>();
+                username.add(msg);
+                ArrayList<Long> userId = DBManager.getIdsByUsernames(username);
+                if (userId == null){
                     bot.sendMessage("Этого пользователя нету в базе данных.", chatId);
                     return;
                 }
@@ -353,33 +399,33 @@ public class User {
                 DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
                 user.setCurrentChangingClass(null);
                 user.setState("default");
-                if (!bot.saveUser(user)) {
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
-                }
-                bot.sendMessage("Пользователь успешно удалён!", chatId);
+                if (!bot.saveUser(user))
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+
+                bot.alertMessage("Пользователь успешно удалён!", chatId, 10000, user);
                 bot.sendClasses(chatId, user);
             }
             case "adding_student" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.sendMessage("Изменение класса отменено.", chatId);
+                        bot.alertMessage("Изменение класса отменено.", chatId, 10000, user);
                         user.setState("default");
                         bot.saveUser(user);
                         return;
                     }
-                    bot.sendMessage("Вы не можете отправлять команды во время изменения класса (/exit для отмены изменения класса).", chatId);
+                    bot.alertMessage("Вы не можете отправлять команды во время изменения класса (/exit для отмены изменения класса).", chatId, 20000, user);
                     return;
                 }
                 StudentClass chosenClass = user.getCurrentChangingClass();
-                ArrayList<String> usernamemaybes = new ArrayList<>();
-                usernamemaybes.add(msg);
-                ArrayList<Long> userId = DBManager.getIdsByUsernames(usernamemaybes);
+                ArrayList<String> username = new ArrayList<>();
+                username.add(msg);
+                ArrayList<Long> userId = DBManager.getIdsByUsernames(username);
                 if (userId == null){
-                    bot.sendMessage("Этого пользователя нету в базе данных.", chatId);
+                    bot.alertMessage("Этот пользователь не зарегистрировал в боте.", chatId, 15000, user);
                     return;
                 }
                 if (chosenClass.getStudents().contains(userId.getFirst())){
-                    bot.sendMessage("Этого пользователя уже есть в вашем классе!", chatId);
+                    bot.alertMessage("Этого пользователя уже есть в вашем классе!", chatId, 10000, user);
                     return;
                 }
                 ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
@@ -389,9 +435,9 @@ public class User {
                 user.setCurrentChangingClass(null);
                 user.setState("default");
                 if (!bot.saveUser(user)) {
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000);
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                 }
-                bot.sendMessage("Пользователь успешно добавлен!", chatId);
+                bot.alertMessage("Пользователь успешно добавлен!", chatId, 10000, user);
                 bot.sendClasses(chatId, user);
             }
         }
