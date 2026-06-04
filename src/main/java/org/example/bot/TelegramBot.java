@@ -474,7 +474,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 button.setWebApp(webAppInfo);
                 User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().get();
                 webReqs.add(new WebRequest(user.getCurrentChangingTest(), new ButtonDTO("change_test", chatId)));
-
+                webReqs.forEach(System.out::println);
                 System.out.println(button.getWebApp().toString());
             }
             else{

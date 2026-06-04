@@ -34,7 +34,7 @@ public class RestController {
     public void addClassFromWeb(@RequestBody org.example.spring.Message req) throws IOException {
         telegramBot.handleQuizFromServer(req);
     }
-    @PostMapping("/api/importquiz")
+    @GetMapping("/api/importquiz")
     public ResponseEntity<WebRequest> importClassToWeb(){
         List<WebRequest> presses = telegramBot.getRecentButtonPresses();
         presses.forEach(System.out::println);
