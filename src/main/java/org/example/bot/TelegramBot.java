@@ -665,7 +665,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
 
-            alertMessage("Тест успешно добавлен!", chatId, 15000, user);
+            alertMessage("Тест успешно сохранён!", chatId, 15000, user);
         } catch (IOException e) {
             alertMessage("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", chatId, 10000, user);
         }
@@ -1180,6 +1180,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         String request = req.getRequest();
         long chatId = Long.parseLong(req.getUserId());
         String jsonData = req.getContent();
+
         System.out.println("jsonData: " + jsonData);
         User user = users.stream()
                 .filter(x -> x.getChatId() == chatId)
@@ -1191,7 +1192,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         String fileName = "newTest_" + chatId + "_" + chatId + ".json";
         File writtenFile = new File(fileName);
-        String cleanJson = "";
+        String cleanJson;
         try {
             JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
             cleanJson = new GsonBuilder().setPrettyPrinting().create().toJson(jsonObject);
@@ -1224,6 +1225,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } catch (TelegramApiException e) {
                     System.err.println("An exception while sending document: \" " + inputFile.getMediaName() + "\" to " + chatId);
                 }
+            }
+            else if (request.equals("changeTest")) {
+                if (!DBManager.deleteTest(chatId, cleanJson)) {
+                    sendMessage("Не удалось изменить тест, попробуйте ещё раз...", chatId);
+                    return;
+                }
+                createTest(chatId, user, writtenFile.getName());
             }
         }
         finally{
