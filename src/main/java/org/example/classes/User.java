@@ -13,6 +13,15 @@ public class User {
     private String state;
     private long chatId;
     private String autoDeleting;
+    private int autoDeleteLength;
+
+    public int getAutoDeleteLength() {
+        return autoDeleteLength;
+    }
+
+    public void setAutoDeleteLength(int autoDeleteLength) {
+        this.autoDeleteLength = autoDeleteLength;
+    }
 
     // statistic (max 5 classes, 10 tests)
     private int classCount;
@@ -157,7 +166,7 @@ public class User {
         userAnswers = new LinkedHashMap<>();
         this.autoDeleting = "autoDeleteUser";
         lastWebReq = new WebRequest();
-
+        autoDeleteLength = 60;
     }
 
     public String getState() {
@@ -261,6 +270,29 @@ public class User {
     public void processMessageStates(TelegramBot bot, String msg, long chatId, ArrayList<User> users) {
         User user = this;
         switch (user.getState()) {
+            case "changingAutoDelay" ->{
+                if (msg.startsWith("/")) {
+                    if (msg.startsWith("/exit")) {
+                        bot.alertMessage("Изменение отменено.", chatId, 10000, user);
+                        user.setState("default");
+                        bot.saveUser(user);
+                        return;
+                    }
+                    bot.alertMessage("Вы не можете отправлять команды во время изменения проекта (/exit для отмены создания класса).", chatId, 20000, user);
+                    return;
+                }
+                Integer length = Integer.parseInt(msg);
+                if (length>3600){
+                    bot.alertMessage("Пожалуйста, введите меньшее время", chatId, 15000, user);
+                    return;
+                }
+                user.setAutoDeleteLength(length);
+                bot.sendMessage("Время задержки было успешно изменено!", chatId);
+                user.setState("default");
+                if (!bot.saveUser(user)){
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+                }
+            }
             case "class_name" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {

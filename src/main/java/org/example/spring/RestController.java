@@ -37,7 +37,7 @@ public class RestController {
     }
     @GetMapping("/api/importquiz")
     public ResponseEntity<WebRequest> importClassToWeb(@RequestParam("chat_id") long chatId){
-        User neededUser = telegramBot.getUsers().stream().filter(x -> x.getChatId() == chatId).findFirst().get();
+        User neededUser = telegramBot.getUsers().stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
         WebRequest presses = neededUser.getLastWebReqFromUser(neededUser);
         neededUser.setLastWebReq(null);
         return ResponseEntity.ok(presses);
