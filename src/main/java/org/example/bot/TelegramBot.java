@@ -468,7 +468,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(x);
             button.setCallbackData(callbacks.get(count.get()));
-            if (callbacks.get(count.get()).equalsIgnoreCase("change_test")){
+            if (button.getCallbackData().equalsIgnoreCase("change_test")){
                 WebAppInfo webAppInfo = new WebAppInfo();
                 webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
                 button.setWebApp(webAppInfo);
