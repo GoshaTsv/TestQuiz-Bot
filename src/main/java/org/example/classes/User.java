@@ -4,6 +4,7 @@ import org.example.bot.TelegramBot;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
+import org.example.spring.WebRequest;
 
 import java.util.*;
 
@@ -39,6 +40,21 @@ public class User {
     private StudentClass currentStartQuizClass;
     private String currentNewClassName;
     private Integer lastMessageId;
+
+    public WebRequest getLastWebReqFromUser(User user) {
+        return user.getLastWebReq();
+    }
+
+    public WebRequest getLastWebReq() {
+        return lastWebReq;
+    }
+
+    public void setLastWebReq(WebRequest lastWebReq) {
+        this.lastWebReq = lastWebReq;
+    }
+
+    //WebRequest for importing classes into the web app
+    private WebRequest lastWebReq;
 
     public StudentClass getCurrentChangingClass() {
         return currentChangingClass;
@@ -139,6 +155,7 @@ public class User {
         correctAnswers = 0;
         userAnswers = new LinkedHashMap<>();
         this.autoDeleting = true;
+        lastWebReq = new WebRequest();
     }
 
     public String getState() {
