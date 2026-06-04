@@ -6,6 +6,9 @@ public class WebRequest {
     private Test test;
     private ButtonDTO button;
 
+    public WebRequest() {
+    }
+
     public WebRequest(Test test, ButtonDTO button) {
         this.test = test;
         this.button = button;

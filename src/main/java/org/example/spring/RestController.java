@@ -36,7 +36,7 @@ public class RestController {
     }
     @GetMapping("/api/importquiz")
     public ResponseEntity<WebRequest> importClassToWeb(){
-        WebRequest presses = telegramBot.getRecentButtonPresses().getLast();
+        WebRequest presses = telegramBot.getLastWebReq();
         return ResponseEntity.ok(presses);
     }
 
