@@ -1228,6 +1228,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 case "changeTest" -> {
                     String prevContent = req.getPrev_content();
+                    System.out.println("Prev content: " + prevContent);
                     if (!DBManager.deleteTest(chatId, prevContent)) {
                         sendMessage("Не удалось изменить тест, попробуйте ещё раз...", chatId);
                         return;
