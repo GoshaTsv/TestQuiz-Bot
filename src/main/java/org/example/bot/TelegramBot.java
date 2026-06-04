@@ -352,7 +352,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                  - /newtest - создать новый тест (максимум 10 тестов)
                  - /mytests - просмотреть свои тесты
                  - /startquiz - провести тестирование
-                 - /toggledelete - включить, включить только для пользователя или выключить автоудаление сообщений (по умолчанию включено только для пользователя.)
+                 - /setautodelete - настроить автоудаление сообщений
                 """, chatId);
         users.add(new User(chatId, "default", 0, 0, -1, null));
     }
@@ -908,7 +908,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     callbacks.add("autoDeleteOn");
                     callbacks.add("autoDeleteUser");
                     callbacks.add("autoDeleteOff");
-                    sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, null);
+                    sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, user.getAutoDeleteSetMessageId());
                     user.setState("changingAutoDeletion");
                     if (!saveUser(user)) alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                 }
@@ -1086,16 +1086,26 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (!saveUser(user))
                 alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
         }
-        else if (msg.startsWith("/toggledelete")) {
+        else if (msg.startsWith("/setautodelete")) {
             ArrayList<String> options = new ArrayList<>();
             options.add("Настроить поведение");
             options.add("Настроить время");
             ArrayList<String> callbacks = new ArrayList<>();
             callbacks.add("changeAutoDelete");
             callbacks.add("changeAutoDeleteDelay");
-            sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, null);
-            user.setState("changingAutoDeletion");
-            if (!saveUser(user)) alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+
+            Integer messageId = sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, null);
+            if (messageId == null) {
+                alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
+                return;
+            }
+
+            if (messageId == -1)
+                return;
+
+            user.setAutoDeleteSetMessageId(messageId);
+            if (!saveUser(user))
+                alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
         }
     }
 
