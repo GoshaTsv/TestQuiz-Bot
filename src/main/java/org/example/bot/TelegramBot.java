@@ -908,13 +908,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     callbacks.add("autoDeleteUser");
                     callbacks.add("autoDeleteOff");
                     sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, user.getAutoDeleteSetMessageId());
-                    user.setState("changingAutoDeletion");
-                    if (!saveUser(user)) alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                 }
                 case "changeAutoDeleteDelay" ->{
                     sendMessage("Пожалуйста, введите количество секунд, перед тем как сообщение будет удаляться.", chatId);
                     user.setState("changingAutoDelay");
-                    if (!saveUser(user)) alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+                    if (!saveUser(user))
+                        alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                 }
             }
         }
