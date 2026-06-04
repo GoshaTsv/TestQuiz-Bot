@@ -96,7 +96,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteUser") || user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn"))
                 new Thread(() -> {
                     try {
-                        Thread.sleep(user.getAutoDeleteLength()*MILLIS_IN_SECONDS);
+                        Thread.sleep((long) user.getAutoDeleteLength() *MILLIS_IN_SECONDS);
                     } catch (InterruptedException e) {
                         System.out.println("An exception in auto delete user's messages: " + e.getMessage());
                     }
@@ -408,7 +408,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 deleteMessage.setChatId(String.valueOf(chatId));
                 deleteMessage.setMessageId(messageId);
                 try {
-                    Thread.sleep(user.getAutoDeleteLength()*MILLIS_IN_SECONDS);
+                    Thread.sleep((long) user.getAutoDeleteLength() *MILLIS_IN_SECONDS);
                     execute(deleteMessage);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
@@ -459,7 +459,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return -1;
         }
         if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
-            new Thread(() -> messageId.set(alertMessage(msg, chatId, user.getAutoDeleteLength() * MILLIS_IN_SECONDS, user)));
+            new Thread(() -> messageId.set(alertMessage(msg, chatId, (long) user.getAutoDeleteLength() * MILLIS_IN_SECONDS, user)));
 
             return messageId.get();
         }
@@ -481,7 +481,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
         if (user == null){
             alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
-            return -255;
+            return null;
         }
         if (editMessageId == null) {
             System.out.println("Edit message id = null");
@@ -498,7 +498,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     new Thread(() ->{
                         DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), finalMessageId);
                         try {
-                            Thread.sleep(user.getAutoDeleteLength()*MILLIS_IN_SECONDS);
+                            Thread.sleep((long) user.getAutoDeleteLength() * MILLIS_IN_SECONDS);
                             execute(deleteMessage);
                         } catch (TelegramApiException | InterruptedException e) {
                             throw new RuntimeException(e);
@@ -520,11 +520,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             try {
                 execute(editMessage);
                 if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
-                    Integer finalMessageId = editMessageId;
                     new Thread(() ->{
-                        DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), finalMessageId);
+                        DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), editMessageId);
                         try {
-                            Thread.sleep(user.getAutoDeleteLength()*MILLIS_IN_SECONDS);
+                            Thread.sleep((long) user.getAutoDeleteLength() *MILLIS_IN_SECONDS);
                             execute(deleteMessage);
                         } catch (TelegramApiException | InterruptedException e) {
                             throw new RuntimeException(e);
@@ -1157,7 +1156,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         callbacks.add("changeAutoDelete");
         callbacks.add("changeAutoDeleteDelay");
 
-        Integer messageId = sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, null);
+        Integer messageId = sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, user.getAutoDeleteSetMessageId());
         if (messageId == null) {
             alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
             return;
