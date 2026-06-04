@@ -668,7 +668,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             Test chosenTest = tests.get(Integer.parseInt(testId));
-
+            user.setCurrentChangingTest(chosenTest);
+            if (!saveUser(user))
+                alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
             ArrayList<String> options = new ArrayList<>();
             options.add("Изменить тест");
             options.add("Скачать тест");
@@ -683,9 +685,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             sendMessage(String.format("Название теста: \"%s\"", chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyTestsMessageId());
 
-            user.setCurrentChangingTest(chosenTest);
-            if (!saveUser(user))
-                alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+
         }
         else if (data.startsWith("start_quiz_class")) {
             if (user.getCurrentStartQuizTestMessageId() != null)
