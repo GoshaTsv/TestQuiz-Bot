@@ -1154,7 +1154,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         ArrayList<String> callbacks = new ArrayList<>();
         callbacks.add("changeAutoDelete");
         callbacks.add("changeAutoDeleteDelay");
-
+//
         Integer messageId = sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, user.getAutoDeleteSetMessageId());
         if (messageId == null) {
             alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
