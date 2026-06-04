@@ -3,14 +3,13 @@ package org.example.spring;
 import org.example.bot.TelegramBot;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.io.IOException;
+import java.util.List;
 
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
@@ -35,4 +34,10 @@ public class RestController {
     public void addClassFromWeb(@RequestBody org.example.spring.Message req) throws IOException {
         telegramBot.handleQuizFromServer(req);
     }
+    @PostMapping("/api/importquiz")
+    public ResponseEntity<WebRequest> importClassToWeb(){
+        List<WebRequest> presses = telegramBot.getRecentButtonPresses();
+        return ResponseEntity.ok((WebRequest) presses);
+    }
+
 }
