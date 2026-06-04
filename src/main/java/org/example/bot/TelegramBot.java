@@ -558,7 +558,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
                     return;
                 }
-                user.setLastWebReq(new WebRequest(user.getCurrentChangingTest(), gson.toJson(user), new ButtonDTO("change_test", chatId)));
+                user.setLastWebReq(new WebRequest(user.getCurrentChangingTest(), gson.toJson(user.getCurrentChangingTest()), new ButtonDTO("change_test", chatId)));
                 System.out.println(button.getWebApp().toString());
             }
             else{
