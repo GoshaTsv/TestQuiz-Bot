@@ -12,7 +12,7 @@ public class User {
     // user data
     private String state;
     private long chatId;
-    private boolean autoDeleting;
+    private String autoDeleting;
 
     // statistic (max 5 classes, 10 tests)
     private int classCount;
@@ -40,6 +40,8 @@ public class User {
     private StudentClass currentStartQuizClass;
     private String currentNewClassName;
     private Integer lastMessageId;
+    //WebRequest for importing classes into the web app
+    private WebRequest lastWebReq;
 
     public WebRequest getLastWebReqFromUser(User user) {
         return user.getLastWebReq();
@@ -53,8 +55,7 @@ public class User {
         this.lastWebReq = lastWebReq;
     }
 
-    //WebRequest for importing classes into the web app
-    private WebRequest lastWebReq;
+
 
     public StudentClass getCurrentChangingClass() {
         return currentChangingClass;
@@ -140,7 +141,7 @@ public class User {
         this.lastMessageId = lastMessageId;
     }
 
-    public boolean isAutoDeleting() {
+    public String getAutoDeleting() {
         return autoDeleting;
     }
 
@@ -154,8 +155,9 @@ public class User {
         prevType = "";
         correctAnswers = 0;
         userAnswers = new LinkedHashMap<>();
-        this.autoDeleting = true;
+        this.autoDeleting = "autoDeleteUser";
         lastWebReq = new WebRequest();
+
     }
 
     public String getState() {
@@ -226,7 +228,7 @@ public class User {
         return lastMessageId;
     }
 
-    public void setAutoDeleting(boolean autoDeleting) {
+    public void setAutoDeleting(String autoDeleting) {
         this.autoDeleting = autoDeleting;
     }
 
