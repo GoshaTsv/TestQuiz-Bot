@@ -7,6 +7,8 @@ import org.example.classes.User;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
+import org.example.spring.ButtonDTO;
+import org.example.spring.WebRequest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
@@ -29,17 +31,20 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import static org.example.classes.User.getCorrectAnswerForQuestion;
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
+    private final List<WebRequest> webReqs = new ArrayList<>();
     private ArrayList<User> users = new ArrayList<>();
 
     @Override
@@ -421,8 +426,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     public Integer sendMessage(String msg, long chatId, ArrayList<String> buttons, ArrayList<String> callbacks, Integer editMessageId) {
         System.out.println("Buttons: " + buttons);
         System.out.println("Callbacks: " + callbacks);
-
-        InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks);
+        InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
         if (editMessageId == null) {
             System.out.println("Edit message id = null");
             SendMessage sendMessage = new SendMessage();
@@ -455,7 +459,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private InlineKeyboardMarkup getKeyboardMarkup(ArrayList<String> buttons, ArrayList<String> callbacks) {
+    private InlineKeyboardMarkup getKeyboardMarkup(ArrayList<String> buttons, ArrayList<String> callbacks, long chatId) {
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
         AtomicInteger count = new AtomicInteger();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
@@ -464,6 +468,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             InlineKeyboardButton button = new InlineKeyboardButton();
             button.setText(x);
             button.setCallbackData(callbacks.get(count.get()));
+            if (callbacks.get(count.get()).equalsIgnoreCase("change_test")){
+                WebAppInfo webAppInfo = new WebAppInfo();
+                webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
+                button.setWebApp(webAppInfo);
+            }
             count.getAndIncrement();
             row.add(button);
             rows.add(row);
@@ -541,11 +550,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public boolean isNameValid(String name) {
-        return name.replaceAll("\\p{Punct}", "").length() < 2;
-    }
-
-
     private void processCallbackData(String data, User user, Update update, long chatId) {
         try {
             execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
@@ -604,7 +608,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         else if (data.startsWith("view_test_back"))
             sendTests(chatId, user);
-        else if (data.startsWith("download_test"))
+        else if (data.startsWith("change_test")) {
+            webReqs.add(new WebRequest(user.getCurrentChangingTest(), new ButtonDTO("change_test", chatId)));
+        } else if (data.startsWith("download_test"))
             sendTextAsDocument(gson.toJson(user.getCurrentChangingTest()), user.getCurrentChangingTest().getTestName() + ".json", chatId);
         else if (data.startsWith("view_classes")) {
             System.out.println("Viewing classes");
@@ -671,6 +677,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             callbacks.add("delete_test");
 
             sendMessage(String.format("Название теста: \"%s\"", chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyTestsMessageId());
+
             user.setCurrentChangingTest(chosenTest);
             if (!saveUser(user))
                 alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
@@ -1037,7 +1044,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         String fileName = "newTest_" + chatId + "_" + chatId + ".json";
         File writtenFile = new File(fileName);
-        String cleanJson;
+        String cleanJson = "";
         try {
             JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
             cleanJson = new GsonBuilder().setPrettyPrinting().create().toJson(jsonObject);
@@ -1081,5 +1088,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
+    }
+    public List<WebRequest> getRecentButtonPresses() {
+        return webReqs.stream()
+                .limit(10)
+                .collect(Collectors.toList());
     }
 }
