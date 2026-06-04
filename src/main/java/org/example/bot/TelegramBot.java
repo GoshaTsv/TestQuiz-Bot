@@ -469,6 +469,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             button.setText(x);
             button.setCallbackData(callbacks.get(count.get()));
             if (button.getCallbackData().equalsIgnoreCase("change_test")){
+                System.out.println("found change_test");
                 WebAppInfo webAppInfo = new WebAppInfo();
                 webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
                 button.setWebApp(webAppInfo);
