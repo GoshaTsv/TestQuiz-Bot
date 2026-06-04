@@ -385,6 +385,7 @@ public class User {
 
                 if (user.getLastMessageId() != null)
                     bot.deleteMessage(user.getLastMessageId(), chatId);
+
                 if (user.getCurrentStartQuizClassMessageId() != null)
                     bot.deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
 
@@ -468,6 +469,12 @@ public class User {
                     return;
                 }
                 StudentClass chosenClass = user.getCurrentChangingClass();
+                if (chosenClass == null) {
+                    bot.alertMessage("Не удалось получить текущий класс, попробуйте ещё раз...", chatId, 10000, user);
+                    bot.sendClasses(chatId, user);
+                    return;
+                }
+
                 ArrayList<String> username = new ArrayList<>();
                 username.add(msg);
                 ArrayList<Long> userId = DBManager.getIdsByUsernames(username);

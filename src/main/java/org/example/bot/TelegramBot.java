@@ -558,7 +558,15 @@ public class TelegramBot extends TelegramLongPollingBot {
                     alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
                     return;
                 }
-                user.setLastWebReq(new WebRequest(user.getCurrentChangingTest(), gson.toJson(user.getCurrentChangingTest()), new ButtonDTO("change_test", chatId)));
+
+                Test currentTest = user.getCurrentChangingTest();
+                if (currentTest == null) {
+                    alertMessage("Не удалось получить текущий тест, попробуйте ещё раз...", chatId, 10000, user);
+                    sendClasses(chatId, user);
+                    return;
+                }
+
+                user.setLastWebReq(new WebRequest(currentTest, gson.toJson(currentTest), new ButtonDTO("change_test", chatId)));
                 System.out.println(button.getWebApp().toString());
             }
             else{
@@ -679,17 +687,48 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         if (data.startsWith("delete_student")) {
-            System.out.println("Changing class");
+            System.out.println("Deleting student class");
 
             StudentClass chosenClass = user.getCurrentChangingClass();
+            if (chosenClass == null) {
+                alertMessage("Не удалось получить текущий класс, попробуйте ещё раз...", chatId, 10000, user);
+                sendClasses(chatId, user);
+                return;
+            }
+
             if (chosenClass.getStudents().size() <= 2){
                 alertMessage("Вы не можете больше удалять учеников, минимум - 2 ученика.", chatId, 10000, user);
                 return;
             }
-            sendMessage("Пожалуйста, введите имя ученика, которого хотите убрать из класса (без @).", chatId);
-            user.setState("deleting_student");
+
+            ArrayList<String> studentsNames = DBManager.getUsernamesByIds(chosenClass.getStudents());
+            if (studentsNames == null) {
+                alertMessage("Не удалось получить учеников класса, попробуйте ещё раз...", chatId, 10000, user);
+                return;
+            }
+
+            ArrayList<String> callbacks = new ArrayList<>();
+            for (int i = 0; i < chosenClass.getStudents().size(); i++)
+                callbacks.add("real_delete_student_" + i);
+
+            sendMessage("Выберете ученика, которого хотите убрать из класса.", chatId, studentsNames, callbacks, user.getCurrentMyClassesMessageId());
+        }
+        else if (data.startsWith("real_delete_student")) {
+            String deleteStudentId = data.replaceAll("real_delete_student_", "");
+            StudentClass chosenClass = user.getCurrentChangingClass();
+
+            ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
+            newSetOfStudents.remove(newSetOfStudents.get(Integer.parseInt(deleteStudentId)));
+
+            DBManager.deleteClass(chatId, chosenClass.getName());
+            DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
+
+            user.setCurrentChangingClass(null);
             if (!saveUser(user))
-                alertMessage("Не удалось обновить состояние пользователя.", chatId, 10000, user);
+                alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+
+            alertMessage("Пользователь успешно удалён!", chatId, 10000, user);
+            sendClasses(chatId, user);
         }
         else if (data.startsWith("add_student")) {
             sendMessage("Пожалуйста, введите имя ученика, которого хотите добавить в класс (без @).", chatId);
@@ -700,9 +739,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         else if (data.startsWith("view_class_back"))
             sendClasses(chatId, user);
         else if (data.startsWith("delete_class")) {
-            user.setState("default");
+            StudentClass currentClass = user.getCurrentChangingClass();
+            if (currentClass == null) {
+                alertMessage("Не удалось получить текущий класс, попробуйте ещё раз...", chatId, 10000, user);
+                sendClasses(chatId, user);
+                return;
+            }
 
-            if (!DBManager.deleteClass(chatId, user.getCurrentChangingClass().getName())) {
+            if (!DBManager.deleteClass(chatId, currentClass.getName())) {
                 alertMessage("Не удалось удалить класс, попробуйте ещё...", chatId, 10000, user);
                 return;
             }
@@ -715,7 +759,14 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendClasses(chatId, user);
         }
         else if (data.startsWith("delete_test")) {
-            if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, user.getCurrentChangingTest().getTestName()))) {
+            Test currentTest = user.getCurrentChangingTest();
+            if (currentTest == null) {
+                alertMessage("Не удалось получить текущий тест, попробуйте ещё раз...", chatId, 10000, user);
+                sendTests(chatId, user);
+                return;
+            }
+
+            if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
                 alertMessage("Не удалось удалить тест, попробуйте ещё...", chatId, 10000, user);
                 return;
             }
@@ -729,47 +780,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         else if (data.startsWith("view_test_back")){
             sendTests(chatId, user);
-        } else if (data.startsWith("download_test"))
-            sendTextAsDocument(gson.toJson(user.getCurrentChangingTest()), user.getCurrentChangingTest().getTestName() + ".json", chatId);
+        } else if (data.startsWith("download_test")) {
+            Test currentTest = user.getCurrentChangingTest();
+            if (currentTest == null) {
+                alertMessage("Не удалось получить текущий тест, попробуйте ещё раз...", chatId, 10000, user);
+                sendClasses(chatId, user);
+                return;
+            }
+
+            sendTextAsDocument(gson.toJson(currentTest), currentTest.getTestName() + ".json", chatId);
+        }
         else if (data.startsWith("view_classes")) {
             System.out.println("Viewing classes");
             String classId = data.replaceAll("view_classes_", "");
-            ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
-            if (classes == null) {
-                alertMessage("Не удалось получить классы пользователя, попробуйте ещё раз...", chatId, 10000, user);
-                return;
-            }
-
-            StudentClass chosenClass = classes.get(Integer.parseInt(classId));
-            StringBuilder classString = new StringBuilder();
-            classString.append(String.format("Название класса: \"%s\"\nУченики: \n", chosenClass.getName()));
-            ArrayList<String> userUsernames = DBManager.getUsernamesByIds(chosenClass.getStudents());
-            if (userUsernames == null) {
-                alertMessage("Не удалось получить пользователей класса, попробуйте ещё раз...", chatId, 10000, user);
-                return;
-            }
-
-            for (String username: userUsernames)
-                classString.append("- @").append(username).append("\n");
-
-            System.out.println(userUsernames);
-            System.out.println(classString);
-            ArrayList<String> options = new ArrayList<>();
-            options.add("Удалить ученика");
-            options.add("Добавить ученика");
-            options.add("Назад");
-            options.add("Удалить класс");
-
-            ArrayList<String> callbacks = new ArrayList<>();
-            callbacks.add("delete_student");
-            callbacks.add("add_student");
-            callbacks.add("view_class_back");
-            callbacks.add("delete_class");
-
-            sendMessage(classString.toString(), chatId, options, callbacks, user.getCurrentMyClassesMessageId());
-            user.setCurrentChangingClass(chosenClass);
-            if (!saveUser(user))
-                alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+            viewClass(classId, chatId, user);
         }
         else if (data.startsWith("view_tests")) {
             System.out.println("Viewing tests");
@@ -798,8 +822,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             callbacks.add("delete_test");
 
             sendMessage(String.format("Название теста: \"%s\"", chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyTestsMessageId());
-
-
         }
         else if (data.startsWith("start_quiz_class")) {
             if (user.getCurrentStartQuizTestMessageId() != null)
@@ -1086,6 +1108,48 @@ public class TelegramBot extends TelegramLongPollingBot {
         System.out.print("Loaded users: ");
     }
 
+    public void viewClass(String classId, long chatId, User user) {
+        ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
+        if (classes == null) {
+            alertMessage("Не удалось получить классы пользователя, попробуйте ещё раз...", chatId, 10000, user);
+            return;
+        }
+
+        StudentClass chosenClass = classes.get(Integer.parseInt(classId));
+        StringBuilder classString = new StringBuilder();
+        classString.append(String.format("Название класса: \"%s\"\nУченики: \n", chosenClass.getName()));
+        ArrayList<String> userUsernames = DBManager.getUsernamesByIds(chosenClass.getStudents());
+        if (userUsernames == null) {
+            alertMessage("Не удалось получить пользователей класса, попробуйте ещё раз...", chatId, 10000, user);
+            return;
+        }
+
+        for (String username: userUsernames)
+            classString.append("- @").append(username).append("\n");
+
+        System.out.println(userUsernames);
+        System.out.println(classString);
+        ArrayList<String> options = new ArrayList<>();
+        options.add("Удалить ученика");
+        options.add("Добавить ученика");
+        options.add("Назад");
+        options.add("Удалить класс");
+
+        ArrayList<String> callbacks = new ArrayList<>();
+        callbacks.add("delete_student");
+        callbacks.add("add_student");
+        callbacks.add("view_class_back");
+        callbacks.add("delete_class");
+
+        user.setCurrentChangingClass(chosenClass);
+        if (!saveUser(user)) {
+            alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+            return;
+        }
+
+        sendMessage(classString.toString(), chatId, options, callbacks, user.getCurrentMyClassesMessageId());
+    }
+
     public void sendTests(long chatId, User user) {
         ArrayList<Test> tests = DBManager.getTests(chatId);
         if (tests == null) {
@@ -1102,7 +1166,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         ArrayList<String> testsStrings = new ArrayList<>();
-        //append(String.format("Ваши тесты (%d): \n", tests.size()));
         for (Test test : tests)
             testsStrings.add(String.format(" - %s (%d вопросов).\n", test.testName, test.questions.size()));
 
@@ -1110,6 +1173,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         for (int i = 0; i < tests.size(); i++)
             callbacks.add("view_tests_" + i);
+
+        user.setCurrentChangingTest(null);
+        if (!saveUser(user)) {
+            alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+            return;
+        }
 
         Integer messageId = sendMessage(String.format("Ваши тесты (%d): \n", tests.size()), chatId, testsStrings, callbacks, user.getCurrentMyTestsMessageId());
 
@@ -1146,6 +1215,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         for (int i = 0; i < classes.size(); i++)
             callbacks.add("view_classes_" + i);
+
+        user.setCurrentStartQuizClass(null);
+        if (!saveUser(user)) {
+            alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+            return;
+        }
 
         Integer messageId = sendMessage((String.format("Ваши классы (%d): \n", classes.size())), chatId, classesStrings, callbacks, user.getCurrentMyClassesMessageId());
         if (messageId == null) {
