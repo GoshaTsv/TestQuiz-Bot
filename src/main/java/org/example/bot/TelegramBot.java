@@ -92,7 +92,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         messageId = message.getMessageId();
         if (messageId != null) {
-            if (user.isAutoDeleting())
+            if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteUser") || user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn"))
                 new Thread(() -> {
                     try {
                         Thread.sleep(60000);
@@ -351,7 +351,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                  - /newtest - создать новый тест (максимум 10 тестов)
                  - /mytests - просмотреть свои тесты
                  - /startquiz - провести тестирование
-                 - /toggledelete - вкл./выкл. автоудаление сообщений (вкл. по умолчанию)
+                 - /toggledelete - включить, включить только для пользователя или выключить автоудаление сообщений (по умолчанию включено только для пользователя.)
                 """, chatId);
         users.add(new User(chatId, "default", 0, 0, -1, null));
     }
@@ -387,17 +387,29 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             sendDocument.setDocument(inputFile);
 
+            Integer messageId = execute(sendDocument).getMessageId();
             execute(sendDocument);
+            DeleteMessage deleteMessage = new DeleteMessage();
+            deleteMessage.setChatId(String.valueOf(chatId));
+            Thread.sleep(60000);
+            deleteMessage.setMessageId(messageId);
+            try {
+                execute(deleteMessage);
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while deleting message: " + e.getMessage());
+            }
         } catch (TelegramApiException e) {
             System.out.println("An exception while sending document: " + e.getMessage());
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public void alertMessage(String msg, long chatId, long length, User user) {
+    public Integer alertMessage(String msg, long chatId, long length, User user) {
         Integer messageId = sendMessage(msg, chatId);
         System.out.println(user.getChatId()==chatId);
         System.out.println(chatId);
-        if(user.isAutoDeleting()){
+        if(user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
             new Thread(() -> {
                 System.out.println("Alert thread started");
                 try {
@@ -410,14 +422,23 @@ public class TelegramBot extends TelegramLongPollingBot {
             }).start();
         }
         System.out.println("User: " + user.getChatId() + " isn't auto deleting.");
+        return messageId;
     }
 
     public Integer sendMessage(String msg, long chatId) {
+        Integer messageId = null;
+        User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
+        if (user == null){
+            alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
+            return -1;
+        }
+        if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
+            messageId = alertMessage(msg, chatId, 60000, user);
+            return messageId;
+        }
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
         sendMessage.setText(msg);
-
-        Integer messageId = null;
         try {
             messageId = execute(sendMessage).getMessageId();
         } catch (TelegramApiException e) {
@@ -430,6 +451,11 @@ public class TelegramBot extends TelegramLongPollingBot {
         System.out.println("Buttons: " + buttons);
         System.out.println("Callbacks: " + callbacks);
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
+        User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
+        if (user == null){
+            alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
+            return -255;
+        }
         if (editMessageId == null) {
             System.out.println("Edit message id = null");
             SendMessage sendMessage = new SendMessage();
@@ -438,6 +464,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage.setText(msg);
 
             Integer messageId = null;
+            if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
+                messageId = alertMessage(msg, chatId, 60000, user);
+                return messageId;
+            }
             try {
                 messageId = execute(sendMessage).getMessageId();
             } catch (TelegramApiException e) {
@@ -454,12 +484,16 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             try {
                 execute(editMessage);
+                if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
+                    alertMessage(msg, chatId, 60000, user);
+                }
             } catch (TelegramApiException e) {
                 System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
             }
 
             return -1;
         }
+
     }
 
     private InlineKeyboardMarkup getKeyboardMarkup(ArrayList<String> buttons, ArrayList<String> callbacks, long chatId) {
@@ -475,7 +509,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 WebAppInfo webAppInfo = new WebAppInfo();
                 webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
                 button.setWebApp(webAppInfo);
-                User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().get();
+                User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().orElse(null);
+                if (user == null){
+                    alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
+                    return;
+                }
                 user.setLastWebReq(new WebRequest(user.getCurrentChangingTest(), new ButtonDTO("change_test", chatId)));
                 System.out.println(button.getWebApp().toString());
             }
@@ -736,8 +774,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
 
             user.setCurrentStartQuizTestMessageId(messageId);
-            if (!saveUser(user))
-                alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+            if (!saveUser(user)) alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
         }
         else if (data.startsWith("start_quiz_test")) {
             if (user.getCurrentStartQuizTestMessageId() != null)
@@ -763,6 +800,20 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             });
             quizThread.start();
+        }
+        else if(data.startsWith("autoDelete")){
+            switch(data){
+                case "autoDeleteOn" -> user.setAutoDeleting("autoDeleteOn");
+                case "autoDeleteUser" -> user.setAutoDeleting("autoDeleteUser");
+                case "autoDeleteOff" -> user.setAutoDeleting("autoDeleteOff");
+                default -> {
+                    alertMessage("Пожалуйста, нажмите на кнопку.", chatId, 5000, user);
+                    return;
+                }
+            }
+            alertMessage("Поведение автоудаления успешно изменено!", chatId, 15000, user);
+            user.setState("default");
+            if (!saveUser(user)) alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
         }
     }
 
@@ -918,22 +969,17 @@ public class TelegramBot extends TelegramLongPollingBot {
                 alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
         }
         else if (msg.startsWith("/toggledelete")) {
-            if (user.isAutoDeleting()) {
-                user.setAutoDeleting(false);
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
-                    return;
-                }
-                alertMessage("Теперь сообщения не будут автоматически исчезать.", chatId, 10000, user);
-            }
-            else {
-                user.setAutoDeleting(true);
-                if (!saveUser(user)) {
-                    sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId);
-                    return;
-                }
-                alertMessage("Теперь сообщения будут автоматически исчезать.", chatId, 10000, user);
-            }
+            ArrayList<String> options = new ArrayList<>();
+            options.add("Включить везде");
+            options.add("Включить только для сообщений пользователя");
+            options.add("Выключить");
+            ArrayList<String> callbacks = new ArrayList<>();
+            callbacks.add("autoDeleteOn");
+            callbacks.add("autoDeleteUser");
+            callbacks.add("autoDeleteOff");
+            sendMessage("Пожалуйста, выберите способ автоудаления сообщений.", chatId, options, callbacks, null);
+            user.setState("changingAutoDeletion");
+            if (!saveUser(user)) alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
         }
     }
 
@@ -1035,7 +1081,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-   public void handleQuizFromServer(org.example.spring.Message req) throws IOException {
+    public void handleQuizFromServer(org.example.spring.Message req) throws IOException {
         System.out.println("Got a message: " + req.toString());
         String request = req.getRequest();
         long chatId = Long.parseLong(req.getUserId());
@@ -1059,7 +1105,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             cleanJson = jsonData;
         }
 
-       System.out.println("Clean JSON to write: " + cleanJson);
+        System.out.println("Clean JSON to write: " + cleanJson);
         try (FileWriter fileWriter = new FileWriter(writtenFile)) {
             fileWriter.write(cleanJson);
             fileWriter.flush();
@@ -1075,16 +1121,16 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println("JSON сохранен в файл: " + fileName);
             if (request.isEmpty()){
                 createTest(chatId, user, writtenFile.getName());
-        } else if (request.equals("exportJSON")) {
-            InputFile inputFile = new InputFile();
-            inputFile.setMedia(writtenFile);
-            SendDocument sendDocument = new SendDocument(String.valueOf(chatId), inputFile);
-            try {
-               execute(sendDocument);
-            } catch (TelegramApiException e) {
-                System.err.println("An exception while sending document: \" " + inputFile.getMediaName() + "\" to " + chatId);
+            } else if (request.equals("exportJSON")) {
+                InputFile inputFile = new InputFile();
+                inputFile.setMedia(writtenFile);
+                SendDocument sendDocument = new SendDocument(String.valueOf(chatId), inputFile);
+                try {
+                    execute(sendDocument);
+                } catch (TelegramApiException e) {
+                    System.err.println("An exception while sending document: \" " + inputFile.getMediaName() + "\" to " + chatId);
+                }
             }
-         }
         }
         finally{
             if (writtenFile.exists()) {
