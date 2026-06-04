@@ -35,10 +35,10 @@ public class RestController {
         telegramBot.handleQuizFromServer(req);
     }
     @GetMapping("/api/importquiz")
-    public ResponseEntity<WebRequest> importClassToWeb(){
+    public ResponseEntity<List<WebRequest>> importClassToWeb(){
         List<WebRequest> presses = telegramBot.getRecentButtonPresses();
         presses.forEach(System.out::println);
-        return ResponseEntity.ok((WebRequest) presses);
+        return ResponseEntity.ok(presses);
     }
 
 }
