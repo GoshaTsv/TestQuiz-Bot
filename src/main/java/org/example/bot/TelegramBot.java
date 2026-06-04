@@ -1192,17 +1192,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         String fileName = "newTest_" + chatId + "_" + chatId + ".json";
         File writtenFile = new File(fileName);
-        String cleanJson;
-        try {
-            JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
-            cleanJson = new GsonBuilder().setPrettyPrinting().create().toJson(jsonObject);
-        } catch (Exception e) {
-            cleanJson = jsonData;
-        }
+//        String cleanJson;
+//        try {
+//            JsonObject jsonObject = JsonParser.parseString(jsonData).getAsJsonObject();
+//            cleanJson = new GsonBuilder().setPrettyPrinting().create().toJson(jsonObject);
+//        } catch (Exception e) {
+//            cleanJson = jsonData;
+//        }
 
-        System.out.println("Clean JSON to write: " + cleanJson);
+        System.out.println("Clean JSON to write: " + jsonData);
         try (FileWriter fileWriter = new FileWriter(writtenFile)) {
-            fileWriter.write(cleanJson);
+            fileWriter.write(jsonData);
             fileWriter.flush();
             fileWriter.close();
             BufferedReader br = new BufferedReader(new FileReader(writtenFile));
@@ -1214,24 +1214,25 @@ public class TelegramBot extends TelegramLongPollingBot {
             br.close();
             System.out.println("finished reading the file.");
             System.out.println("JSON сохранен в файл: " + fileName);
-            if (request.isEmpty()){
-                createTest(chatId, user, writtenFile.getName());
-            } else if (request.equals("exportJSON")) {
-                InputFile inputFile = new InputFile();
-                inputFile.setMedia(writtenFile);
-                SendDocument sendDocument = new SendDocument(String.valueOf(chatId), inputFile);
-                try {
-                    execute(sendDocument);
-                } catch (TelegramApiException e) {
-                    System.err.println("An exception while sending document: \" " + inputFile.getMediaName() + "\" to " + chatId);
+            switch (request) {
+                case "" -> createTest(chatId, user, writtenFile.getName());
+                case "exportJSON" -> {
+                    InputFile inputFile = new InputFile();
+                    inputFile.setMedia(writtenFile);
+                    SendDocument sendDocument = new SendDocument(String.valueOf(chatId), inputFile);
+                    try {
+                        execute(sendDocument);
+                    } catch (TelegramApiException e) {
+                        System.err.println("An exception while sending document: \" " + inputFile.getMediaName() + "\" to " + chatId);
+                    }
                 }
-            }
-            else if (request.equals("changeTest")) {
-                if (!DBManager.deleteTest(chatId, cleanJson)) {
-                    sendMessage("Не удалось изменить тест, попробуйте ещё раз...", chatId);
-                    return;
+                case "changeTest" -> {
+                    if (!DBManager.deleteTest(chatId, jsonData)) {
+                        sendMessage("Не удалось изменить тест, попробуйте ещё раз...", chatId);
+                        return;
+                    }
+                    createTest(chatId, user, writtenFile.getName());
                 }
-                createTest(chatId, user, writtenFile.getName());
             }
         }
         finally{
