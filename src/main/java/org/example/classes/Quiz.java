@@ -91,7 +91,7 @@ public class Quiz {
                     userCurrent.setPrevType("var");
                     return;
                 } else {
-                    bot.sendMessage("1Вопрос #1: " + question.question, x);
+                    bot.sendMessage("Вопрос #1: " + question.question, x);
                     userCurrent.setPrevType("ans");
                     userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
                 }
