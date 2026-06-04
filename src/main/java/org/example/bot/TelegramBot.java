@@ -558,7 +558,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
                     return;
                 }
-                user.setLastWebReq(new WebRequest(user.getCurrentChangingTest(), new ButtonDTO("change_test", chatId)));
+                user.setLastWebReq(new WebRequest(user.getCurrentChangingTest(), gson.toJson(user), new ButtonDTO("change_test", chatId)));
                 System.out.println(button.getWebApp().toString());
             }
             else{
@@ -1227,7 +1227,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
                 }
                 case "changeTest" -> {
-                    if (!DBManager.deleteTest(chatId, jsonData)) {
+                    String prevContent = req.getPrev_content();
+                    if (!DBManager.deleteTest(chatId, prevContent)) {
                         sendMessage("Не удалось изменить тест, попробуйте ещё раз...", chatId);
                         return;
                     }
