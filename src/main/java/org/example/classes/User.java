@@ -12,8 +12,11 @@ public class User {
     // user data
     private String state;
     private long chatId;
+
+    // auto deleting
     private String autoDeleting;
     private int autoDeleteLength;
+    private Integer autoDeleteSetMessageId;
 
     public int getAutoDeleteLength() {
         return autoDeleteLength;
@@ -241,6 +244,14 @@ public class User {
         this.autoDeleting = autoDeleting;
     }
 
+    public Integer getAutoDeleteSetMessageId() {
+        return autoDeleteSetMessageId;
+    }
+
+    public void setAutoDeleteSetMessageId(Integer autoDeleteSetMessageId) {
+        this.autoDeleteSetMessageId = autoDeleteSetMessageId;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -270,7 +281,7 @@ public class User {
     public void processMessageStates(TelegramBot bot, String msg, long chatId, ArrayList<User> users) {
         User user = this;
         switch (user.getState()) {
-            case "changingAutoDelay" ->{
+            case "changingAutoDelay" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
                         bot.alertMessage("Изменение отменено.", chatId, 10000, user);
@@ -281,17 +292,25 @@ public class User {
                     bot.alertMessage("Вы не можете отправлять команды во время изменения проекта (/exit для отмены создания класса).", chatId, 20000, user);
                     return;
                 }
-                Integer length = Integer.parseInt(msg);
-                if (length>3600){
-                    bot.alertMessage("Пожалуйста, введите меньшее время", chatId, 15000, user);
+                int length = Integer.parseInt(msg);
+                if (length > 3600){
+                    bot.alertMessage("Пожалуйста, введите меньшее время.", chatId, 15000, user);
                     return;
                 }
+
+                if (length < 5){
+                    bot.alertMessage("Пожалуйста, введите большее время.", chatId, 15000, user);
+                    return;
+                }
+
                 user.setAutoDeleteLength(length);
-                bot.sendMessage("Время задержки было успешно изменено!", chatId);
                 user.setState("default");
                 if (!bot.saveUser(user)){
                     bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+                    return;
                 }
+
+                bot.alertMessage("Время задержки было успешно изменено!", chatId, 10000, user);
             }
             case "class_name" -> {
                 if (msg.startsWith("/")) {
@@ -421,41 +440,6 @@ public class User {
                 }
 
                 bot.sendMessage("Пожалуйста, отправьте файл.", chatId);
-            }
-            case "deleting_student" -> {
-                if (msg.startsWith("/")) {
-                    if (msg.startsWith("/exit")) {
-                        bot.alertMessage("Изменение класса отменено.", chatId, 10000, user);
-                        user.setState("default");
-                        bot.saveUser(user);
-                        return;
-                    }
-                    bot.sendMessage("Вы не можете отправлять команды во время изменения класса (/exit для отмены изменения класса).", chatId);
-                    return;
-                }
-                StudentClass chosenClass = user.getCurrentChangingClass();
-                ArrayList<String> username = new ArrayList<>();
-                username.add(msg);
-                ArrayList<Long> userId = DBManager.getIdsByUsernames(username);
-                if (userId == null){
-                    bot.sendMessage("Этого пользователя нету в базе данных.", chatId);
-                    return;
-                }
-                if (!chosenClass.getStudents().contains(userId.getFirst())){
-                    bot.sendMessage("Этого пользователя нету в вашем классе!", chatId);
-                    return;
-                }
-                ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
-                newSetOfStudents.remove(userId.getFirst());
-                DBManager.deleteClass(chatId, chosenClass.getName());
-                DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
-                user.setCurrentChangingClass(null);
-                user.setState("default");
-                if (!bot.saveUser(user))
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
-
-                bot.alertMessage("Пользователь успешно удалён!", chatId, 10000, user);
-                bot.sendClasses(chatId, user);
             }
             case "adding_student" -> {
                 if (msg.startsWith("/")) {
