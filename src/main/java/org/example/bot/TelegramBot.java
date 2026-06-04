@@ -368,11 +368,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public void deleteMessage(Integer deleteMessageId, long chatId) {
         ForwardMessage forward = new ForwardMessage();
-        forward.setChatId(String.valueOf(-100123456));
-        forward.setFromChatId(String.valueOf(-100123456));
+        forward.setChatId(String.valueOf(chatId));
+        forward.setFromChatId(String.valueOf(chatId));
         forward.setMessageId(deleteMessageId);
         try {
-            execute(forward);
+            DeleteMessage deleteForwarded = new DeleteMessage();
+            deleteForwarded.setChatId(String.valueOf(chatId));
+            deleteForwarded.setMessageId(forward.getMessageId());
+            execute(deleteForwarded);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
