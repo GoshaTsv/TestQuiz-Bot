@@ -377,7 +377,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             deleteForwarded.setMessageId(forward.getMessageId());
             execute(deleteForwarded);
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            System.out.println("An exception while deleting message: " + e.getMessage());
+            return;
         }
         DeleteMessage deleteMessage = new DeleteMessage();
         deleteMessage.setChatId(String.valueOf(chatId));
@@ -458,7 +459,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return -1;
         }
         if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
-            new Thread(() -> messageId.set(alertMessage(msg, chatId, user.getAutoDeleteLength()*MILLIS_IN_SECONDS, user)));
+            new Thread(() -> messageId.set(alertMessage(msg, chatId, user.getAutoDeleteLength() * MILLIS_IN_SECONDS, user)));
 
             return messageId.get();
         }
