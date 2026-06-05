@@ -245,6 +245,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             if (user.getQuizState() > quiz.getTest().questions.size()) {
                 System.out.println("got to start of the thread!");
+                if (user.getCurrentQuizMessageId() != null) {
+                    deleteMessage(user.getCurrentQuizMessageId(), chatId);
+
+                    user.setCurrentQuizMessageId(null);
+                    if (!saveUser(user))
+                        sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                }
                 Thread thread = new Thread(() -> {
                     System.out.println("thread launched!");
                     sendMessage("Поздравляем! Вы правильно ответили на " + user.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", chatId);
