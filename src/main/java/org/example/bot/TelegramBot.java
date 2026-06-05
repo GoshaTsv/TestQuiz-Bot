@@ -443,11 +443,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
             return -1;
         }
-        if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
-            new Thread(() -> messageId.set(alertMessage(msg, chatId, (long) user.getAutoDeleteLength() * MILLIS_IN_SECONDS, user)));
 
-            return messageId.get();
-        }
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
         sendMessage.setText(msg);
