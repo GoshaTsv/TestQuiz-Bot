@@ -509,6 +509,18 @@ public class TelegramBot extends TelegramLongPollingBot {
                 execute(editMessage);
             } catch (TelegramApiException e) {
                 System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setChatId(String.valueOf(chatId));
+                sendMessage.setReplyMarkup(keyboard);
+                sendMessage.setText(msg);
+
+                Integer messageId = null;
+                try {
+                    messageId = execute(sendMessage).getMessageId();
+                } catch (TelegramApiException e1) {
+                    System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                }
+                return messageId;
             }
 
             return -1;
