@@ -438,12 +438,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public Integer sendMessage(String msg, long chatId) {
         AtomicReference<Integer> messageId = new AtomicReference<>();
-        User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
-        if (user == null){
-            alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
-            return -1;
-        }
-
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
         sendMessage.setText(msg);
