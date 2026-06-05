@@ -587,7 +587,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (callbacks.get(count.get()).equalsIgnoreCase("change_test")){
                 System.out.println("found change_test");
                 WebAppInfo webAppInfo = new WebAppInfo();
-                webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
+                webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=changeTest");
                 button.setWebApp(webAppInfo);
                 User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().orElse(null);
                 if (user == null){
@@ -1040,7 +1040,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             webAppButton.setText("Создать тест");
 
             WebAppInfo webAppInfo = new WebAppInfo();
-            webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId);
+            webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=newTest");
             webAppButton.setWebApp(webAppInfo);
 
             org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow row =
