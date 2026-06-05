@@ -298,7 +298,7 @@ public class User {
                         bot.saveUser(user);
                         return;
                     }
-                    bot.alertMessage("Вы не можете отправлять команды во время изменения проекта (/exit для отмены создания класса).", chatId, 20000, user);
+                    bot.alertMessage("Вы не можете отправлять команды во время изменения задержки (/exit для отмены).", chatId, 20000, user);
                     return;
                 }
                 int length = Integer.parseInt(msg);

@@ -59,7 +59,7 @@ public class Test {
                 }
 
                 JsonNode questionText = questionNode.get("question");
-                if (questionText == null || !questionText.isTextual()) {
+                if (questionText == null || !questionText.isTextual() || questionText.size() > 3000) {
                     return "Неправильная структура вопросов!";
                 }
 
@@ -69,6 +69,11 @@ public class Test {
                 }
 
                 var fields = answers.fields();
+                for(JsonNode answer : answers){
+                    if (answer.get(0) == null || answer.get(0).size() > 3000){
+                        return "Неправильная структура вариантов ответа в одном из вопросов!";
+                    }
+                }
                 while (fields.hasNext()) {
                     var field = fields.next();
                     if (!field.getValue().isBoolean()) {

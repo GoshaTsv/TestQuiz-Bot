@@ -667,7 +667,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int i = 0; i < chosenClass.getStudents().size(); i++)
                 callbacks.add("real_delete_student_" + i);
 
-            sendMessage("Выберете ученика, которого хотите убрать из класса.", chatId, studentsNames, callbacks, user.getCurrentMyClassesMessageId());
+            sendMessage("Выберите ученика, которого хотите убрать из класса.", chatId, studentsNames, callbacks, user.getCurrentMyClassesMessageId());
         }
         else if (data.startsWith("real_delete_student")) {
             String deleteStudentId = data.replaceAll("real_delete_student_", "");
@@ -687,7 +687,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendClasses(chatId, user);
         }
         else if (data.startsWith("add_student")) {
-            sendMessage("Пожалуйста, введите имя ученика, которого хотите добавить в класс (без @).", chatId);
+            sendMessage("Пожалуйста, введите имя ученика, которого хотите добавить в класс (без @), или введите /exit для отмены.", chatId);
             user.setState("adding_student");
             if (!saveUser(user))
                 alertMessage("Не удалось обновить состояние пользователя.", chatId, 10000, user);
@@ -816,7 +816,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int i = 0; i < tests.size(); i++)
                 callbacks.add("start_quiz_test_" + i);
 
-            Integer messageId = sendMessage("Выберете тест для начала квиза.", chatId, testsStrings, callbacks, user.getCurrentMyClassesMessageId());
+            Integer messageId = sendMessage("Выберите тест для начала квиза.", chatId, testsStrings, callbacks, user.getCurrentMyClassesMessageId());
             if (messageId == null) {
                 alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
                 return;
@@ -869,7 +869,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 case "changeAutoDeleteDelay" ->{
                     System.out.println("changeAutoDeleteDelay");
-                    Integer messageId = sendMessage("Пожалуйста, введите количество секунд, перед тем как сообщение будет удаляться.", chatId);
+                    Integer messageId = sendMessage("Пожалуйста, введите количество секунд, перед тем как сообщение будет удаляться, или /exit для отмены..", chatId);
                     if (messageId == null) {
                         alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
                         return;
@@ -914,7 +914,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            Integer messageId = sendMessage("Введите название нового класса.", chatId);
+            Integer messageId = sendMessage("Введите название нового класса. (/exit для отмены)", chatId);
 
             if (messageId == null) {
                 alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
@@ -1040,7 +1040,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int i = 0; i < classes.size(); i++)
                 callbacks.add("start_quiz_class_" + i);
 
-            Integer classMessageId = sendMessage("Выберете класс для запуска квиза.", chatId, classesStrings, callbacks, null);
+            Integer classMessageId = sendMessage("Выберите класс для запуска квиза.", chatId, classesStrings, callbacks, null);
 
             if (classMessageId == null) {
                 alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
