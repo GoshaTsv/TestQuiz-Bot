@@ -326,7 +326,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         throw new RuntimeException(e);
                     }
 
-                    Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId);
+                    Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId, user.getCurrentQuizMessageId());
                     user.setPrevType("ans");
 
                     if (!saveUser(user)) {
@@ -472,6 +472,47 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
         }
         return messageId.get();
+    }
+
+    public Integer sendMessage(String msg, long chatId, Integer editMessageId) {
+        if (editMessageId == null) {
+            AtomicReference<Integer> messageId = new AtomicReference<>();
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(chatId));
+            sendMessage.setText(msg);
+            try {
+                messageId.set(execute(sendMessage).getMessageId());
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            }
+            return messageId.get();
+        }
+        else {
+            System.out.println("Edit message id: " + editMessageId);
+            EditMessageText editMessage = new EditMessageText();
+            editMessage.setChatId(String.valueOf(chatId));
+            editMessage.setMessageId(editMessageId);
+            editMessage.setText(msg);
+
+            try {
+                execute(editMessage);
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setChatId(String.valueOf(chatId));
+                sendMessage.setText(msg);
+
+                Integer messageId = null;
+                try {
+                    messageId = execute(sendMessage).getMessageId();
+                } catch (TelegramApiException e1) {
+                    System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                }
+                return messageId;
+            }
+
+            return -1;
+        }
     }
 
     public Integer sendMessage(String msg, long chatId, ArrayList<String> buttons, ArrayList<String> callbacks, Integer editMessageId) {
