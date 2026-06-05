@@ -406,7 +406,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    public Integer alertMessage(String msg, long chatId, long length, User user) {
+    public void alertMessage(String msg, long chatId, long length, User user) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
         sendMessage.setText(msg);
@@ -416,7 +416,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         catch (TelegramApiException e){
             System.out.println("An exception in alert: " + e.getMessage());
-            return -1;
+            return;
         }
         System.out.println(user.getChatId()==chatId);
         System.out.println(chatId);
@@ -433,7 +433,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             }).start();
         }
         System.out.println("User: " + user.getChatId() + " isn't auto deleting.");
-        return messageId;
     }
 
     public Integer sendMessage(String msg, long chatId) {
@@ -827,7 +826,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
 
             user.setCurrentStartQuizTestMessageId(messageId);
-            if (!saveUser(user)) alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+            if (!saveUser(user))
+                alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
         }
         else if (data.startsWith("start_quiz_test")) {
             if (user.getCurrentStartQuizTestMessageId() != null)
@@ -869,7 +869,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 case "changeAutoDeleteDelay" ->{
                     System.out.println("changeAutoDeleteDelay");
-                    sendMessage("Пожалуйста, введите количество секунд, перед тем как сообщение будет удаляться.", chatId);
+                    Integer messageId = sendMessage("Пожалуйста, введите количество секунд, перед тем как сообщение будет удаляться.", chatId);
+                    if (messageId == null) {
+                        alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
+                        return;
+                    }
+
+                    if (messageId == -1)
+                        return;
+
+                    user.setCurrentAutoDeleteSetSecondsMessageId(messageId);
                     user.setState("changingAutoDelay");
                     if (!saveUser(user))
                         alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
