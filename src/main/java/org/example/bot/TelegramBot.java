@@ -474,18 +474,6 @@ public class TelegramBot extends TelegramLongPollingBot {
             Integer messageId = null;
             try {
                 messageId = execute(sendMessage).getMessageId();
-                if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
-                    Integer finalMessageId = messageId;
-                    new Thread(() ->{
-                        DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), finalMessageId);
-                        try {
-                            Thread.sleep((long) user.getAutoDeleteLength() * MILLIS_IN_SECONDS);
-                            execute(deleteMessage);
-                        } catch (TelegramApiException | InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }).start();
-                }
             } catch (TelegramApiException e) {
                 System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
             }
@@ -500,17 +488,6 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             try {
                 execute(editMessage);
-                if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
-                    new Thread(() ->{
-                        DeleteMessage deleteMessage = new DeleteMessage(String.valueOf(chatId), editMessageId);
-                        try {
-                            Thread.sleep((long) user.getAutoDeleteLength() *MILLIS_IN_SECONDS);
-                            execute(deleteMessage);
-                        } catch (TelegramApiException | InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }).start();
-                }
             } catch (TelegramApiException e) {
                 System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
             }
