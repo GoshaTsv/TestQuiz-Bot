@@ -110,11 +110,11 @@ public class User {
         this.prevType = prevType;
     }
 
-    public int getQuizState() {
+    public synchronized int getQuizState() {
         return quizState;
     }
 
-    public void setQuizState(int quizState) {
+    public synchronized void setQuizState(int quizState) {
         this.quizState = quizState;
     }
 
