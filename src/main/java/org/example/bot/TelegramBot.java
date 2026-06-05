@@ -811,7 +811,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int i = 0; i < tests.size(); i++)
                 callbacks.add("start_quiz_test_" + i);
 
-            Integer messageId = sendMessage("Выберите тест для начала квиза.", chatId, testsStrings, callbacks, user.getCurrentMyClassesMessageId());
+            Integer messageId = sendMessage("Выберите тест для начала квиза.", chatId, testsStrings, callbacks, user.getCurrentStartQuizTestMessageId());
             if (messageId == null) {
                 alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
                 return;
@@ -1035,7 +1035,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int i = 0; i < classes.size(); i++)
                 callbacks.add("start_quiz_class_" + i);
 
-            Integer classMessageId = sendMessage("Выберите класс для запуска квиза.", chatId, classesStrings, callbacks, null);
+            Integer classMessageId = sendMessage("Выберите класс для запуска квиза.", chatId, classesStrings, callbacks, user.getCurrentStartQuizClassMessageId());
 
             if (classMessageId == null) {
                 alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
