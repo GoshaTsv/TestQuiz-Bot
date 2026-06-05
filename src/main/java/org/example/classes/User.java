@@ -34,7 +34,6 @@ public class User {
     // quiz vars
     private int quizState;
     private Quiz currentQuiz;
-    private String correctAnswer;
     private String prevType;
     private int correctAnswers;
     private LinkedHashMap<String, Boolean> userAnswers;
@@ -109,14 +108,6 @@ public class User {
 
     public void setPrevType(String prevType) {
         this.prevType = prevType;
-    }
-
-    public String getCorrectAnswer() {
-        return correctAnswer;
-    }
-
-    public void setCorrectAnswer(String correctAnswer) {
-        this.correctAnswer = correctAnswer;
     }
 
     public int getQuizState() {
@@ -280,7 +271,6 @@ public class User {
                 ", testsCount=" + testsCount +
                 ", quizState=" + quizState +
                 ", currentQuiz=" + currentQuiz +
-                ", correctAnswer='" + correctAnswer + '\'' +
                 ", prevType='" + prevType + '\'' +
                 ", correctAnswers=" + correctAnswers +
                 ", userAnswers=" + userAnswers +
