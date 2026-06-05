@@ -70,9 +70,11 @@ public class Test {
 
                 var fields = answers.fields();
                 for(JsonNode answer : answers){
-                    if (answer.get(0) == null || answer.get(0).size() > 3000){
-                        return "Неправильная структура вариантов ответа в одном из вопросов!";
+                    if (answer.get(0) == null){
+                        return "Неправильная структура вариантов ответа в одном из вопросов! 1";
                     }
+                    if (answer.get(0).size() > 3000)
+                        return "Неправильная структура вариантов ответа в одном из вопросов! 2";
                 }
                 while (fields.hasNext()) {
                     var field = fields.next();
