@@ -44,10 +44,10 @@ import static org.example.classes.User.getCorrectAnswerForQuestion;
 public class TelegramBot extends TelegramLongPollingBot {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
-    private ArrayList<User> users = new ArrayList<>();
+    private List<User> users = Collections.synchronizedList(new ArrayList<>());
     private final int MILLIS_IN_SECONDS = 1000;
 
-    public ArrayList<User> getUsers() {
+    public List<User> getUsers() {
         return users;
     }
 
@@ -115,7 +115,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                user.processMessageStates(this, msg, chatId, users);
+                user.processMessageStates(this, msg, chatId, (ArrayList<User>) users);
                 processCommands(update, msg, chatId, user);
             }
             if (update.hasCallbackQuery()) {
@@ -929,7 +929,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     alertMessage("Квиз успешно создан!", chatId, 30000, user);
                     deleteMessage(messageId, chatId);
                     Quiz quiz = new Quiz(chatId, user.getCurrentStartQuizClass(), chosenTest);
-                    quiz.startQuiz(this, users, chatId);
+                    quiz.startQuiz(this, (ArrayList<User>) users, chatId);
                 }
             });
             quizThread.start();
@@ -1332,10 +1332,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 .findFirst()
                 .orElse(null);
         if (user == null){
-            alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
+            alertMessage("Не получилось найти пользователя...", chatId, 10000, null);
             return;
         }
-        String fileName = "newTest_" + chatId + "_" + chatId + ".json";
+        String fileName = "newTest_" + chatId + "_" + System.currentTimeMillis() + ".json";
         File writtenFile = new File(fileName);
 //        String cleanJson;
 //        try {
