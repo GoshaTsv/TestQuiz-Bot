@@ -17,6 +17,7 @@ public class User {
     private String autoDeleting;
     private int autoDeleteLength;
     private Integer autoDeleteSetMessageId;
+    private Integer currentAutoDeleteSetSecondsMessageId;
 
     public int getAutoDeleteLength() {
         return autoDeleteLength;
@@ -127,6 +128,14 @@ public class User {
 
     public void setCurrentMyClassesMessageId(Integer currentMyClassesMessageId) {
         this.currentMyClassesMessageId = currentMyClassesMessageId;
+    }
+
+    public Integer getCurrentAutoDeleteSetSecondsMessageId() {
+        return currentAutoDeleteSetSecondsMessageId;
+    }
+
+    public void setCurrentAutoDeleteSetSecondsMessageId(Integer currentAutoDeleteSetSecondsMessageId) {
+        this.currentAutoDeleteSetSecondsMessageId = currentAutoDeleteSetSecondsMessageId;
     }
 
     public void setCurrentMyTestsMessageId(Integer currentMyTestsMessageId) {
@@ -309,6 +318,9 @@ public class User {
                     bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                     return;
                 }
+
+                if (user.getCurrentAutoDeleteSetSecondsMessageId() != null)
+                    bot.deleteMessage(user.getCurrentAutoDeleteSetSecondsMessageId(), chatId);
 
                 bot.alertMessage("Время задержки было успешно изменено!", chatId, 10000, user);
             }
