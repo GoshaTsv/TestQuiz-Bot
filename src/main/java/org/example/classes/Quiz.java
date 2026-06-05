@@ -58,6 +58,10 @@ public class Quiz {
                         bot.sendMessage("Что-то пошло не так. Попробуйте ещё раз...", chatId);
                     }
                 }
+
+                if (userCurrent.getCurrentQuizMessageId() != null)
+                    bot.deleteMessage(userCurrent.getCurrentQuizMessageId(), chatId);
+
                 userCurrent.setQuizState(1);
                 userCurrent.setCurrentQuiz(quiz);
                 try {
@@ -67,17 +71,9 @@ public class Quiz {
                 }
 
                 Question question = quiz.getTest().questions.getFirst();
+                Integer messageId;
                 if (question.answers.size() > 1) {
                     ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
-                    int rightVar = 1;
-                    Boolean[] answers = question.answers.values().toArray(new Boolean[0]);
-
-                    for (int j = 0; j < answers.length; j++) {
-                        if (answers[j]) {
-                            rightVar = j;
-                            break;
-                        }
-                    }
 
                     ArrayList<String> callbacks = new ArrayList<>();
 
@@ -86,15 +82,30 @@ public class Quiz {
 
                     System.out.println("Callbacks: " + callbacks);
 
-                    bot.sendMessage("Вопрос #1: " + question.question, x, variants, callbacks, null);
-                    userCurrent.setCorrectAnswer(String.valueOf(rightVar));
+                    messageId = bot.sendMessage("Вопрос #1: " + question.question, x, variants, callbacks, null);
                     userCurrent.setPrevType("var");
-                    return;
+
                 } else {
-                    bot.sendMessage("Вопрос #1: " + question.question, x);
+                    messageId = bot.sendMessage("Вопрос #1: " + question.question, x);
                     userCurrent.setPrevType("ans");
-                    userCurrent.setCorrectAnswer(question.answers.keySet().toArray(new String[0])[0]);
                 }
+
+                if (!bot.saveUser(userCurrent)) {
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, userCurrent);
+                    return;
+                }
+
+                if (messageId == null) {
+                    bot.alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, userCurrent);
+                    return;
+                }
+
+                if (messageId == -1)
+                    return;
+
+                userCurrent.setCurrentQuizMessageId(messageId);
+                if (!bot.saveUser(userCurrent))
+                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, userCurrent);
 
                 try {
                     Thread.sleep(1000);
