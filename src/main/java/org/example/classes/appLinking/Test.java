@@ -59,7 +59,7 @@ public class Test {
                 }
 
                 JsonNode questionText = questionNode.get("question");
-                if (questionText == null || !questionText.isTextual() || questionText.size() > 3000) {
+                if (questionText == null || !questionText.isTextual() || questionText.asText().length() > 3000) {
                     return "Неправильная структура вопросов!";
                 }
 
@@ -69,18 +69,16 @@ public class Test {
                 }
 
                 var fields = answers.fields();
-                for(JsonNode answer : answers){
-                    if (answer.get(0) == null){
-                        return "Неправильная структура вариантов ответа в одном из вопросов! 1";
-                    }
-                    if (answer.get(0).size() > 3000)
-                        return "Неправильная структура вариантов ответа в одном из вопросов! 2";
-                }
                 while (fields.hasNext()) {
                     var field = fields.next();
-                    if (!field.getValue().isBoolean()) {
+                    String answerKey = field.getKey();
+                    JsonNode answerValue = field.getValue();
+
+                    if (answerKey == null || answerKey.length() > 3000)
+                        return "Неправильная структура вариантов ответа в одном из вопросов! 2";
+
+                    if (!answerValue.isBoolean())
                         return "Неправильная структура ответов!";
-                    }
                 }
             }
         } catch (Exception e) {
