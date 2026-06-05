@@ -38,6 +38,7 @@ public class User {
     private String prevType;
     private int correctAnswers;
     private LinkedHashMap<String, Boolean> userAnswers;
+    private Integer currentQuizMessageId;
 
     // change classes/tests
     private StudentClass currentChangingClass;
@@ -55,6 +56,14 @@ public class User {
     private Integer lastMessageId;
     //WebRequest for importing classes into the web app
     private WebRequest lastWebReq;
+
+    public Integer getCurrentQuizMessageId() {
+        return currentQuizMessageId;
+    }
+
+    public void setCurrentQuizMessageId(Integer currentQuizMessageId) {
+        this.currentQuizMessageId = currentQuizMessageId;
+    }
 
     public WebRequest getLastWebReqFromUser(User user) {
         return user.getLastWebReq();
