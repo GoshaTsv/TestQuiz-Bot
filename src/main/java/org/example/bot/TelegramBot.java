@@ -84,11 +84,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         if (user == null) {
+            User testUser = new User(chatId, "default", 0, 0, -1, null);
             System.out.println("User is null for " + chatId);
             if (message.hasText() && message.getText().startsWith("/start") && !(message.getText().startsWith("/startquiz")))
                 startRegistration(update, chatId);
             else
-                alertMessage("Напишите /start для регистрации.", chatId, 20000, user);
+                alertMessage("Напишите /start для регистрации.", chatId, 20000, testUser);
             return;
         }
         messageId = message.getMessageId();
@@ -418,7 +419,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println("An exception in alert: " + e.getMessage());
             return;
         }
-        System.out.println(user.getChatId()==chatId);
+        System.out.println(user.getChatId() == chatId);
         System.out.println(chatId);
         if(user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
             new Thread(() -> {
@@ -460,7 +461,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
         if (user == null){
-            alertMessage("Не получилось найти пользователя...", chatId, 10000, user);
+            alertMessage("Не получилось найти пользователя...", chatId, 10000, new User(chatId, "default", 0, 0, -1, null));
             return null;
         }
         if (editMessageId == null) {
