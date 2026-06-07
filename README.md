@@ -1,6 +1,6 @@
 About
 -------------------------------------------------
-TestQuiz is an app designed for teachers and students, in which the teachers make their tests and send them to students, and students complete them. This repository contains the telegram bot side of the project, meant for both sides.
+TestQuiz is an app designed for teachers and students, in which the teachers make their tests and send them to students, and students complete them. This repository contains the telegram bot and server side of the project, meant for both sides.
 
 Features
 ----------------------------------------------------------------
