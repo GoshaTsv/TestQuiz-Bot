@@ -76,10 +76,7 @@ public class Quiz {
                 Question question = quiz.getTest().getQuestions().getFirst();
                 String questionType = question.getType();
                 Integer messageId;
-                Integer photoId = bot.sendPhoto(question, x);
-                if (photoId!= -1 && photoId != null){
-                    userCurrent.setCurrentQuizPhotoId(photoId);
-                }
+
                 if (questionType.equalsIgnoreCase("var")) {
                     ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
 
@@ -90,11 +87,11 @@ public class Quiz {
 
                     System.out.println("Callbacks: " + callbacks);
 
-                    messageId = bot.sendMessage("Вопрос #1: " + question.getQuestion(), x, variants, callbacks, null);
+                    messageId = bot.sendMessagePhoto("Вопрос #1: " + question.getQuestion(), x, question.getImage(), variants, callbacks, null);
                     userCurrent.setPrevType("var");
 
                 } else if (questionType.equalsIgnoreCase("ans")){
-                    messageId = bot.sendMessage("Вопрос #1: " + question.getQuestion(), x);
+                    messageId = bot.sendMessagePhoto("Вопрос #1: " + question.getQuestion(), x, question.getImage());
                     userCurrent.setPrevType("ans");
                 }
                 else {
@@ -105,7 +102,7 @@ public class Quiz {
                     for (int j = 0; j < variants.size(); j++)
                         callbacks.add("srv_" + j);
 
-                    messageId = bot.sendMessage("Опрос #1 + " + question.getQuestion(), x, variants, callbacks, null);
+                    messageId = bot.sendMessagePhoto("Опрос #1 + " + question.getQuestion(), x, question.getImage(), variants, callbacks, null);
                 }
 
                 if (!bot.saveUser(userCurrent)) {
