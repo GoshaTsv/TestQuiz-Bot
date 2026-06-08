@@ -157,11 +157,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 userName = update.getCallbackQuery().getFrom().getUserName();
             }
 
-            if (user == null) {
-                alertMessage("Произошла ошибка, попробуйте ещё раз...", chatId, 10000, user);
-                return;
-            }
-
             if (user.getCurrentQuiz() == null) {
                 alertMessage("Произошла ошибка, попробуйте ещё раз...", chatId, 10000, user);
                 return;
@@ -316,8 +311,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     for (int i = 0; i < variants.size(); i++)
                         callbacks.add("ans_" + i);
                     System.out.println(user.getCurrentQuizPhotoId());
-                    Integer photoId = sendPhoto(question, user.getChatId(), user.getCurrentQuizPhotoId());
-                    Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, variants, callbacks, user.getCurrentQuizMessageId());
+                    Integer quizMessageId = sendMessagePhoto("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId());
                     user.setPrevType("var");
 
 
@@ -334,8 +328,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (quizMessageId == -1)
                         return;
 
-                    user.setCurrentQuizPhotoId(photoId);
-                    System.out.println(user.getCurrentQuizPhotoId());
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
                         alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
@@ -345,11 +337,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                     try {
                         Thread.sleep(250);
                     } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                        sendMessage("Не удалось отправить вопрос.", chatId);
                     }
                     System.out.println(user.getCurrentQuizPhotoId());
-                    Integer photoId = sendPhoto(question, user.getChatId(), user.getCurrentQuizPhotoId());
-                    Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, user.getCurrentQuizMessageId());
+                    Integer quizMessageId = sendMessagePhoto("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, question.getImage(), user.getCurrentQuizMessageId());
                     user.setPrevType("ans");
 
                     if (!saveUser(user)) {
@@ -364,8 +355,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     if (quizMessageId == -1)
                         return;
-                    user.setCurrentQuizPhotoId(photoId);
-                    System.out.println(user.getCurrentQuizPhotoId());
+
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
                         alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
