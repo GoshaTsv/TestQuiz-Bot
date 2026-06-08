@@ -79,32 +79,9 @@ public class Quiz {
                 Question question = quiz.getTest().getQuestions().getFirst();
                 String questionType = question.getType();
                 Integer messageId;
-                Image image = question.getImage();
-                if (!(image.getDataURL() == null)){
-                    String[] base64String = image.getDataURL().split(",");
-                    StringBuilder pureBase64 = new StringBuilder();
-                    for(String base64: base64String){
-                        if (base64.equalsIgnoreCase(base64String[0])){
-                            continue;
-                        }
-                        pureBase64.append(base64);
-                    }
-                    String realBase64 = pureBase64.toString();
-                    byte[] imageBytes = Base64.getDecoder().decode(realBase64);
-                    InputFile inputFile = new InputFile(
-                            new ByteArrayInputStream(imageBytes),
-                            "image" + x + "_" + System.currentTimeMillis() + ".png"
-                    );
-                    SendPhoto sendPhotoRequest = SendPhoto.builder()
-                            .chatId(x)
-                            .photo(inputFile)
-                            .build();
-
-                    try {
-                        bot.execute(sendPhotoRequest);
-                    } catch (TelegramApiException e) {
-                        throw new RuntimeException(e);
-                    }
+                Integer photoId = bot.sendPhoto(question, x);
+                if (photoId>0){
+                    userCurrent.setCurrentQuizPhotoId(photoId);
                 }
                 if (questionType.equalsIgnoreCase("var")) {
                     ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
