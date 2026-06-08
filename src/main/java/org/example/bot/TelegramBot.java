@@ -23,10 +23,12 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -317,8 +319,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                         if (!saveUser(user))
                             sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     }
-                    Integer photoId = sendPhoto(question, user.getChatId());
-                    Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, variants, callbacks, user.getCurrentQuizMessageId());
+                    Integer photoId = sendPhoto(question, user.getChatId(), user.getCurrentQuizPhotoId());
+                    Integer quizMessageId = sendMessage("QВопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, variants, callbacks, user.getCurrentQuizMessageId());
                     user.setPrevType("var");
 
 
@@ -354,7 +356,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         if (!saveUser(user))
                             sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     }
-                    Integer photoId = sendPhoto(question, user.getChatId());
+                    Integer photoId = sendPhoto(question, user.getChatId(), user.getCurrentQuizPhotoId());
                     Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, user.getCurrentQuizMessageId());
                     user.setPrevType("ans");
 
@@ -1416,34 +1418,64 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
     }
-    public Integer sendPhoto(Question question, long x){
+    public Integer sendPhoto(Question question, long x, Integer editPhotoMessageId) {
         Image image = question.getImage();
-        if (!(image == null)){
-            String[] base64String = image.getDataURL().split(",");
-            StringBuilder pureBase64 = new StringBuilder();
-            for(String base64: base64String){
-                if (base64.equalsIgnoreCase(base64String[0])){
-                    continue;
-                }
-                pureBase64.append(base64);
-            }
-            String realBase64 = pureBase64.toString();
-            byte[] imageBytes = Base64.getDecoder().decode(realBase64);
-            InputFile inputFile = new InputFile(
-                    new ByteArrayInputStream(imageBytes),
-                    "image" + x + "_" + System.currentTimeMillis() + ".png"
-            );
-            SendPhoto sendPhotoRequest = SendPhoto.builder()
-                    .chatId(x)
-                    .photo(inputFile)
-                    .build();
-            try {
-                return execute(sendPhotoRequest).getMessageId();
-            } catch (TelegramApiException e) {
-                throw new RuntimeException(e);
-            }
+        if (image == null) {
+            return -1;
+        }
 
+        String[] base64String = image.getDataURL().split(",");
+        StringBuilder pureBase64 = new StringBuilder();
+        for(String base64: base64String){
+            if (base64.equalsIgnoreCase(base64String[0])){
+                continue;
+            }
+            pureBase64.append(base64);
+        }
+        String realBase64 = pureBase64.toString();
+        byte[] imageBytes = Base64.getDecoder().decode(realBase64);
+        InputFile inputFile = new InputFile(
+                new ByteArrayInputStream(imageBytes),
+                "image" + x + "_" + System.currentTimeMillis() + ".png"
+        );
+
+        if (editPhotoMessageId != null) {
+            try {
+                EditMessageMedia editMessageMedia = new EditMessageMedia();
+                editMessageMedia.setChatId(String.valueOf(x));
+                editMessageMedia.setMessageId(editPhotoMessageId);
+
+                InputMediaPhoto inputMediaPhoto = new InputMediaPhoto();
+                inputMediaPhoto.setMedia(inputFile.getNewMediaFile(), inputFile.getMediaName());
+
+                editMessageMedia.setMedia(inputMediaPhoto);
+
+                try {
+                    Serializable result = execute(editMessageMedia);
+                    if (result instanceof Message) {
+                        return ((Message) result).getMessageId();
+                    }
+                    System.out.println("Edit photo returned unexpected type: " + result.getClass().getName());
+                } catch (TelegramApiException e) {
+                    System.out.println("Failed to edit photo, sending new one: " + e.getMessage());
+                }
+            } catch (Exception e) {
+                System.out.println("Error preparing edit media: " + e.getMessage());
+            }
+        }
+
+        SendPhoto sendPhotoRequest = SendPhoto.builder()
+                .chatId(x)
+                .photo(inputFile)
+                .build();
+        try {
+            return execute(sendPhotoRequest).getMessageId();
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
     }
-        return -1;
-}
+
+    public Integer sendPhoto(Question question, long x) {
+        return sendPhoto(question, x, null);
+    }
 }
