@@ -1441,11 +1441,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 editMessageMedia.setMedia(inputMediaPhoto);
 
                 try {
-                    Serializable result = execute(editMessageMedia);
-                    if (result instanceof Message) {
-                        return ((Message) result).getMessageId();
-                    }
-                    System.out.println("Edit photo returned unexpected type: " + result.getClass().getName());
+                    execute(editMessageMedia);
+                    return -1;
                 } catch (TelegramApiException e) {
                     System.out.println("Failed to edit photo, sending new one: " + e.getMessage());
                 }
