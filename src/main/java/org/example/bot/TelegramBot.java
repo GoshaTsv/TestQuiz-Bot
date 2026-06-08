@@ -314,6 +314,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     for (int i = 0; i < variants.size(); i++)
                         callbacks.add("ans_" + i);
+                    System.out.println(user.getCurrentQuizPhotoId());
                     Integer photoId = sendPhoto(question, user.getChatId(), user.getCurrentQuizPhotoId());
                     Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, variants, callbacks, user.getCurrentQuizMessageId());
                     user.setPrevType("var");
@@ -334,7 +335,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (photoId!=-1) {
                         user.setCurrentQuizPhotoId(photoId);
                     }
-
+                    System.out.println(user.getCurrentQuizPhotoId());
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
                         alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
@@ -346,6 +347,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
+                    System.out.println(user.getCurrentQuizPhotoId());
                     Integer photoId = sendPhoto(question, user.getChatId(), user.getCurrentQuizPhotoId());
                     Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, user.getCurrentQuizMessageId());
                     user.setPrevType("ans");
@@ -365,6 +367,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (photoId!=-1) {
                         user.setCurrentQuizPhotoId(photoId);
                     }
+                    System.out.println(user.getCurrentQuizPhotoId());
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
                         alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
