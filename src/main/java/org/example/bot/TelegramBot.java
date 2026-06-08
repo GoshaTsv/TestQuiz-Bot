@@ -1411,7 +1411,14 @@ public class TelegramBot extends TelegramLongPollingBot {
     public Integer sendPhoto(Question question, long x, Integer editPhotoMessageId) {
         Image image = question.getImage();
         if (image == null) {
+            if (editPhotoMessageId != null && editPhotoMessageId != -1) {
+                deleteMessage(editPhotoMessageId, x);
+            }
             return -1;
+        }
+
+        if (editPhotoMessageId != null && editPhotoMessageId != -1) {
+            deleteMessage(editPhotoMessageId, x);
         }
 
         String[] base64String = image.getDataURL().split(",");
@@ -1428,28 +1435,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 new ByteArrayInputStream(imageBytes),
                 "image" + x + "_" + System.currentTimeMillis() + ".png"
         );
-
-        if (editPhotoMessageId != null) {
-            try {
-                EditMessageMedia editMessageMedia = new EditMessageMedia();
-                editMessageMedia.setChatId(String.valueOf(x));
-                editMessageMedia.setMessageId(editPhotoMessageId);
-
-                InputMediaPhoto inputMediaPhoto = new InputMediaPhoto();
-                inputMediaPhoto.setMedia(inputFile.getNewMediaFile(), inputFile.getMediaName());
-
-                editMessageMedia.setMedia(inputMediaPhoto);
-
-                try {
-                    execute(editMessageMedia);
-                    return -1;
-                } catch (TelegramApiException e) {
-                    System.out.println("Failed to edit photo, sending new one: " + e.getMessage());
-                }
-            } catch (Exception e) {
-                System.out.println("Error preparing edit media: " + e.getMessage());
-            }
-        }
 
         SendPhoto sendPhotoRequest = SendPhoto.builder()
                 .chatId(x)
