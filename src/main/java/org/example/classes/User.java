@@ -278,7 +278,7 @@ public class User {
     }
 
     public static String getCorrectAnswerForQuestion(Question question) {
-        for (Map.Entry<String, Boolean> entry : question.answers.entrySet()) {
+        for (Map.Entry<String, Boolean> entry : question.getAnswers().entrySet()) {
             if (entry.getValue()) {
                 return entry.getKey();
             }

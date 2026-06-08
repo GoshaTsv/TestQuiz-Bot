@@ -9,13 +9,22 @@ import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Objects;
 
 public class Test {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     @SerializedName("quizName") //added serialized name to match the generated json's field
-    public String testName;
-    public ArrayList<Question> questions;
+    private String testName;
+    private ArrayList<Question> questions;
+
+    public ArrayList<Question> getQuestions() {
+        return questions;
+    }
+
+    public void setQuestions(ArrayList<Question> questions) {
+        this.questions = questions;
+    }
 
     public String toString() {
         return "Quiz{" +
@@ -57,12 +66,14 @@ public class Test {
                 if (!questionNode.isObject()) {
                     return "Неправильная структура вопросов!";
                 }
-
+                JsonNode questionType = questionNode.get("type");
                 JsonNode questionText = questionNode.get("question");
                 if (questionText == null || !questionText.isTextual() || questionText.asText().length() > 3000) {
                     return "Неправильная структура вопросов!";
                 }
-
+                if (!Objects.equals(questionType.asText(), "var") || !Objects.equals(questionType.asText(), "ans") || !Objects.equals(questionType.asText(), "srv")) {
+                    return "Неправильно заданный вид вопроса!";
+                }
                 JsonNode answers = questionNode.get("answers");
                 if (answers == null || !answers.isObject() || answers.isEmpty() || answers.size() > 8) {
                     return "Неправильная структура ответов!";
@@ -92,7 +103,7 @@ public class Test {
         ArrayList<Question> questions = test.questions;
 
         for (Question question : questions) {
-            HashMap<String, Boolean> map = question.answers;
+            HashMap<String, Boolean> map = question.getAnswers();
             if ((!map.containsValue(Boolean.TRUE) && map.size()==1)) {
                 return "Неправильная структура вопросов!";
             }
