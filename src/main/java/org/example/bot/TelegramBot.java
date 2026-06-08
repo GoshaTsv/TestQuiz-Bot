@@ -312,6 +312,12 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     for (int i = 0; i < variants.size(); i++)
                         callbacks.add("ans_" + i);
+                    if (user.getCurrentQuizPhotoId() != null){
+                        deleteMessage(user.getCurrentQuizPhotoId(), chatId);
+                        user.setCurrentQuizPhotoId(null);
+                        if (!saveUser(user))
+                            sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                    }
                     Integer photoId = sendPhoto(question, user.getChatId());
                     Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, variants, callbacks, user.getCurrentQuizMessageId());
                     user.setPrevType("var");
@@ -329,7 +335,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     if (quizMessageId == -1)
                         return;
-                    if (photoId>0) {
+                    if (photoId!=-1) {
                         user.setCurrentQuizPhotoId(photoId);
                     }
 
@@ -343,6 +349,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                         Thread.sleep(250);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
+                    }
+                    if (user.getCurrentQuizPhotoId() != null){
+                        deleteMessage(user.getCurrentQuizPhotoId(), chatId);
+                        user.setCurrentQuizPhotoId(null);
+                        if (!saveUser(user))
+                            sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     }
                     Integer photoId = sendPhoto(question, user.getChatId());
                     Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, user.getCurrentQuizMessageId());
@@ -360,7 +372,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     if (quizMessageId == -1)
                         return;
-                    if (photoId>0) {
+                    if (photoId!=-1) {
                         user.setCurrentQuizPhotoId(photoId);
                     }
                     user.setCurrentQuizMessageId(quizMessageId);
