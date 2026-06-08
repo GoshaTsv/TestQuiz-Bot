@@ -3,9 +3,6 @@ import org.example.bot.TelegramBot;
 import org.example.classes.appLinking.Image;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -80,7 +77,7 @@ public class Quiz {
                 String questionType = question.getType();
                 Integer messageId;
                 Integer photoId = bot.sendPhoto(question, x);
-                if (photoId>0){
+                if (photoId!= -1 && photoId != null){
                     userCurrent.setCurrentQuizPhotoId(photoId);
                 }
                 if (questionType.equalsIgnoreCase("var")) {

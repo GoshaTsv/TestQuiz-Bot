@@ -300,7 +300,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             Question question = quiz.getTest().getQuestions().get(user.getQuizState() - 1);
 
-            if (question.getAnswers().size() > 1) {
+            if (question.getType().equalsIgnoreCase("var")) {
                 new Thread(() -> {
                     ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
 
@@ -332,9 +332,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     if (quizMessageId == -1)
                         return;
-                    if (photoId!=-1) {
-                        user.setCurrentQuizPhotoId(photoId);
-                    }
+                    user.setCurrentQuizPhotoId(photoId);
                     System.out.println(user.getCurrentQuizPhotoId());
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
@@ -364,9 +362,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     if (quizMessageId == -1)
                         return;
-                    if (photoId!=-1) {
-                        user.setCurrentQuizPhotoId(photoId);
-                    }
+                    user.setCurrentQuizPhotoId(photoId);
                     System.out.println(user.getCurrentQuizPhotoId());
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
