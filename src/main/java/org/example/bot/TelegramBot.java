@@ -33,6 +33,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
 
@@ -204,7 +205,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     String selectedAnswer = callbackData.replace("ans_", "");
                     List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
-                    String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion)));
+                    String correctAnswer = String.valueOf(keys.indexOf(getCorrectAnswerForQuestion(currentQuestion)));
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
                     String userAnswer = keys.get(Integer.parseInt(selectedAnswer));
@@ -332,6 +333,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     if (quizMessageId == -1)
                         return;
+
                     user.setCurrentQuizPhotoId(photoId);
                     System.out.println(user.getCurrentQuizPhotoId());
                     user.setCurrentQuizMessageId(quizMessageId);
@@ -445,7 +447,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendDocument.setChatId(chatId);
 
             byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
-            InputFile inputFile = new InputFile(new java.io.ByteArrayInputStream(bytes), fileName);
+            InputFile inputFile = new InputFile(new ByteArrayInputStream(bytes), fileName);
 
             sendDocument.setDocument(inputFile);
             execute(sendDocument);
@@ -498,16 +500,16 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public Integer sendMessage(String msg, long chatId, Integer editMessageId) {
         if (editMessageId == null) {
-            AtomicReference<Integer> messageId = new AtomicReference<>();
+            Integer messageId = null;
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(chatId));
             sendMessage.setText(msg);
             try {
-                messageId.set(execute(sendMessage).getMessageId());
+                messageId = execute(sendMessage).getMessageId();
             } catch (TelegramApiException e) {
                 System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
             }
-            return messageId.get();
+            return messageId;
         }
         else {
             System.out.println("Edit message id: " + editMessageId);
@@ -588,7 +590,107 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             return -1;
         }
+    }
 
+    public Integer sendMessagePhoto(String msg, long chatId, Image image, Integer editPhotoMessageId) {
+        if (image == null) {
+            if (editPhotoMessageId != null && editPhotoMessageId != -1)
+                deleteMessage(editPhotoMessageId, chatId);
+
+            Integer messageId = null;
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(chatId));
+            sendMessage.setText(msg);
+            try {
+                messageId = execute(sendMessage).getMessageId();
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            }
+            return messageId;
+        }
+
+        if (editPhotoMessageId != null && editPhotoMessageId != -1)
+            deleteMessage(editPhotoMessageId, chatId);
+
+        InputFile file = getInputFileFromImage(image, chatId);
+
+        System.out.println("Message id = null");
+        SendPhoto sendPhotoRequest = SendPhoto.builder()
+                .chatId(chatId)
+                .caption(msg)
+                .photo(file)
+                .build();
+
+        try {
+            return execute(sendPhotoRequest).getMessageId();
+        } catch (TelegramApiException e) {
+            sendMessage("Произошла ошибка, попробуйте ещё раз...", chatId);
+            return -1;
+        }
+    }
+
+    public Integer sendMessagePhoto(String msg, long chatId, Image image, ArrayList<String> buttons, ArrayList<String> callbacks, Integer editPhotoMessageId) {
+        System.out.println("Buttons: " + buttons);
+        System.out.println("Callbacks: " + callbacks);
+
+        InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
+        if (image == null) {
+            if (editPhotoMessageId != null && editPhotoMessageId != -1)
+                deleteMessage(editPhotoMessageId, chatId);
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(chatId));
+            sendMessage.setReplyMarkup(keyboard);
+            sendMessage.setText(msg);
+
+            Integer messageId = null;
+            try {
+                messageId = execute(sendMessage).getMessageId();
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            }
+            return messageId;
+        }
+
+        if (editPhotoMessageId != null && editPhotoMessageId != -1)
+            deleteMessage(editPhotoMessageId, chatId);
+
+        InputFile file = getInputFileFromImage(image, chatId);
+
+        SendPhoto sendPhotoRequest = SendPhoto.builder()
+                .chatId(chatId)
+                .caption(msg)
+                .photo(file)
+                .replyMarkup(keyboard)
+                .build();
+        try {
+            return execute(sendPhotoRequest).getMessageId();
+        } catch (TelegramApiException e) {
+            sendMessage("Произошла ошибка, попробуйте ещё раз...", chatId);
+            return -1;
+        }
+    }
+
+    public Integer sendMessagePhoto(String msg, long chatId, Image image) {
+        return sendMessagePhoto(msg, chatId, image, null);
+    }
+
+    public InputFile getInputFileFromImage(Image image, long chatId) {
+        String[] base64String = image.getDataURL().split(",");
+        StringBuilder pureBase64 = new StringBuilder();
+        for(String base64: base64String){
+            if (base64.equalsIgnoreCase(base64String[0])){
+                continue;
+            }
+            pureBase64.append(base64);
+        }
+        String realBase64 = pureBase64.toString();
+        byte[] imageBytes = Base64.getDecoder().decode(realBase64);
+
+        return new InputFile(
+                new ByteArrayInputStream(imageBytes),
+                "image" + chatId + "_" + System.currentTimeMillis() + ".png"
+        );
     }
 
     private InlineKeyboardMarkup getKeyboardMarkup(ArrayList<String> buttons, ArrayList<String> callbacks, long chatId) {
@@ -1058,11 +1160,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=newTest");
             webAppButton.setWebApp(webAppInfo);
 
-            org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow row =
-                    new org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow();
+            KeyboardRow row =
+                    new KeyboardRow();
             row.add(webAppButton);
 
-            keyboard.setKeyboard(java.util.List.of(row));
+            keyboard.setKeyboard(List.of(row));
             sendMessage.setReplyMarkup(keyboard);
 
             Integer messageId = null;
@@ -1406,47 +1508,5 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
         }
-    }
-    public Integer sendPhoto(Question question, long x, Integer editPhotoMessageId) {
-        Image image = question.getImage();
-        if (image == null) {
-            if (editPhotoMessageId != null && editPhotoMessageId != -1) {
-                deleteMessage(editPhotoMessageId, x);
-            }
-            return -1;
-        }
-
-        if (editPhotoMessageId != null && editPhotoMessageId != -1) {
-            deleteMessage(editPhotoMessageId, x);
-        }
-
-        String[] base64String = image.getDataURL().split(",");
-        StringBuilder pureBase64 = new StringBuilder();
-        for(String base64: base64String){
-            if (base64.equalsIgnoreCase(base64String[0])){
-                continue;
-            }
-            pureBase64.append(base64);
-        }
-        String realBase64 = pureBase64.toString();
-        byte[] imageBytes = Base64.getDecoder().decode(realBase64);
-        InputFile inputFile = new InputFile(
-                new ByteArrayInputStream(imageBytes),
-                "image" + x + "_" + System.currentTimeMillis() + ".png"
-        );
-
-        SendPhoto sendPhotoRequest = SendPhoto.builder()
-                .chatId(x)
-                .photo(inputFile)
-                .build();
-        try {
-            return execute(sendPhotoRequest).getMessageId();
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public Integer sendPhoto(Question question, long x) {
-        return sendPhoto(question, x, null);
     }
 }
