@@ -38,6 +38,7 @@ public class User {
     private int correctAnswers;
     private LinkedHashMap<String, Boolean> userAnswers;
     private Integer currentQuizMessageId;
+    private Integer currentQuizPhotoId;
 
     // change classes/tests
     private StudentClass currentChangingClass;
@@ -55,6 +56,14 @@ public class User {
     private Integer lastMessageId;
     //WebRequest for importing classes into the web app
     private WebRequest lastWebReq;
+
+    public Integer getCurrentQuizPhotoId() {
+        return currentQuizPhotoId;
+    }
+
+    public void setCurrentQuizPhotoId(Integer currentQuizPhotoId) {
+        this.currentQuizPhotoId = currentQuizPhotoId;
+    }
 
     public Integer getCurrentQuizMessageId() {
         return currentQuizMessageId;

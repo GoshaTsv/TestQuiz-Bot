@@ -4,6 +4,7 @@ import com.google.gson.*;
 import org.example.classes.Quiz;
 import org.example.classes.StudentClass;
 import org.example.classes.User;
+import org.example.classes.appLinking.Image;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
@@ -20,6 +21,7 @@ import org.telegram.telegrambots.meta.api.methods.ForwardMessage;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
@@ -247,8 +249,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 System.out.println("got to start of the thread!");
                 if (user.getCurrentQuizMessageId() != null) {
                     deleteMessage(user.getCurrentQuizMessageId(), chatId);
-
                     user.setCurrentQuizMessageId(null);
+                    if (!saveUser(user))
+                        sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                }
+                if (user.getCurrentQuizPhotoId() != null){
+                    deleteMessage(user.getCurrentQuizPhotoId(), chatId);
+                    user.setCurrentQuizPhotoId(null);
                     if (!saveUser(user))
                         sendMessage("Не удалось обновить состояние пользователя.", chatId);
                 }
@@ -280,6 +287,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     user.setCurrentQuiz(null);
                     user.setCorrectAnswers(0);
                     user.setUserAnswers(new LinkedHashMap<>());
+                    user.setCurrentQuizPhotoId(null);
 
                     if (!saveUser(user))
                         alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
@@ -304,9 +312,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     for (int i = 0; i < variants.size(); i++)
                         callbacks.add("ans_" + i);
-
+                    Integer photoId = sendPhoto(question, user.getChatId());
                     Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, variants, callbacks, user.getCurrentQuizMessageId());
                     user.setPrevType("var");
+
 
                     if (!saveUser(user)) {
                         alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
@@ -320,6 +329,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     if (quizMessageId == -1)
                         return;
+                    if (photoId>0) {
+                        user.setCurrentQuizPhotoId(photoId);
+                    }
 
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
@@ -332,7 +344,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-
+                    Integer photoId = sendPhoto(question, user.getChatId());
                     Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, user.getCurrentQuizMessageId());
                     user.setPrevType("ans");
 
@@ -348,7 +360,9 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     if (quizMessageId == -1)
                         return;
-
+                    if (photoId>0) {
+                        user.setCurrentQuizPhotoId(photoId);
+                    }
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
                         alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
@@ -1392,4 +1406,34 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
     }
+    public Integer sendPhoto(Question question, long x){
+        Image image = question.getImage();
+        if (!(image.getDataURL() == null)){
+            String[] base64String = image.getDataURL().split(",");
+            StringBuilder pureBase64 = new StringBuilder();
+            for(String base64: base64String){
+                if (base64.equalsIgnoreCase(base64String[0])){
+                    continue;
+                }
+                pureBase64.append(base64);
+            }
+            String realBase64 = pureBase64.toString();
+            byte[] imageBytes = Base64.getDecoder().decode(realBase64);
+            InputFile inputFile = new InputFile(
+                    new ByteArrayInputStream(imageBytes),
+                    "image" + x + "_" + System.currentTimeMillis() + ".png"
+            );
+            SendPhoto sendPhotoRequest = SendPhoto.builder()
+                    .chatId(x)
+                    .photo(inputFile)
+                    .build();
+            try {
+                return execute(sendPhotoRequest).getMessageId();
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
+            }
+
+    }
+        return -1;
+}
 }
