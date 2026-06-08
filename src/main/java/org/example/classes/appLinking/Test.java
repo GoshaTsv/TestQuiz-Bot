@@ -72,7 +72,7 @@ public class Test {
                     return "Неправильная структура вопросов!";
                 }
                 if (!Objects.equals(questionType.asText(), "var") || !Objects.equals(questionType.asText(), "ans") || !Objects.equals(questionType.asText(), "srv")) {
-                    return "Неправильно заданный вид вопроса!";
+                    return "Неправильно заданный вид вопроса!" + questionType.asText();
                 }
                 JsonNode answers = questionNode.get("answers");
                 if (answers == null || !answers.isObject() || answers.isEmpty() || answers.size() > 8) {
