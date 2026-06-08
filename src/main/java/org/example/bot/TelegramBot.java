@@ -23,16 +23,19 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageMedia;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.webapp.WebAppInfo;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -247,15 +250,15 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             if (user.getQuizState() > quiz.getTest().getQuestions().size()) {
                 System.out.println("got to start of the thread!");
-                if (user.getCurrentQuizMessageId() != null) {
-                    deleteMessage(user.getCurrentQuizMessageId(), chatId);
-                    user.setCurrentQuizMessageId(null);
-                    if (!saveUser(user))
-                        sendMessage("Не удалось обновить состояние пользователя.", chatId);
-                }
                 if (user.getCurrentQuizPhotoId() != null){
                     deleteMessage(user.getCurrentQuizPhotoId(), chatId);
                     user.setCurrentQuizPhotoId(null);
+                    if (!saveUser(user))
+                        sendMessage("Не удалось обновить состояние пользователя.", chatId);
+                }
+                if (user.getCurrentQuizMessageId() != null) {
+                    deleteMessage(user.getCurrentQuizMessageId(), chatId);
+                    user.setCurrentQuizMessageId(null);
                     if (!saveUser(user))
                         sendMessage("Не удалось обновить состояние пользователя.", chatId);
                 }
@@ -298,7 +301,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             Question question = quiz.getTest().getQuestions().get(user.getQuizState() - 1);
 
-            if (question.getAnswers().size() > 1) {
+            if (question.getType().equalsIgnoreCase("var")) {
                 new Thread(() -> {
                     ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
 
@@ -312,7 +315,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     for (int i = 0; i < variants.size(); i++)
                         callbacks.add("ans_" + i);
-                    Integer photoId = sendPhoto(question, user.getChatId());
+                    Integer photoId = sendPhoto(question, user.getChatId(), user.getCurrentQuizPhotoId());
                     Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, variants, callbacks, user.getCurrentQuizMessageId());
                     user.setPrevType("var");
 
@@ -337,14 +340,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (!saveUser(user))
                         alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
                 }).start();
-            } else {
+            } else if (question.getType().equalsIgnoreCase("ans")){
                 new Thread(() -> {
                     try {
                         Thread.sleep(250);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    Integer photoId = sendPhoto(question, user.getChatId());
+                    Integer photoId = sendPhoto(question, user.getChatId(), user.getCurrentQuizPhotoId());
                     Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, user.getCurrentQuizMessageId());
                     user.setPrevType("ans");
 
@@ -1406,7 +1409,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
     }
-    public Integer sendPhoto(Question question, long x){
+    public Integer sendPhoto(Question question, long x, Integer editPhotoId){
         Image image = question.getImage();
         if (!(image.getDataURL() == null)){
             String[] base64String = image.getDataURL().split(",");
@@ -1423,17 +1426,36 @@ public class TelegramBot extends TelegramLongPollingBot {
                     new ByteArrayInputStream(imageBytes),
                     "image" + x + "_" + System.currentTimeMillis() + ".png"
             );
-            SendPhoto sendPhotoRequest = SendPhoto.builder()
+
+            if (editPhotoId == null){
+                SendPhoto sendPhotoRequest = SendPhoto.builder()
+                        .chatId(x)
+                        .photo(inputFile)
+                        .build();
+                try {
+                    return execute(sendPhotoRequest).getMessageId();
+                } catch (TelegramApiException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            InputMediaPhoto inputMedia = InputMediaPhoto.builder()
+                    .media(String.valueOf(editPhotoId))
+                    .parseMode("HTML")
+                    .build();
+
+            EditMessageMedia editMessage = EditMessageMedia.builder()
                     .chatId(x)
-                    .photo(inputFile)
+                    .messageId(editPhotoId)
+                    .media(inputMedia)
                     .build();
             try {
-                return execute(sendPhotoRequest).getMessageId();
+                execute(editMessage);
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
 
-    }
+
+        }
         return -1;
 }
 }

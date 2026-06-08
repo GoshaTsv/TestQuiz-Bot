@@ -79,7 +79,7 @@ public class Quiz {
                 Question question = quiz.getTest().getQuestions().getFirst();
                 String questionType = question.getType();
                 Integer messageId;
-                Integer photoId = bot.sendPhoto(question, x);
+                Integer photoId = bot.sendPhoto(question, x, null);
                 if (photoId>0){
                     userCurrent.setCurrentQuizPhotoId(photoId);
                 }
