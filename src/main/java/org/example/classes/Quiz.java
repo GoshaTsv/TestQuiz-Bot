@@ -1,9 +1,15 @@
 package org.example.classes;
 import org.example.bot.TelegramBot;
+import org.example.classes.appLinking.Image;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Base64;
 
 public class Quiz {
     private long teacherId;
@@ -70,10 +76,38 @@ public class Quiz {
                     Thread.currentThread().interrupt();
                 }
 
-                Question question = quiz.getTest().questions.getFirst();
+                Question question = quiz.getTest().getQuestions().getFirst();
+                String questionType = question.getType();
                 Integer messageId;
-                if (question.answers.size() > 1) {
-                    ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
+                Image image = question.getImage();
+                if (!(image.getDataURL() == null)){
+                    String[] base64String = image.getDataURL().split(",");
+                    StringBuilder pureBase64 = new StringBuilder();
+                    for(String base64: base64String){
+                        if (base64.equalsIgnoreCase(base64String[0])){
+                            continue;
+                        }
+                        pureBase64.append(base64);
+                    }
+                    String realBase64 = pureBase64.toString();
+                    byte[] imageBytes = Base64.getDecoder().decode(realBase64);
+                    InputFile inputFile = new InputFile(
+                            new ByteArrayInputStream(imageBytes),
+                            "image" + x + "_" + System.currentTimeMillis() + ".png"
+                    );
+                    SendPhoto sendPhotoRequest = SendPhoto.builder()
+                            .chatId(x)
+                            .photo(inputFile)
+                            .build();
+
+                    try {
+                        bot.execute(sendPhotoRequest);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                if (questionType.equalsIgnoreCase("var")) {
+                    ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
 
                     ArrayList<String> callbacks = new ArrayList<>();
 
@@ -82,12 +116,22 @@ public class Quiz {
 
                     System.out.println("Callbacks: " + callbacks);
 
-                    messageId = bot.sendMessage("Вопрос #1: " + question.question, x, variants, callbacks, null);
+                    messageId = bot.sendMessage("Вопрос #1: " + question.getQuestion(), x, variants, callbacks, null);
                     userCurrent.setPrevType("var");
 
-                } else {
-                    messageId = bot.sendMessage("Вопрос #1: " + question.question, x);
+                } else if (questionType.equalsIgnoreCase("ans")){
+                    messageId = bot.sendMessage("Вопрос #1: " + question.getQuestion(), x);
                     userCurrent.setPrevType("ans");
+                }
+                else {
+                    //place holder for surveys
+                    ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
+                    ArrayList<String> callbacks = new ArrayList<>();
+
+                    for (int j = 0; j < variants.size(); j++)
+                        callbacks.add("srv_" + j);
+
+                    messageId = bot.sendMessage("Опрос #1 + " + question.getQuestion(), x, variants, callbacks, null);
                 }
 
                 if (!bot.saveUser(userCurrent)) {

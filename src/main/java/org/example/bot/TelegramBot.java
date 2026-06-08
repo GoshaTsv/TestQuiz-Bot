@@ -163,7 +163,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             Quiz quiz = user.getCurrentQuiz();
             Test test = quiz.getTest();
-            Question currentQuestion = test.questions.get(user.getQuizState() - 1);
+            Question currentQuestion = test.getQuestions().get(user.getQuizState() - 1);
 
             if (!(update.hasMessage() || update.hasCallbackQuery())) {
                 alertMessage("Пожалуйста, отправьте ответ на вопрос.", chatId, 10000, user);
@@ -199,7 +199,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     answer.setCallbackQueryId(update.getCallbackQuery().getId());
 
                     String selectedAnswer = callbackData.replace("ans_", "");
-                    List<String> keys = new ArrayList<>(quiz.getTest().questions.get(user.getQuizState() - 1).answers.keySet());
+                    List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
                     String correctAnswer = String.valueOf(keys.indexOf(User.getCorrectAnswerForQuestion(currentQuestion)));
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
@@ -243,7 +243,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (messageId != null)
                 deleteMessage(messageId, chatId);
 
-            if (user.getQuizState() > quiz.getTest().questions.size()) {
+            if (user.getQuizState() > quiz.getTest().getQuestions().size()) {
                 System.out.println("got to start of the thread!");
                 if (user.getCurrentQuizMessageId() != null) {
                     deleteMessage(user.getCurrentQuizMessageId(), chatId);
@@ -254,16 +254,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 Thread thread = new Thread(() -> {
                     System.out.println("thread launched!");
-                    sendMessage("Поздравляем! Вы правильно ответили на " + user.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов! Надеемся, вам понравилось!", chatId);
-                    sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().testName + "\" и правильно ответил на " + user.getCorrectAnswers() + " из " + quiz.getTest().questions.size() + " вопросов. \nОтветы ученика:", quiz.getTeacherId());
+                    sendMessage("Поздравляем! Вы правильно ответили на " + user.getCorrectAnswers() + " из " + quiz.getTest().getQuestions().size() + " вопросов! Надеемся, вам понравилось!", chatId);
+                    sendMessage("Здравствуйте. @" + userName + " закончил ваш тест \"" + quiz.getTest().getTestName() + "\" и правильно ответил на " + user.getCorrectAnswers() + " из " + quiz.getTest().getQuestions().size() + " вопросов. \nОтветы ученика:", quiz.getTeacherId());
                     List<String> userAnswers = new ArrayList<>(user.getUserAnswers().keySet());
 
                     System.out.println("User answers: " + userAnswers);
 
-                    for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().questions.size(); i++) {
-                        String question = test.questions.get(i).question;
+                    for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().getQuestions().size(); i++) {
+                        String question = test.getQuestions().get(i).getQuestion();
                         String userAnswer = userAnswers.get(i).split("\uD80C\uDE78")[1];
-                        String correctAnswer = getCorrectAnswerForQuestion(quiz.getTest().questions.get(i));
+                        String correctAnswer = getCorrectAnswerForQuestion(quiz.getTest().getQuestions().get(i));
 
                         System.out.println("Question: " + question);
                         System.out.println("User answer: " + userAnswer);
@@ -288,11 +288,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            Question question = quiz.getTest().questions.get(user.getQuizState() - 1);
+            Question question = quiz.getTest().getQuestions().get(user.getQuizState() - 1);
 
-            if (question.answers.size() > 1) {
+            if (question.getAnswers().size() > 1) {
                 new Thread(() -> {
-                    ArrayList<String> variants = new ArrayList<>(question.answers.keySet());
+                    ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
 
                     try {
                         Thread.sleep(250);
@@ -305,7 +305,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     for (int i = 0; i < variants.size(); i++)
                         callbacks.add("ans_" + i);
 
-                    Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId, variants, callbacks, user.getCurrentQuizMessageId());
+                    Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, variants, callbacks, user.getCurrentQuizMessageId());
                     user.setPrevType("var");
 
                     if (!saveUser(user)) {
@@ -333,7 +333,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         throw new RuntimeException(e);
                     }
 
-                    Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.question, chatId, user.getCurrentQuizMessageId());
+                    Integer quizMessageId = sendMessage("Вопрос #" + user.getQuizState() + ": " + question.getQuestion(), chatId, user.getCurrentQuizMessageId());
                     user.setPrevType("ans");
 
                     if (!saveUser(user)) {
@@ -1237,7 +1237,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         ArrayList<String> testsStrings = new ArrayList<>();
         for (Test test : tests)
-            testsStrings.add(String.format(" - %s (%d вопросов).\n", test.testName, test.questions.size()));
+            testsStrings.add(String.format(" - %s (%d вопросов).\n", test.getTestName(), test.getQuestions().size()));
 
         ArrayList<String> callbacks = new ArrayList<>();
 
