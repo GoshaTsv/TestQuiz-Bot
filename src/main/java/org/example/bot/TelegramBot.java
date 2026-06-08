@@ -1408,7 +1408,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
     public Integer sendPhoto(Question question, long x){
         Image image = question.getImage();
-        if (!(image.getDataURL() == null)){
+        if (!(image == null)){
             String[] base64String = image.getDataURL().split(",");
             StringBuilder pureBase64 = new StringBuilder();
             for(String base64: base64String){
