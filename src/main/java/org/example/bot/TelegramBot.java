@@ -312,9 +312,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     for (int i = 0; i < variants.size(); i++)
                         callbacks.add("ans_" + i);
-                    if (user.getCurrentQuizPhotoId() != null){
+                    if (user.getCurrentQuizPhotoId() != -1 || user.getCurrentQuizPhotoId() != null){
                         deleteMessage(user.getCurrentQuizPhotoId(), chatId);
-                        user.setCurrentQuizPhotoId(null);
                         if (!saveUser(user))
                             sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     }
@@ -350,9 +349,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    if (user.getCurrentQuizPhotoId() != null){
+                    if (user.getCurrentQuizPhotoId() != -1 || user.getCurrentQuizPhotoId() != null){
                         deleteMessage(user.getCurrentQuizPhotoId(), chatId);
-                        user.setCurrentQuizPhotoId(null);
                         if (!saveUser(user))
                             sendMessage("Не удалось обновить состояние пользователя.", chatId);
                     }
