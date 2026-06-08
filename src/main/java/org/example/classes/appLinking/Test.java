@@ -71,8 +71,8 @@ public class Test {
                 if (questionText == null || !questionText.isTextual() || questionText.asText().length() > 3000) {
                     return "Неправильная структура вопросов!";
                 }
-                if (!Objects.equals(questionType.asText(), "var") || !Objects.equals(questionType.asText(), "ans") || !Objects.equals(questionType.asText(), "srv")) {
-                    return "Неправильно заданный вид вопроса!" + questionType.asText();
+                if (!(Objects.equals(questionType.asText(), "var") || Objects.equals(questionType.asText(), "ans") || Objects.equals(questionType.asText(), "srv"))) {
+                    return "Неправильно заданный вид вопроса!";
                 }
                 JsonNode answers = questionNode.get("answers");
                 if (answers == null || !answers.isObject() || answers.isEmpty() || answers.size() > 8) {
