@@ -23,6 +23,8 @@ public class Translator {
         if ("by".equalsIgnoreCase(lang))
             lang = "be";
 
+        System.out.println("Lang:" + lang);
+
         Locale locale = Locale.forLanguageTag(lang);
 
         try {
