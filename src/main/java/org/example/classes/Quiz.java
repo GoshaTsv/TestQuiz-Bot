@@ -19,37 +19,27 @@ public class Quiz {
         this.test = test;
     }
 
-    public long getTeacherId() {
-        return teacherId;
-    }
-
-    public StudentClass getStudentClass() {
-        return studentClass;
-    }
-
-    public Test getTest() {
-        return test;
-    }
-
-    public void setTeacherId(long teacherId) {
-        this.teacherId = teacherId;
-    }
-
-    public void setStudentClass(StudentClass studentClass) {
-        this.studentClass = studentClass;
-    }
-
-    public void setTest(Test test) {
-        this.test = test;
-    }
+    public long getTeacherId() { return teacherId; }
+    public StudentClass getStudentClass() { return studentClass; }
+    public Test getTest() { return test; }
+    public void setTeacherId(long teacherId) { this.teacherId = teacherId; }
+    public void setStudentClass(StudentClass studentClass) { this.studentClass = studentClass; }
+    public void setTest(Test test) { this.test = test; }
 
     public void startQuiz(TelegramBot bot, ArrayList<User> users, long chatId) {
         Quiz quiz = this;
+        // получаем учителя для языка сообщений об ошибках
+        User teacher = users.stream().filter(u -> u.getChatId() == chatId).findFirst().orElse(null);
+        String teacherLang = (teacher != null) ? teacher.getLang() : "ru";
+
         quiz.getStudentClass().getStudents().forEach(x -> {
             User userCurrent = users.stream().filter(user1 -> user1.getChatId() == x).findFirst().orElse(null);
             if (userCurrent == null) {
                 System.out.println("User not found in thread when starting test");
-                bot.sendMessage("Что-то пошло не так. Попробуйте ещё раз...", chatId);
+                bot.sendMessage(
+                        bot.getTranslator().getTranslatedText("Что-то пошло не так. Попробуйте ещё раз...", teacherLang),
+                        chatId
+                );
                 return;
             }
 
@@ -58,7 +48,10 @@ public class Quiz {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
-                        bot.sendMessage("Что-то пошло не так. Попробуйте ещё раз...", chatId);
+                        bot.sendMessage(
+                                bot.getTranslator().getTranslatedText("Что-то пошло не так. Попробуйте ещё раз...", teacherLang),
+                                chatId
+                        );
                     }
                 }
 
@@ -76,42 +69,52 @@ public class Quiz {
                 Question question = quiz.getTest().getQuestions().getFirst();
                 String questionType = question.getType();
                 Integer messageId;
+                String userLang = userCurrent.getLang();
 
                 if (questionType.equalsIgnoreCase("var")) {
                     ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
-
                     ArrayList<String> callbacks = new ArrayList<>();
-
                     for (int j = 0; j < variants.size(); j++)
                         callbacks.add("ans_" + j);
 
-                    System.out.println("Callbacks: " + callbacks);
-
-                    messageId = bot.sendMessagePhoto("Вопрос #1: " + question.getQuestion(), x, question.getImage(), variants, callbacks, null);
+                    messageId = bot.sendMessagePhoto(
+                            bot.getTranslator().getTranslatedText("Вопрос #%d: %s", userLang, 1, question.getQuestion()),
+                            x, question.getImage(), variants, callbacks, null
+                    );
                     userCurrent.setPrevType("var");
 
-                } else if (questionType.equalsIgnoreCase("ans")){
-                    messageId = bot.sendMessagePhoto("Вопрос #1: " + question.getQuestion(), x, question.getImage());
+                } else if (questionType.equalsIgnoreCase("ans")) {
+                    messageId = bot.sendMessagePhoto(
+                            bot.getTranslator().getTranslatedText("Вопрос #%d: %s", userLang, 1, question.getQuestion()),
+                            x, question.getImage()
+                    );
                     userCurrent.setPrevType("ans");
-                }
-                else {
-                    //place holder for surveys
+                } else {
+                    // place holder for surveys
                     ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
                     ArrayList<String> callbacks = new ArrayList<>();
-
                     for (int j = 0; j < variants.size(); j++)
                         callbacks.add("srv_" + j);
 
-                    messageId = bot.sendMessagePhoto("Опрос #1 + " + question.getQuestion(), x, question.getImage(), variants, callbacks, null);
+                    messageId = bot.sendMessagePhoto(
+                            bot.getTranslator().getTranslatedText("Опрос #%d: %s", userLang, 1, question.getQuestion()),
+                            x, question.getImage(), variants, callbacks, null
+                    );
                 }
 
                 if (!bot.saveUser(userCurrent)) {
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, userCurrent);
+                    bot.alertMessage(
+                            bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", teacherLang),
+                            chatId, 10000, userCurrent
+                    );
                     return;
                 }
 
                 if (messageId == null) {
-                    bot.alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, userCurrent);
+                    bot.alertMessage(
+                            bot.getTranslator().getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", teacherLang),
+                            chatId, 10000, userCurrent
+                    );
                     return;
                 }
 
@@ -120,7 +123,10 @@ public class Quiz {
 
                 userCurrent.setCurrentQuizMessageId(messageId);
                 if (!bot.saveUser(userCurrent))
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, userCurrent);
+                    bot.alertMessage(
+                            bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", teacherLang),
+                            chatId, 10000, userCurrent
+                    );
 
                 try {
                     Thread.sleep(1000);
