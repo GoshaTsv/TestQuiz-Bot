@@ -16,6 +16,10 @@ public class Translator {
         if (rawString == null || rawString.isBlank()) {
             return "";
         }
+
+        System.out.println("Raw string: " + rawString);
+        System.out.println("Lang: " + lang);
+
         Locale locale = Locale.forLanguageTag(lang);
         return messageSource.getMessage(rawString, args, locale);
     }
