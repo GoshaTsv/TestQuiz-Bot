@@ -36,7 +36,7 @@ public class Quiz {
             if (userCurrent == null) {
                 System.out.println("User not found in thread when starting test");
                 bot.sendMessage(
-                        bot.getTranslator().getTranslatedText("Что-то пошло не так. Попробуйте ещё раз...", teacherLang),
+                        bot.getTranslator().getTranslatedText("something.went.wrong", teacherLang),
                         chatId
                 );
                 return;
@@ -48,7 +48,7 @@ public class Quiz {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
                         bot.sendMessage(
-                                bot.getTranslator().getTranslatedText("Что-то пошло не так. Попробуйте ещё раз...", teacherLang),
+                                bot.getTranslator().getTranslatedText("something.went.wrong", teacherLang),
                                 chatId
                         );
                     }
@@ -77,14 +77,14 @@ public class Quiz {
                         callbacks.add("ans_" + j);
 
                     messageId = bot.sendMessagePhoto(
-                            bot.getTranslator().getTranslatedText("Вопрос #{0}: {1}", userLang, 1, question.getQuestion()),
+                            bot.getTranslator().getTranslatedText("question.number", userLang, 1, question.getQuestion()),
                             x, question.getImage(), variants, callbacks, null
                     );
                     userCurrent.setPrevType("var");
 
                 } else if (questionType.equalsIgnoreCase("ans")) {
                     messageId = bot.sendMessagePhoto(
-                            bot.getTranslator().getTranslatedText("Вопрос #{0}: {1}", userLang, 1, question.getQuestion()),
+                            bot.getTranslator().getTranslatedText("question.number", userLang, 1, question.getQuestion()),
                             x, question.getImage()
                     );
                     userCurrent.setPrevType("ans");
@@ -95,14 +95,14 @@ public class Quiz {
                         callbacks.add("srv_" + j);
 
                     messageId = bot.sendMessagePhoto(
-                            bot.getTranslator().getTranslatedText("Опрос #{0}: {1}", userLang, 1, question.getQuestion()),
+                            bot.getTranslator().getTranslatedText("survey.number", userLang, 1, question.getQuestion()),
                             x, question.getImage(), variants, callbacks, null
                     );
                 }
 
                 if (!bot.saveUser(userCurrent)) {
                     bot.alertMessage(
-                            bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", teacherLang),
+                            bot.getTranslator().getTranslatedText("failed.update.user", teacherLang),
                             chatId, 10000, userCurrent
                     );
                     return;
@@ -110,7 +110,7 @@ public class Quiz {
 
                 if (messageId == null) {
                     bot.alertMessage(
-                            bot.getTranslator().getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", teacherLang),
+                            bot.getTranslator().getTranslatedText("failed.get.message.id", teacherLang),
                             chatId, 10000, userCurrent
                     );
                     return;
@@ -122,7 +122,7 @@ public class Quiz {
                 userCurrent.setCurrentQuizMessageId(messageId);
                 if (!bot.saveUser(userCurrent))
                     bot.alertMessage(
-                            bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", teacherLang),
+                            bot.getTranslator().getTranslatedText("failed.update.user", teacherLang),
                             chatId, 10000, userCurrent
                     );
 
