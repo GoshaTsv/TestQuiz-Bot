@@ -398,7 +398,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-        sendMessage(translator.getTranslatedText("Здравствуйте, это бот для тестов, вот все команды бота:\n - /newclass - создать новый класс (максимум 5 классов)\n - /myclasses - просмотреть свои классы\n - /newtest - создать новый тест (максимум 10 тестов)\n - /mytests - просмотреть свои тесты\n - /startquiz - провести тестирование\n - /setautodelete - настроить автоудаление сообщений", "ru"), chatId);
+        sendMessage(
+                translator.getTranslatedText("Здравствуйте, это бот для тестов, вот все команды бота:\n - /newclass - создать новый класс (максимум 5 классов)\n - /myclasses - просмотреть свои классы\n - /newtest - создать новый тест (максимум 10 тестов)\n - /mytests - просмотреть свои тесты\n - /startquiz - провести тестирование\n - /setautodelete - настроить автоудаление сообщений", "ru"),
+                chatId
+        );
         users.add(new User(chatId, "default", "ru", 0, 0, -1, null));
     }
 
