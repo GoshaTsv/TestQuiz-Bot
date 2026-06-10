@@ -87,7 +87,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         if (user == null) {
-            User testUser = new User(chatId, "default", 0, 0, -1, null);
+            User testUser = new User(chatId, "default", "ru", 0, 0, -1, null);
             System.out.println("User is null for " + chatId);
             if (message.hasText() && message.getText().startsWith("/start") && !(message.getText().startsWith("/startquiz")))
                 startRegistration(update, chatId);
@@ -375,7 +375,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void startRegistration(Update update, long chatId) {
         String username = update.getMessage().getFrom().getUserName();
-        User testUser = new User(chatId, "default", 0, 0, -1, null);
+        User testUser = new User(chatId, "default", "ru", 0, 0, -1, null);
 
         if (username == null) {
             alertMessage(translator.getTranslatedText("Задайте username своему аккаунту чтобы продолжить.", "ru"), chatId, 20000, testUser);
@@ -403,7 +403,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                  - /startquiz - провести тестирование
                  - /setautodelete - настроить автоудаление сообщений
                 """, chatId);
-        users.add(new User(chatId, "default", 0, 0, -1, null));
+        users.add(new User(chatId, "default", "ru", 0, 0, -1, null));
     }
 
     public boolean saveUser(User user) {
@@ -544,7 +544,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
         if (user == null){
-            alertMessage(translator.getTranslatedText("Не получилось найти пользователя...", "ru"), chatId, 10000, new User(chatId, "default", 0, 0, -1, null));
+            alertMessage(translator.getTranslatedText("Не получилось найти пользователя...", "ru"), chatId, 10000, new User(chatId, "default", "ru", 0, 0, -1, null));
             return null;
         }
         if (editMessageId == null) {

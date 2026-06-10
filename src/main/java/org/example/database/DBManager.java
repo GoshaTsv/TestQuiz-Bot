@@ -380,7 +380,7 @@ public class DBManager {
                 }
 
 
-                users.add(new User(res.getLong("chat_id"), "default", classes.size(), tests.size(), -1, null));
+                users.add(new User(res.getLong("chat_id"), "default", res.getString("lang"), classes.size(), tests.size(), -1, null));
             }
             return users;
         } catch (SQLException e) {

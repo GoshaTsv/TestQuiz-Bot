@@ -184,13 +184,14 @@ public class User {
         return autoDeleting;
     }
 
-    public User(long chatId, String state, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
+    public User(long chatId, String state, String lang, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
         this.chatId = chatId;
         this.state = state;
         this.classCount = classCount;
         this.testsCount = testsCount;
         this.quizState = quizState;
         this.currentQuiz = currentQuiz;
+        this.lang = lang;
         prevType = "";
         correctAnswers = 0;
         userAnswers = new LinkedHashMap<>();
