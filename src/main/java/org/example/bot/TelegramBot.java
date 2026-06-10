@@ -261,10 +261,10 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 Thread thread = new Thread(() -> {
                     System.out.println("thread launched!");
-                    sendMessage(translator.getTranslatedText("Поздравляем! Вы правильно ответили на %d из %d вопросов! Надеемся, вам понравилось!", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()), chatId);
+                    sendMessage(translator.getTranslatedText("Поздравляем! Вы правильно ответили на {0} из {1} вопросов! Надеемся, вам понравилось!", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()), chatId);
                     sendMessage(
                             translator.getTranslatedText(
-                                    "Здравствуйте. @%s закончил ваш тест \"%s\" и правильно ответил на %d из %d вопросов. \nОтветы ученика:",
+                                    "Здравствуйте. @{0} закончил ваш тест \"{1}\" и правильно ответил на {2} из {3} вопросов. \nОтветы ученика:",
                                     user.getLang(),
                                     userName,
                                     quiz.getTest().getTestName(),
@@ -286,7 +286,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.out.println("Question: " + question);
                         System.out.println("User answer: " + userAnswer);
                         System.out.println("Correct answer: " + correctAnswer);
-                        sendMessage(translator.getTranslatedText("Вопрос #%d: \"%s\"\nОтвет вашего ученика (@%s): \"%s\"\nПравильный ответ: \"%s\"", user.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
+                        sendMessage(translator.getTranslatedText("Вопрос #{0}: \"{1}\"\nОтвет вашего ученика (@{2}): \"{3}\"\nПравильный ответ: \"{4}\"", user.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
 
                         try {
                             Thread.sleep(500);
@@ -324,7 +324,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     for (int i = 0; i < variants.size(); i++)
                         callbacks.add("ans_" + i);
                     System.out.println(user.getCurrentQuizPhotoId());
-                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("Вопрос #%d: %s", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId());
+                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("Вопрос #{0}: {1}", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId());
                     user.setPrevType("var");
 
 
@@ -353,7 +353,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         sendMessage(translator.getTranslatedText("Не удалось отправить вопрос.", user.getLang()), chatId);
                     }
                     System.out.println(user.getCurrentQuizPhotoId());
-                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("Вопрос #%d: %s", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), user.getCurrentQuizMessageId());
+                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("Вопрос #{0}: {1}", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), user.getCurrentQuizMessageId());
                     user.setPrevType("ans");
 
                     if (!saveUser(user)) {
@@ -398,15 +398,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-        sendMessage("""
-                Здравствуйте, это бот для тестов, вот все команды бота:
-                 - /newclass - создать новый класс (максимум 5 классов)
-                 - /myclasses - просмотреть свои классы
-                 - /newtest - создать новый тест (максимум 10 тестов)
-                 - /mytests - просмотреть свои тесты
-                 - /startquiz - провести тестирование
-                 - /setautodelete - настроить автоудаление сообщений
-                """, chatId);
+        sendMessage(translator.getTranslatedText("Здравствуйте, это бот для тестов, вот все команды бота:\n - /newclass - создать новый класс (максимум 5 классов)\n - /myclasses - просмотреть свои классы\n - /newtest - создать новый тест (максимум 10 тестов)\n - /mytests - просмотреть свои тесты\n - /startquiz - провести тестирование\n - /setautodelete - настроить автоудаление сообщений", "ru"), chatId);
         users.add(new User(chatId, "default", "ru", 0, 0, -1, null));
     }
 
@@ -700,16 +692,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
         AtomicInteger count = new AtomicInteger();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().orElse(null);
+        String lang = user != null ? user.getLang() : "ru";
+
         buttons.forEach(x -> {
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
-            button.setText(x);
+            button.setText(translator.getTranslatedText(x, lang));
             if (callbacks.get(count.get()).equalsIgnoreCase("change_test")){
                 System.out.println("found change_test");
                 WebAppInfo webAppInfo = new WebAppInfo();
                 webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=changeTest");
                 button.setWebApp(webAppInfo);
-                User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().orElse(null);
+
                 if (user == null){
                     alertMessage(translator.getTranslatedText("Не получилось найти пользователя...", "ru"), chatId, 10000, null);
                     return;
@@ -977,7 +972,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             callbacks.add("view_test_back");
             callbacks.add("delete_test");
 
-            sendMessage(String.format("Название теста: \"%s\"", chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyTestsMessageId());
+            sendMessage(translator.getTranslatedText("Название теста: \"{0}\"", user.getLang(), chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyTestsMessageId());
         }
         else if (data.startsWith("start_quiz_class")) {
             if (user.getCurrentStartQuizTestMessageId() != null)
@@ -1150,14 +1145,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(chatId));
-            sendMessage.setText("Пожалуйста, отправьте .json файл с тестом, создайте новый тест в мини-приложении или напишите /exit для отмены.");
+            sendMessage.setText(translator.getTranslatedText("Пожалуйста, отправьте .json файл с тестом, создайте новый тест в мини-приложении или напишите /exit для отмены.", user.getLang()));
 
             ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
             keyboard.setResizeKeyboard(true);
             keyboard.setOneTimeKeyboard(false);
 
             KeyboardButton webAppButton = new KeyboardButton();
-            webAppButton.setText("Создать тест");
+            webAppButton.setText(translator.getTranslatedText("Создать тест", user.getLang()));
 
             WebAppInfo webAppInfo = new WebAppInfo();
             webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=newTest");
@@ -1284,14 +1279,14 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         StudentClass chosenClass = classes.get(Integer.parseInt(classId));
-        StringBuilder classString = new StringBuilder();
-        classString.append(String.format("Название класса: \"%s\"\nУченики: \n", chosenClass.getName()));
         ArrayList<String> userUsernames = DBManager.getUsernamesByIds(chosenClass.getStudents());
         if (userUsernames == null) {
             alertMessage(translator.getTranslatedText("Не удалось получить пользователей класса, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
             return;
         }
 
+        StringBuilder classString = new StringBuilder();
+        classString.append(translator.getTranslatedText("Название класса: \"{0}\"\nУченики: \n", user.getLang(), chosenClass.getName()));
         for (String username: userUsernames)
             classString.append("- @").append(username).append("\n");
 
@@ -1357,7 +1352,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         ArrayList<String> testsStrings = new ArrayList<>();
         for (Test test : tests)
-            testsStrings.add(String.format(" - %s (%d вопросов).\n", test.getTestName(), test.getQuestions().size()));
+            testsStrings.add(translator.getTranslatedText(" - {0} ({1} вопросов).\n", user.getLang(), test.getTestName(), test.getQuestions().size()));
 
         ArrayList<String> callbacks = new ArrayList<>();
 
@@ -1370,7 +1365,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
 
-        Integer messageId = sendMessage(String.format("Ваши тесты (%d): \n", tests.size()), chatId, testsStrings, callbacks, user.getCurrentMyTestsMessageId());
+        Integer messageId = sendMessage(translator.getTranslatedText("Ваши тесты ({0}): \n", user.getLang(), tests.size()), chatId, testsStrings, callbacks, user.getCurrentMyTestsMessageId());
 
         if (messageId == null) {
             alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
@@ -1399,7 +1394,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         ArrayList<String> classesStrings = new ArrayList<>();
 
         for (StudentClass studentClass : classes)
-            classesStrings.add(String.format("%s (%d учеников)\n", studentClass.getName(), studentClass.getStudents().size()));
+            classesStrings.add(translator.getTranslatedText("{0} ({1} учеников)\n", user.getLang(), studentClass.getName(), studentClass.getStudents().size()));
 
         ArrayList<String> callbacks = new ArrayList<>();
 
@@ -1412,7 +1407,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
         }
 
-        Integer messageId = sendMessage((String.format("Ваши классы (%d): \n", classes.size())), chatId, classesStrings, callbacks, user.getCurrentMyClassesMessageId());
+        Integer messageId = sendMessage(translator.getTranslatedText("Ваши классы ({0}): \n", user.getLang(), classes.size()), chatId, classesStrings, callbacks, user.getCurrentMyClassesMessageId());
         if (messageId == null) {
             alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
             return;
