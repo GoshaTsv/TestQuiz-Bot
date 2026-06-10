@@ -12,6 +12,7 @@ public class User {
     // user data
     private String state;
     private long chatId;
+    private String lang;
 
     // auto deleting
     private String autoDeleting;
@@ -56,6 +57,14 @@ public class User {
     private Integer lastMessageId;
     //WebRequest for importing classes into the web app
     private WebRequest lastWebReq;
+
+    public String getLang() {
+        return lang;
+    }
+
+    public void setLang(String lang) {
+        this.lang = lang;
+    }
 
     public Integer getCurrentQuizPhotoId() {
         return currentQuizPhotoId;
@@ -297,184 +306,173 @@ public class User {
 
     public void processMessageStates(TelegramBot bot, String msg, long chatId, ArrayList<User> users) {
         User user = this;
+        final String lang = user.getLang();
+
         switch (user.getState()) {
             case "changingAutoDelay" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.alertMessage("Изменение отменено.", chatId, 10000, user);
+                        bot.alertMessage(bot.getTranslator().getTranslatedText("Изменение отменено.", lang), chatId, 10000, user);
                         user.setState("default");
                         bot.saveUser(user);
                         return;
                     }
-                    bot.alertMessage("Вы не можете отправлять команды во время изменения задержки (/exit для отмены).", chatId, 20000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Вы не можете отправлять команды во время изменения задержки (/exit для отмены).", lang), chatId, 20000, user);
                     return;
                 }
                 int length = Integer.parseInt(msg);
                 if (length > 3600){
-                    bot.alertMessage("Пожалуйста, введите меньшее время.", chatId, 15000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Пожалуйста, введите меньшее время.", lang), chatId, 15000, user);
                     return;
                 }
-
                 if (length < 5){
-                    bot.alertMessage("Пожалуйста, введите большее время.", chatId, 15000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Пожалуйста, введите большее время.", lang), chatId, 15000, user);
                     return;
                 }
 
                 user.setAutoDeleteLength(length);
                 user.setState("default");
                 if (!bot.saveUser(user)){
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", lang), chatId, 10000, user);
                     return;
                 }
 
                 if (user.getCurrentAutoDeleteSetSecondsMessageId() != null)
                     bot.deleteMessage(user.getCurrentAutoDeleteSetSecondsMessageId(), chatId);
 
-                bot.alertMessage("Время задержки было успешно изменено!", chatId, 10000, user);
+                bot.alertMessage(bot.getTranslator().getTranslatedText("Время задержки было успешно изменено!", lang), chatId, 10000, user);
             }
             case "class_name" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.alertMessage("Создание класса отменено.", chatId, 10000, user);
+                        bot.alertMessage(bot.getTranslator().getTranslatedText("Создание класса отменено.", lang), chatId, 10000, user);
                         user.setState("default");
                         bot.saveUser(user);
                         return;
                     }
-                    bot.alertMessage("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", chatId, 20000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", lang), chatId, 20000, user);
                     return;
                 }
 
                 if (msg.replaceAll("\\p{Punct}", "").length() < 2) {
-                    bot.alertMessage("Введите корректное имя класса (минимум 2 символа без знаков препинания и пробелов).", chatId, 15000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Введите корректное имя класса (минимум 2 символа без знаков препинания и пробелов).", lang), chatId, 15000, user);
                     return;
                 }
 
                 int doesClassExit = DBManager.doesClassExit(chatId, msg);
                 if (doesClassExit == 2) {
-                    bot.alertMessage("Произошла ошибка во время проверки имени класса, попробуйте ещё...", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Произошла ошибка во время проверки имени класса, попробуйте ещё...", lang), chatId, 10000, user);
                     return;
                 }
                 if (doesClassExit == 1) {
-                    bot.alertMessage("У вас уже существует класс с таким именем.", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("У вас уже существует класс с таким именем.", lang), chatId, 10000, user);
                     return;
                 }
 
                 user.setState("class_students");
                 user.setCurrentNewClassName(msg);
                 if (!bot.saveUser(user)) {
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", lang), chatId, 10000, user);
                     return;
                 }
 
                 if (user.getLastMessageId() != null)
                     bot.deleteMessage(user.getLastMessageId(), chatId);
 
-                Integer messageId = bot.sendMessage("Перечислите через пробел username'ы учеников без @ (например: ivan victor test).", chatId);
+                Integer messageId = bot.sendMessage(
+                        bot.getTranslator().getTranslatedText("Перечислите через пробел username'ы учеников без @ (например: ivan victor test).", lang),
+                        chatId
+                );
 
                 if (messageId == null) {
-                    bot.alertMessage("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", lang), chatId, 10000, user);
                     return;
                 }
-
                 if (messageId == -1)
                     return;
 
                 user.setLastMessageId(messageId);
                 if (!bot.saveUser(user))
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", lang), chatId, 10000, user);
             }
             case "class_students" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.alertMessage("Создания класса отменено.", chatId, 10000, user);
+                        bot.alertMessage(bot.getTranslator().getTranslatedText("Создания класса отменено.", lang), chatId, 10000, user);
                         user.setState("default");
                         bot.saveUser(user);
                         return;
                     }
-                    bot.alertMessage("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", chatId, 20000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Вы не можете отправлять команды во время создания класса (/exit для отмены создания класса).", lang), chatId, 20000, user);
                     return;
                 }
                 ArrayList<String> usernames = new ArrayList<>(Arrays.asList(msg.split(" ")));
                 if (usernames.size() < 2) {
-                    bot.alertMessage("Класс должен состоять минимум из 2-х учеников.", chatId, 15000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Класс должен состоять минимум из 2-х учеников.", lang), chatId, 15000, user);
                     return;
                 }
 
                 user.setState("default");
-
-                bot.sendMessage("Создание класса...", chatId);
+                bot.sendMessage(bot.getTranslator().getTranslatedText("Создание класса...", lang), chatId);
 
                 ArrayList<Long> students = DBManager.getIdsByUsernames(usernames);
-
                 if (students == null || students.size() != usernames.size()) {
-                    bot.alertMessage("Не удалось получить учеников, возможно они не зарегистрированы в боте.", chatId, 20000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось получить учеников, возможно они не зарегистрированы в боте.", lang), chatId, 20000, user);
                     return;
                 }
 
                 if (!DBManager.createClass(user.getCurrentNewClassName(), chatId, students)) {
-                    bot.alertMessage("Не удалось создать класс, попробуйте снова...", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось создать класс, попробуйте снова...", lang), chatId, 10000, user);
                     return;
                 }
                 user.setClassCount(user.getClassCount() + 1);
                 user.setCurrentNewClassName(null);
                 if (!bot.saveUser(user)) {
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", lang), chatId, 10000, user);
                     return;
                 }
 
                 if (user.getLastMessageId() != null)
                     bot.deleteMessage(user.getLastMessageId(), chatId);
-
                 if (user.getCurrentStartQuizClassMessageId() != null)
                     bot.deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
-
                 if (user.getCurrentMyClassesMessageId() != null)
                     bot.deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
-
                 if (user.getCurrentStartQuizTestMessageId() != null)
                     bot.deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
-
                 if (user.getCurrentMyTestsMessageId() != null)
                     bot.deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
 
-                bot.sendMessage("Класс успешно создан!", chatId);
+                bot.sendMessage(bot.getTranslator().getTranslatedText("Класс успешно создан!", lang), chatId);
             }
-            //sent most of the logic of case "create_test" outside the if-clause as for it to be activated the message needs to have text
             case "create_test" -> {
-                 /* added an if-clause to check for any command and the /exit command specifically
-                if the user sent just a command, the bot tells them they can exit using /exit
-                * the bot sends a message telling the person that they have cancelled the import of the test
-                * then it sets the state to default, checks for it being done and goes back to the start
-                also added an if-clause for checking the state
-                * */
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.alertMessage("Вы отменили загрузку теста.", chatId, 10000, user);
+                        bot.alertMessage(bot.getTranslator().getTranslatedText("Вы отменили загрузку теста.", lang), chatId, 10000, user);
                         user.setState("default");
                         if (!bot.saveUser(user))
-                            bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+                            bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", lang), chatId, 10000, user);
                         return;
                     }
-                    bot.sendMessage("Вы можете отменить загрузку файла с помощью команды /exit.", chatId);
+                    bot.sendMessage(bot.getTranslator().getTranslatedText("Вы можете отменить загрузку файла с помощью команды /exit.", lang), chatId);
                     return;
                 }
-
-                bot.sendMessage("Пожалуйста, отправьте файл.", chatId);
+                bot.sendMessage(bot.getTranslator().getTranslatedText("Пожалуйста, отправьте файл.", lang), chatId);
             }
             case "adding_student" -> {
                 if (msg.startsWith("/")) {
                     if (msg.startsWith("/exit")) {
-                        bot.alertMessage("Изменение класса отменено.", chatId, 10000, user);
+                        bot.alertMessage(bot.getTranslator().getTranslatedText("Изменение класса отменено.", lang), chatId, 10000, user);
                         user.setState("default");
                         bot.saveUser(user);
                         return;
                     }
-                    bot.alertMessage("Вы не можете отправлять команды во время изменения класса (/exit для отмены изменения класса).", chatId, 20000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Вы не можете отправлять команды во время изменения класса (/exit для отмены изменения класса).", lang), chatId, 20000, user);
                     return;
                 }
                 StudentClass chosenClass = user.getCurrentChangingClass();
                 if (chosenClass == null) {
-                    bot.alertMessage("Не удалось получить текущий класс, попробуйте ещё раз...", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось получить текущий класс, попробуйте ещё раз...", lang), chatId, 10000, user);
                     bot.sendClasses(chatId, user);
                     return;
                 }
@@ -483,11 +481,11 @@ public class User {
                 username.add(msg);
                 ArrayList<Long> userId = DBManager.getIdsByUsernames(username);
                 if (userId == null){
-                    bot.alertMessage("Этот пользователь не зарегистрировал в боте.", chatId, 15000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Этот пользователь не зарегистрировал в боте.", lang), chatId, 15000, user);
                     return;
                 }
                 if (chosenClass.getStudents().contains(userId.getFirst())){
-                    bot.alertMessage("Этого пользователя уже есть в вашем классе!", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Этого пользователя уже есть в вашем классе!", lang), chatId, 10000, user);
                     return;
                 }
                 ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
@@ -497,9 +495,9 @@ public class User {
                 user.setCurrentChangingClass(null);
                 user.setState("default");
                 if (!bot.saveUser(user)) {
-                    bot.alertMessage("Не удалось обновить состояние пользователя, попробуйте ещё раз...", chatId, 10000, user);
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", lang), chatId, 10000, user);
                 }
-                bot.alertMessage("Пользователь успешно добавлен!", chatId, 10000, user);
+                bot.alertMessage(bot.getTranslator().getTranslatedText("Пользователь успешно добавлен!", lang), chatId, 10000, user);
                 bot.sendClasses(chatId, user);
             }
         }
