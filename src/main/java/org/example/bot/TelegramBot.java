@@ -65,6 +65,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         return System.getenv("BOT_TOKEN");
     }
 
+    public TelegramBot(Translator translator) {
+        this.translator = translator;
+    }
+
     //moved all the user.setTestCount and user.setClassCount a bit lower so that it doesnt count when you get an error
     @Override
     public void onUpdateReceived(Update update) {
