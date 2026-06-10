@@ -69,7 +69,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         this.translator = translator;
     }
 
-    //moved all the user.setTestCount and user.setClassCount a bit lower so that it doesnt count when you get an error
     @Override
     public void onUpdateReceived(Update update) {
         long chatId;
@@ -82,11 +81,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             chatId = update.getCallbackQuery().getFrom().getId();
         }
 
-
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
 
         if (!message.hasText() && !message.hasDocument() && !update.hasCallbackQuery()) {
-            alertMessage(translator.getTranslatedText("Вы можете отправлять только сообщения или файлы.", user != null ? user.getLang() : "ru"), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("only.messages.or.files", user != null ? user.getLang() : "ru"), chatId, 10000, user);
             return;
         }
 
@@ -96,7 +94,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (message.hasText() && message.getText().startsWith("/start") && !(message.getText().startsWith("/startquiz")))
                 startRegistration(update, chatId);
             else
-                alertMessage(translator.getTranslatedText("Напишите /start для регистрации.", "ru"), chatId, 20000, testUser);
+                alertMessage(translator.getTranslatedText("write.start.to.register", "ru"), chatId, 20000, testUser);
             return;
         }
         messageId = message.getMessageId();
@@ -118,7 +116,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 if (update.hasCallbackQuery()) msg = update.getCallbackQuery().getData();
 
                 if (msg.trim().isEmpty()) {
-                    alertMessage(translator.getTranslatedText("Вы не можете отправлять пустые сообщения.", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("cannot.send.empty", user.getLang()), chatId, 10000, user);
                     return;
                 }
 
@@ -131,7 +129,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             if (message.hasDocument()) {
                 if (!(update.getMessage().getDocument().getFileName().endsWith(".json"))) {
-                    alertMessage(translator.getTranslatedText("Пожалуйста, отправьте файл с типом .json.", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("send.json.file", user.getLang()), chatId, 10000, user);
                     return;
                 }
                 String fileId = update.getMessage().getDocument().getFileId();
@@ -144,7 +142,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     fileName = "newTest" + chatId + ".json";
                     downloadFile(filePath, new File(fileName));
                 } catch (TelegramApiException e) {
-                    alertMessage(translator.getTranslatedText("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("error.adding.test", user.getLang()), chatId, 10000, user);
                     return;
                 }
 
@@ -160,7 +158,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             if (user.getCurrentQuiz() == null) {
-                alertMessage(translator.getTranslatedText("Произошла ошибка, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("error.try.again", user.getLang()), chatId, 10000, user);
                 return;
             }
             Quiz quiz = user.getCurrentQuiz();
@@ -168,7 +166,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             Question currentQuestion = test.getQuestions().get(user.getQuizState() - 1);
 
             if (!(update.hasMessage() || update.hasCallbackQuery())) {
-                alertMessage(translator.getTranslatedText("Пожалуйста, отправьте ответ на вопрос.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("send.answer", user.getLang()), chatId, 10000, user);
                 return;
             }
             if (user.getPrevType().equalsIgnoreCase("ans")) {
@@ -190,7 +188,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                     System.out.println("new user answers: " + newUserAnswers);
                 } else {
-                    alertMessage(translator.getTranslatedText("Пожалуйста, ответьте на вопрос словом/словами.", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("answer.with.word", user.getLang()), chatId, 10000, user);
                     return;
                 }
             }
@@ -225,18 +223,18 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.out.println("Exception while processing variant answer: " + e.getMessage());
                     }
                 } else {
-                    alertMessage(translator.getTranslatedText("Пожалуйста, нажмите на 1 из кнопок.", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("click.button", user.getLang()), chatId, 10000, user);
                     return;
                 }
             }
 
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -251,26 +249,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                     deleteMessage(user.getCurrentQuizMessageId(), chatId);
                     user.setCurrentQuizMessageId(null);
                     if (!saveUser(user))
-                        alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя.", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.update.user.short", user.getLang()), chatId, 10000, user);
                 }
                 if (user.getCurrentQuizPhotoId() != null){
                     deleteMessage(user.getCurrentQuizPhotoId(), chatId);
                     user.setCurrentQuizPhotoId(null);
                     if (!saveUser(user))
-                        alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя.", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.update.user.short", user.getLang()), chatId, 10000, user);
                 }
                 Thread thread = new Thread(() -> {
                     System.out.println("thread launched!");
-                    sendMessage(translator.getTranslatedText("Поздравляем! Вы правильно ответили на {0} из {1} вопросов! Надеемся, вам понравилось!", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()), chatId);
+                    sendMessage(translator.getTranslatedText("quiz.congrats", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()), chatId);
                     sendMessage(
-                            translator.getTranslatedText(
-                                    "Здравствуйте. @{0} закончил ваш тест \"{1}\" и правильно ответил на {2} из {3} вопросов. \nОтветы ученика:",
-                                    user.getLang(),
-                                    userName,
-                                    quiz.getTest().getTestName(),
-                                    user.getCorrectAnswers(),
-                                    quiz.getTest().getQuestions().size()
-                            ),
+                            translator.getTranslatedText("quiz.finished", user.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()),
                             quiz.getTeacherId()
                     );
 
@@ -286,7 +277,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.out.println("Question: " + question);
                         System.out.println("User answer: " + userAnswer);
                         System.out.println("Correct answer: " + correctAnswer);
-                        sendMessage(translator.getTranslatedText("Вопрос #{0}: \"{1}\"\nОтвет вашего ученика (@{2}): \"{3}\"\nПравильный ответ: \"{4}\"", user.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
+                        sendMessage(translator.getTranslatedText("quiz.question.result", user.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
 
                         try {
                             Thread.sleep(500);
@@ -301,7 +292,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     user.setCurrentQuizPhotoId(null);
 
                     if (!saveUser(user))
-                        alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 });
                 thread.start();
                 return;
@@ -324,17 +315,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                     for (int i = 0; i < variants.size(); i++)
                         callbacks.add("ans_" + i);
                     System.out.println(user.getCurrentQuizPhotoId());
-                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("Вопрос #{0}: {1}", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId());
+                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("question.number", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId());
                     user.setPrevType("var");
 
-
                     if (!saveUser(user)) {
-                        alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                         return;
                     }
 
                     if (quizMessageId == null) {
-                        alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
                         return;
                     }
 
@@ -343,26 +333,26 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
-                        alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 }).start();
             } else {
                 new Thread(() -> {
                     try {
                         Thread.sleep(250);
                     } catch (InterruptedException e) {
-                        sendMessage(translator.getTranslatedText("Не удалось отправить вопрос.", user.getLang()), chatId);
+                        sendMessage(translator.getTranslatedText("failed.send.question", user.getLang()), chatId);
                     }
                     System.out.println(user.getCurrentQuizPhotoId());
-                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("Вопрос #{0}: {1}", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), user.getCurrentQuizMessageId());
+                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("question.number", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), user.getCurrentQuizMessageId());
                     user.setPrevType("ans");
 
                     if (!saveUser(user)) {
-                        alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                         return;
                     }
 
                     if (quizMessageId == null) {
-                        alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
                         return;
                     }
 
@@ -371,7 +361,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
-                        alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 }).start();
             }
         }
@@ -382,26 +372,23 @@ public class TelegramBot extends TelegramLongPollingBot {
         User testUser = new User(chatId, "default", "ru", 0, 0, -1, null);
 
         if (username == null) {
-            alertMessage(translator.getTranslatedText("Задайте username своему аккаунту чтобы продолжить.", "ru"), chatId, 20000, testUser);
+            alertMessage(translator.getTranslatedText("set.username", "ru"), chatId, 20000, testUser);
             return;
         }
 
         int doesUserExit = DBManager.doesUserExist(username);
         if (doesUserExit == 2) {
-            alertMessage(translator.getTranslatedText("Произошла ошибка во время проверки пользователя на существование, попробуйте ещё раз...", "ru"), chatId, 10000, testUser);
+            alertMessage(translator.getTranslatedText("error.checking.user", "ru"), chatId, 10000, testUser);
             return;
         }
 
         if (doesUserExit == 0)
             if (!DBManager.registerAccount(username, chatId)) {
-                alertMessage(translator.getTranslatedText("Произошла ошибка во время регистрации, попробуйте ещё раз... (/start)", "ru"), chatId, 10000, testUser);
+                alertMessage(translator.getTranslatedText("error.registering", "ru"), chatId, 10000, testUser);
                 return;
             }
 
-        sendMessage(
-                translator.getTranslatedText("Здравствуйте, это бот для тестов, вот все команды бота:\\n - /newclass - создать новый класс (максимум 5 классов)\\n - /myclasses - просмотреть свои классы\\n - /newtest - создать новый тест (максимум 10 тестов)\\n - /mytests - просмотреть свои тесты\\n - /startquiz - провести тестирование\\n - /setautodelete - настроить автоудаление сообщений", "ru"),
-                chatId
-        );
+        sendMessage(translator.getTranslatedText("start.message", "ru"), chatId);
         users.add(new User(chatId, "default", "ru", 0, 0, -1, null));
     }
 
@@ -466,9 +453,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println("An exception in alert: " + e.getMessage());
             return;
         }
-        System.out.println(user.getChatId() == chatId);
-        System.out.println(chatId);
-        if(user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
+        if(user != null && user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
             new Thread(() -> {
                 System.out.println("Alert thread started");
                 try {
@@ -480,7 +465,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 System.out.println("Deleting alert message");
             }).start();
         }
-        System.out.println("User: " + user.getChatId() + " isn't auto deleting.");
     }
 
     public Integer sendMessage(String msg, long chatId) {
@@ -543,7 +527,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
         if (user == null){
-            alertMessage(translator.getTranslatedText("Не получилось найти пользователя...", "ru"), chatId, 10000, new User(chatId, "default", "ru", 0, 0, -1, null));
+            alertMessage(translator.getTranslatedText("user.not.found.short", "ru"), chatId, 10000, new User(chatId, "default", "ru", 0, 0, -1, null));
             return null;
         }
         if (editMessageId == null) {
@@ -622,7 +606,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             return execute(sendPhotoRequest).getMessageId();
         } catch (TelegramApiException e) {
-            sendMessage(translator.getTranslatedText("Произошла ошибка, попробуйте ещё раз...", "ru"), chatId);
+            sendMessage(translator.getTranslatedText("error.try.again", "ru"), chatId);
             return -1;
         }
     }
@@ -664,7 +648,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             return execute(sendPhotoRequest).getMessageId();
         } catch (TelegramApiException e) {
-            sendMessage(translator.getTranslatedText("Произошла ошибка, попробуйте ещё раз...", "ru"), chatId);
+            sendMessage(translator.getTranslatedText("error.try.again", "ru"), chatId);
             return -1;
         }
     }
@@ -701,6 +685,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         buttons.forEach(x -> {
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
+            // x - это уже ключ перевода
             button.setText(translator.getTranslatedText(x, lang));
             if (callbacks.get(count.get()).equalsIgnoreCase("change_test")){
                 System.out.println("found change_test");
@@ -709,13 +694,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 button.setWebApp(webAppInfo);
 
                 if (user == null){
-                    alertMessage(translator.getTranslatedText("Не получилось найти пользователя...", "ru"), chatId, 10000, null);
+                    alertMessage(translator.getTranslatedText("user.not.found.short", "ru"), chatId, 10000, null);
                     return;
                 }
 
                 Test currentTest = user.getCurrentChangingTest();
                 if (currentTest == null) {
-                    alertMessage(translator.getTranslatedText("Не удалось получить текущий тест, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("failed.get.current.test", user.getLang()), chatId, 10000, user);
                     sendClasses(chatId, user);
                     return;
                 }
@@ -756,29 +741,29 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить тесты, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.tests", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             if (tests.stream().filter(t -> t.getTestName().equalsIgnoreCase(test.getTestName())).findFirst().orElse(null) != null) {
-                alertMessage(translator.getTranslatedText("У вас уже есть такой тест, отправьте другой.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("test.already.exists", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             user.setState("default");
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             if (!DBManager.createTest(json.toString(), chatId)) {
-                alertMessage(translator.getTranslatedText("Тест не получилось добавить. Попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("test.add.failed", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             user.setTestsCount(user.getTestsCount() + 1);
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -786,7 +771,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 deleteMessage(user.getLastMessageId(), chatId);
                 user.setLastMessageId(null);
                 if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                     return;
                 }
             }
@@ -795,7 +780,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
                 user.setCurrentStartQuizClass(null);
                 if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                     return;
                 }
             }
@@ -804,7 +789,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
                 user.setCurrentMyClassesMessageId(null);
                 if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                     return;
                 }
             }
@@ -813,7 +798,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
                 user.setCurrentStartQuizTestMessageId(null);
                 if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                     return;
                 }
             }
@@ -822,14 +807,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                 deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
                 user.setCurrentMyTestsMessageId(null);
                 if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                     return;
                 }
             }
 
-            alertMessage(translator.getTranslatedText("Тест успешно сохранён!", user.getLang()), chatId, 15000, user);
+            alertMessage(translator.getTranslatedText("test.saved", user.getLang()), chatId, 15000, user);
         } catch (IOException e) {
-            alertMessage(translator.getTranslatedText("Произошла ошибка во время добавления теста. Попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("error.adding.test", user.getLang()), chatId, 10000, user);
         }
     }
 
@@ -845,19 +830,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             StudentClass chosenClass = user.getCurrentChangingClass();
             if (chosenClass == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить текущий класс, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.current.class", user.getLang()), chatId, 10000, user);
                 sendClasses(chatId, user);
                 return;
             }
 
             if (chosenClass.getStudents().size() <= 2){
-                alertMessage(translator.getTranslatedText("Вы не можете больше удалять учеников, минимум - 2 ученика.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("cannot.remove.students.limit", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             ArrayList<String> studentsNames = DBManager.getUsernamesByIds(chosenClass.getStudents());
             if (studentsNames == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить учеников класса, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.class.students", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -865,7 +850,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int i = 0; i < chosenClass.getStudents().size(); i++)
                 callbacks.add("real_delete_student_" + i);
 
-            sendMessage(translator.getTranslatedText("Выберите ученика, которого хотите убрать из класса.", user.getLang()), chatId, studentsNames, callbacks, user.getCurrentMyClassesMessageId());
+            sendMessage(translator.getTranslatedText("select.student.to.remove", user.getLang()), chatId, studentsNames, callbacks, user.getCurrentMyClassesMessageId());
         }
         else if (data.startsWith("real_delete_student")) {
             String deleteStudentId = data.replaceAll("real_delete_student_", "");
@@ -879,34 +864,34 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             user.setCurrentChangingClass(null);
             if (!saveUser(user))
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
 
-            alertMessage(translator.getTranslatedText("Пользователь успешно удалён!", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("user.removed", user.getLang()), chatId, 10000, user);
             sendClasses(chatId, user);
         }
         else if (data.startsWith("add_student")) {
-            sendMessage(translator.getTranslatedText("Пожалуйста, введите имя ученика, которого хотите добавить в класс (без @), или введите /exit для отмены.", user.getLang()), chatId);
+            sendMessage(translator.getTranslatedText("enter.student.name", user.getLang()), chatId);
             user.setState("adding_student");
             if (!saveUser(user))
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user.short", user.getLang()), chatId, 10000, user);
         }
         else if (data.startsWith("view_class_back"))
             sendClasses(chatId, user);
         else if (data.startsWith("delete_class")) {
             StudentClass currentClass = user.getCurrentChangingClass();
             if (currentClass == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить текущий класс, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.current.class", user.getLang()), chatId, 10000, user);
                 sendClasses(chatId, user);
                 return;
             }
 
             if (!DBManager.deleteClass(chatId, currentClass.getName())) {
-                alertMessage(translator.getTranslatedText("Не удалось удалить класс, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.delete.class", user.getLang()), chatId, 10000, user);
                 return;
             }
             user.setClassCount(user.getClassCount() - 1);
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -915,18 +900,18 @@ public class TelegramBot extends TelegramLongPollingBot {
         else if (data.startsWith("delete_test")) {
             Test currentTest = user.getCurrentChangingTest();
             if (currentTest == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить текущий тест, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.current.test", user.getLang()), chatId, 10000, user);
                 sendTests(chatId, user);
                 return;
             }
 
             if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
-                alertMessage(translator.getTranslatedText("Не удалось удалить тест, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.delete.test", user.getLang()), chatId, 10000, user);
                 return;
             }
             user.setTestsCount(user.getTestsCount() - 1);
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -937,7 +922,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (data.startsWith("download_test")) {
             Test currentTest = user.getCurrentChangingTest();
             if (currentTest == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить текущий тест, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.current.test", user.getLang()), chatId, 10000, user);
                 sendClasses(chatId, user);
                 return;
             }
@@ -955,19 +940,19 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить тесты пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.user.tests", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             Test chosenTest = tests.get(Integer.parseInt(testId));
             user.setCurrentChangingTest(chosenTest);
             if (!saveUser(user))
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
             ArrayList<String> options = new ArrayList<>();
-            options.add("Изменить тест");
-            options.add("Скачать тест");
-            options.add("Назад");
-            options.add("Удалить тест");
+            options.add("edit.test");
+            options.add("download.test");
+            options.add("back");
+            options.add("delete.test.btn");
 
             ArrayList<String> callbacks = new ArrayList<>();
             callbacks.add("change_test");
@@ -975,7 +960,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             callbacks.add("view_test_back");
             callbacks.add("delete_test");
 
-            sendMessage(translator.getTranslatedText("Название теста: \"{0}\"", user.getLang(), chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyTestsMessageId());
+            sendMessage(translator.getTranslatedText("test.name.label", user.getLang(), chosenTest.getTestName()), chatId, options, callbacks, user.getCurrentMyTestsMessageId());
         }
         else if (data.startsWith("start_quiz_class")) {
             if (user.getCurrentStartQuizTestMessageId() != null)
@@ -987,7 +972,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             String classId = data.replaceAll("start_quiz_class_", "");
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
             if (classes == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить классы пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.user.classes", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -995,14 +980,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             user.setCurrentStartQuizClass(chosenClass);
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             ArrayList<Test> tests = DBManager.getTests(chatId);
 
             if (tests == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить тесты пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.user.tests", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -1014,9 +999,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int i = 0; i < tests.size(); i++)
                 callbacks.add("start_quiz_test_" + i);
 
-            Integer messageId = sendMessage(translator.getTranslatedText("Выберите тест для начала квиза.", user.getLang()), chatId, testsStrings, callbacks, user.getCurrentStartQuizTestMessageId());
+            Integer messageId = sendMessage(translator.getTranslatedText("select.test.for.quiz", user.getLang()), chatId, testsStrings, callbacks, user.getCurrentStartQuizTestMessageId());
             if (messageId == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -1025,7 +1010,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             user.setCurrentStartQuizTestMessageId(messageId);
             if (!saveUser(user))
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
         }
         else if (data.startsWith("start_quiz_test")) {
             if (user.getCurrentStartQuizTestMessageId() != null)
@@ -1034,17 +1019,17 @@ public class TelegramBot extends TelegramLongPollingBot {
             String testId = data.replaceAll("start_quiz_test_", "");
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить тесты пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.user.tests", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             Test chosenTest = tests.get(Integer.parseInt(testId));
 
-            Integer messageId = sendMessage(translator.getTranslatedText("Создание квиза...", user.getLang()), chatId);
+            Integer messageId = sendMessage(translator.getTranslatedText("creating.quiz", user.getLang()), chatId);
 
             Thread quizThread = new Thread(() -> {
                 synchronized (this) {
-                    alertMessage(translator.getTranslatedText("Квиз успешно создан!", user.getLang()), chatId, 30000, user);
+                    alertMessage(translator.getTranslatedText("quiz.created", user.getLang()), chatId, 30000, user);
                     deleteMessage(messageId, chatId);
                     Quiz quiz = new Quiz(chatId, user.getCurrentStartQuizClass(), chosenTest);
                     quiz.startQuiz(this, (ArrayList<User>) users, chatId);
@@ -1056,20 +1041,20 @@ public class TelegramBot extends TelegramLongPollingBot {
             switch(data){
                 case "changeAutoDelete" -> {
                     ArrayList<String> options = new ArrayList<>();
-                    options.add("Включить везде");
-                    options.add("Включить только для сообщений пользователя");
-                    options.add("Выключить");
+                    options.add("enable.everywhere");
+                    options.add("enable.user.messages");
+                    options.add("disable");
                     ArrayList<String> callbacks = new ArrayList<>();
                     callbacks.add("autoDeleteOn");
                     callbacks.add("autoDeleteUser");
                     callbacks.add("autoDeleteOff");
-                    sendMessage(translator.getTranslatedText("Пожалуйста, выберите способ автоудаления сообщений.", user.getLang()), chatId, options, callbacks, user.getAutoDeleteSetMessageId());
+                    sendMessage(translator.getTranslatedText("select.auto.delete.method", user.getLang()), chatId, options, callbacks, user.getAutoDeleteSetMessageId());
                 }
                 case "changeAutoDeleteDelay" ->{
                     System.out.println("changeAutoDeleteDelay");
-                    Integer messageId = sendMessage(translator.getTranslatedText("Пожалуйста, введите количество секунд, перед тем как сообщение будет удаляться, или /exit для отмены..", user.getLang()), chatId);
+                    Integer messageId = sendMessage(translator.getTranslatedText("enter.seconds", user.getLang()), chatId);
                     if (messageId == null) {
-                        alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
                         return;
                     }
 
@@ -1079,7 +1064,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     user.setCurrentAutoDeleteSetSecondsMessageId(messageId);
                     user.setState("changingAutoDelay");
                     if (!saveUser(user))
-                        alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                        alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 }
             }
         }
@@ -1089,11 +1074,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "autoDeleteUser" -> user.setAutoDeleting("autoDeleteUser");
                 case "autoDeleteOff" -> user.setAutoDeleting("autoDeleteOff");
                 default -> {
-                    alertMessage(translator.getTranslatedText("Пожалуйста, нажмите на кнопку.", user.getLang()), chatId, 5000, user);
+                    alertMessage(translator.getTranslatedText("press.button", user.getLang()), chatId, 5000, user);
                     return;
                 }
             }
-            alertMessage(translator.getTranslatedText("Поведение автоудаления успешно изменено!", user.getLang()), chatId, 15000, user);
+            alertMessage(translator.getTranslatedText("auto.delete.changed", user.getLang()), chatId, 15000, user);
             sendAutoDeleteSettings(chatId, user);
         }
     }
@@ -1103,19 +1088,19 @@ public class TelegramBot extends TelegramLongPollingBot {
             startRegistration(update, chatId);
         else if (msg.startsWith("/newclass")) {
             if (user.getClassCount() >= 5) {
-                alertMessage(translator.getTranslatedText("Вы больше не можете создавать классы! Лимит - 5 классов", user.getLang()), chatId, 15000, user);
+                alertMessage(translator.getTranslatedText("class.limit", user.getLang()), chatId, 15000, user);
                 return;
             }
             user.setState("class_name");
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 return;
             }
 
-            Integer messageId = sendMessage(translator.getTranslatedText("Введите название нового класса. (/exit для отмены)", user.getLang()), chatId);
+            Integer messageId = sendMessage(translator.getTranslatedText("enter.class.name", user.getLang()), chatId);
 
             if (messageId == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -1124,45 +1109,44 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             user.setLastMessageId(messageId);
             if (!saveUser(user))
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
         } else if (msg.startsWith("/myclasses")) {
             if (user.getCurrentMyClassesMessageId() != null)
                 deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
             user.setCurrentMyClassesMessageId(null);
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             sendClasses(chatId, user);
         } else if (msg.startsWith("/newtest")) {
             if (user.getTestsCount() >= 10) {
-                alertMessage(translator.getTranslatedText("Вы больше не можете создавать тесты! Лимит - 10 тестов", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("test.limit", user.getLang()), chatId, 10000, user);
                 return;
             }
             user.setState("create_test");
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user.short", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(String.valueOf(chatId));
-            sendMessage.setText(translator.getTranslatedText("Пожалуйста, отправьте .json файл с тестом, создайте новый тест в мини-приложении или напишите /exit для отмены.", user.getLang()));
+            sendMessage.setText(translator.getTranslatedText("send.json.or.miniapp", user.getLang()));
 
             ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
             keyboard.setResizeKeyboard(true);
             keyboard.setOneTimeKeyboard(false);
 
             KeyboardButton webAppButton = new KeyboardButton();
-            webAppButton.setText(translator.getTranslatedText("Создать тест", user.getLang()));
+            webAppButton.setText(translator.getTranslatedText("create.test", user.getLang()));
 
             WebAppInfo webAppInfo = new WebAppInfo();
             webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=newTest");
             webAppButton.setWebApp(webAppInfo);
 
-            KeyboardRow row =
-                    new KeyboardRow();
+            KeyboardRow row = new KeyboardRow();
             row.add(webAppButton);
 
             keyboard.setKeyboard(List.of(row));
@@ -1177,7 +1161,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             if (messageId == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -1186,15 +1170,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             user.setLastMessageId(messageId);
             if (!saveUser(user))
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
         }
-
         else if (msg.startsWith("/mytests")) {
             if (user.getCurrentMyTestsMessageId() != null)
                 deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
             user.setCurrentMyTestsMessageId(null);
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -1209,23 +1192,23 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
             if (classes == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить ваши классы, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.your.classes", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             if (classes.isEmpty()) {
-                alertMessage(translator.getTranslatedText("У вас ещё нет классов.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("no.classes.yet", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить ваши тесты, попробуйте ещё...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.your.tests", user.getLang()), chatId, 10000, user);
                 return;
             }
 
             if (tests.isEmpty()) {
-                alertMessage(translator.getTranslatedText("У вас ещё нет тестов.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("no.tests.yet", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -1238,10 +1221,10 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int i = 0; i < classes.size(); i++)
                 callbacks.add("start_quiz_class_" + i);
 
-            Integer classMessageId = sendMessage(translator.getTranslatedText("Выберите класс для запуска квиза.", user.getLang()), chatId, classesStrings, callbacks, user.getCurrentStartQuizClassMessageId());
+            Integer classMessageId = sendMessage(translator.getTranslatedText("select.class.for.quiz", user.getLang()), chatId, classesStrings, callbacks, user.getCurrentStartQuizClassMessageId());
 
             if (classMessageId == null) {
-                alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -1250,14 +1233,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             user.setCurrentStartQuizClassMessageId(classMessageId);
             if (!saveUser(user))
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
         }
         else if (msg.startsWith("/setautodelete")) {
             if (user.getAutoDeleteSetMessageId() != null)
                 deleteMessage(user.getAutoDeleteSetMessageId(), chatId);
             user.setAutoDeleteSetMessageId(null);
             if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 return;
             }
 
@@ -1277,29 +1260,29 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void viewClass(String classId, long chatId, User user) {
         ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
         if (classes == null) {
-            alertMessage(translator.getTranslatedText("Не удалось получить классы пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.get.user.classes", user.getLang()), chatId, 10000, user);
             return;
         }
 
         StudentClass chosenClass = classes.get(Integer.parseInt(classId));
         ArrayList<String> userUsernames = DBManager.getUsernamesByIds(chosenClass.getStudents());
         if (userUsernames == null) {
-            alertMessage(translator.getTranslatedText("Не удалось получить пользователей класса, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.get.class.users", user.getLang()), chatId, 10000, user);
             return;
         }
 
         StringBuilder classString = new StringBuilder();
-        classString.append(translator.getTranslatedText("Название класса: \"{0}\"\nУченики: \n", user.getLang(), chosenClass.getName()));
+        classString.append(translator.getTranslatedText("class.name.label", user.getLang(), chosenClass.getName()));
         for (String username: userUsernames)
             classString.append("- @").append(username).append("\n");
 
         System.out.println(userUsernames);
         System.out.println(classString);
         ArrayList<String> options = new ArrayList<>();
-        options.add("Удалить ученика");
-        options.add("Добавить ученика");
-        options.add("Назад");
-        options.add("Удалить класс");
+        options.add("remove.student");
+        options.add("add.student");
+        options.add("back");
+        options.add("delete.class");
 
         ArrayList<String> callbacks = new ArrayList<>();
         callbacks.add("delete_student");
@@ -1309,7 +1292,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         user.setCurrentChangingClass(chosenClass);
         if (!saveUser(user)) {
-            alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
             return;
         }
 
@@ -1318,15 +1301,15 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     public void sendAutoDeleteSettings(long chatId, User user) {
         ArrayList<String> options = new ArrayList<>();
-        options.add("Настроить поведение");
-        options.add("Настроить время");
+        options.add("configure.behavior");
+        options.add("configure.time");
         ArrayList<String> callbacks = new ArrayList<>();
         callbacks.add("changeAutoDelete");
         callbacks.add("changeAutoDeleteDelay");
-//
-        Integer messageId = sendMessage(translator.getTranslatedText("Пожалуйста, выберите способ автоудаления сообщений.", user.getLang()), chatId, options, callbacks, user.getAutoDeleteSetMessageId());
+
+        Integer messageId = sendMessage(translator.getTranslatedText("select.auto.delete.method", user.getLang()), chatId, options, callbacks, user.getAutoDeleteSetMessageId());
         if (messageId == null) {
-            alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
             return;
         }
 
@@ -1335,7 +1318,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         user.setAutoDeleteSetMessageId(messageId);
         if (!saveUser(user))
-            alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
     }
 
     public void sendTests(long chatId, User user) {
@@ -1343,19 +1326,19 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (tests == null) {
             if (user.getCurrentMyTestsMessageId() != null)
                 deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
-            alertMessage(translator.getTranslatedText("Не удалось получить тесты пользователя...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.get.user.tests.ellipsis", user.getLang()), chatId, 10000, user);
             return;
         }
         if (tests.isEmpty()) {
             if (user.getCurrentMyTestsMessageId() != null)
                 deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
-            alertMessage(translator.getTranslatedText("У вас нет тестов!", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("no.tests", user.getLang()), chatId, 10000, user);
             return;
         }
 
         ArrayList<String> testsStrings = new ArrayList<>();
         for (Test test : tests)
-            testsStrings.add(translator.getTranslatedText(" - {0} ({1} вопросов).\n", user.getLang(), test.getTestName(), test.getQuestions().size()));
+            testsStrings.add(translator.getTranslatedText("test.list.item", user.getLang(), test.getTestName(), test.getQuestions().size()));
 
         ArrayList<String> callbacks = new ArrayList<>();
 
@@ -1364,14 +1347,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         user.setCurrentChangingTest(null);
         if (!saveUser(user)) {
-            alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
             return;
         }
 
-        Integer messageId = sendMessage(translator.getTranslatedText("Ваши тесты ({0}): \n", user.getLang(), tests.size()), chatId, testsStrings, callbacks, user.getCurrentMyTestsMessageId());
+        Integer messageId = sendMessage(translator.getTranslatedText("your.tests", user.getLang(), tests.size()), chatId, testsStrings, callbacks, user.getCurrentMyTestsMessageId());
 
         if (messageId == null) {
-            alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
             return;
         }
 
@@ -1380,24 +1363,24 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         user.setCurrentMyTestsMessageId(messageId);
         if (!saveUser(user))
-            alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
     }
 
     public void sendClasses(long chatId, User user){
         ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
         if (classes == null) {
-            alertMessage(translator.getTranslatedText("Не удалось получить классы пользователя...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.get.user.classes.ellipsis", user.getLang()), chatId, 10000, user);
             return;
         }
         if (classes.isEmpty()) {
-            alertMessage(translator.getTranslatedText("У вас нет классов!", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("no.classes", user.getLang()), chatId, 10000, user);
             return;
         }
 
         ArrayList<String> classesStrings = new ArrayList<>();
 
         for (StudentClass studentClass : classes)
-            classesStrings.add(translator.getTranslatedText("{0} ({1} учеников)\n", user.getLang(), studentClass.getName(), studentClass.getStudents().size()));
+            classesStrings.add(translator.getTranslatedText("class.list.item", user.getLang(), studentClass.getName(), studentClass.getStudents().size()));
 
         ArrayList<String> callbacks = new ArrayList<>();
 
@@ -1406,13 +1389,13 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         user.setCurrentStartQuizClass(null);
         if (!saveUser(user)) {
-            alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
             return;
         }
 
-        Integer messageId = sendMessage(translator.getTranslatedText("Ваши классы ({0}): \n", user.getLang(), classes.size()), chatId, classesStrings, callbacks, user.getCurrentMyClassesMessageId());
+        Integer messageId = sendMessage(translator.getTranslatedText("your.classes", user.getLang(), classes.size()), chatId, classesStrings, callbacks, user.getCurrentMyClassesMessageId());
         if (messageId == null) {
-            alertMessage(translator.getTranslatedText("Не удалось получить ID сообщения, возможно оно не будет обрабатываться.", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
             return;
         }
 
@@ -1421,12 +1404,14 @@ public class TelegramBot extends TelegramLongPollingBot {
 
         user.setCurrentMyClassesMessageId(messageId);
         if (!saveUser(user))
-            alertMessage(translator.getTranslatedText("Не удалось обновить состояние пользователя, попробуйте ещё раз...", user.getLang()), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
     }
+
     @GetMapping("/health")
     public String index(){
         return "Hello, sufferings!";
     }
+
     @Configuration
     public class CorsConfig implements WebMvcConfigurer {
         @Override
@@ -1450,7 +1435,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 .findFirst()
                 .orElse(null);
         if (user == null){
-            alertMessage(translator.getTranslatedText("Не получилось найти пользователя...", "ru"), chatId, 10000, null);
+            alertMessage(translator.getTranslatedText("user.not.found.short", "ru"), chatId, 10000, null);
             return;
         }
         String fileName = "newTest_" + chatId + "_" + System.currentTimeMillis() + ".json";
@@ -1486,7 +1471,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     String prevContent = req.getPrev_content();
                     System.out.println("Prev content: " + prevContent);
                     if (!DBManager.deleteTest(chatId, prevContent)) {
-                        sendMessage(translator.getTranslatedText("Не удалось изменить тест, попробуйте ещё раз...", user.getLang()), chatId);
+                        sendMessage(translator.getTranslatedText("failed.modify.test", user.getLang()), chatId);
                         return;
                     }
                     createTest(chatId, user, writtenFile.getName());
