@@ -28,7 +28,6 @@ public class Quiz {
 
     public void startQuiz(TelegramBot bot, ArrayList<User> users, long chatId) {
         Quiz quiz = this;
-        // получаем учителя для языка сообщений об ошибках
         User teacher = users.stream().filter(u -> u.getChatId() == chatId).findFirst().orElse(null);
         String teacherLang = (teacher != null) ? teacher.getLang() : "ru";
 
@@ -78,26 +77,25 @@ public class Quiz {
                         callbacks.add("ans_" + j);
 
                     messageId = bot.sendMessagePhoto(
-                            bot.getTranslator().getTranslatedText("Вопрос #%d: %s", userLang, 1, question.getQuestion()),
+                            bot.getTranslator().getTranslatedText("Вопрос #{0}: {1}", userLang, 1, question.getQuestion()),
                             x, question.getImage(), variants, callbacks, null
                     );
                     userCurrent.setPrevType("var");
 
                 } else if (questionType.equalsIgnoreCase("ans")) {
                     messageId = bot.sendMessagePhoto(
-                            bot.getTranslator().getTranslatedText("Вопрос #%d: %s", userLang, 1, question.getQuestion()),
+                            bot.getTranslator().getTranslatedText("Вопрос #{0}: {1}", userLang, 1, question.getQuestion()),
                             x, question.getImage()
                     );
                     userCurrent.setPrevType("ans");
                 } else {
-                    // place holder for surveys
                     ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
                     ArrayList<String> callbacks = new ArrayList<>();
                     for (int j = 0; j < variants.size(); j++)
                         callbacks.add("srv_" + j);
 
                     messageId = bot.sendMessagePhoto(
-                            bot.getTranslator().getTranslatedText("Опрос #%d: %s", userLang, 1, question.getQuestion()),
+                            bot.getTranslator().getTranslatedText("Опрос #{0}: {1}", userLang, 1, question.getQuestion()),
                             x, question.getImage(), variants, callbacks, null
                     );
                 }
