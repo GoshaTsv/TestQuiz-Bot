@@ -236,7 +236,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     AnswerCallbackQuery answer = new AnswerCallbackQuery();
                     answer.setCallbackQueryId(update.getCallbackQuery().getId());
 
-                    String selectedAnswer = callbackData.replace("ans_", "");
+                    String selectedAnswer = callbackData.replace("srv_", "");
                     List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
                     String correctAnswer = String.valueOf(keys.indexOf(getCorrectAnswerForQuestion(currentQuestion)));
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
@@ -413,11 +413,26 @@ public class TelegramBot extends TelegramLongPollingBot {
                 for (int j = 0; j < variants.size(); j++)
                     callbacks.add("srv_" + j);
 
-                messageId = sendMessagePhoto(
+                Integer quizMessageId = sendMessagePhoto(
                         getTranslator().getTranslatedText("survey.number", user.getLang(), 1, question.getQuestion()),
                         chatId, question.getImage(), variants, callbacks, null
                 );
                 user.setPrevType("srv");
+
+                if (!saveUser(user)) {
+                    alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+                    return;
+                }
+
+                if (quizMessageId == null) {
+                    alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
+                    return;
+                }
+
+                if (quizMessageId == -1)
+                    return;
+
+                user.setCurrentQuizMessageId(quizMessageId);
                 if (!saveUser(user))
                     alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
             }
