@@ -103,7 +103,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         messageId = message.getMessageId();
         if (messageId != null) {
             if (!rateLimiter.tryConsume(chatId)) {
-                alertMessage("message.spam", chatId, 5000, user);
+                alertMessage(translator.getTranslatedText("message.spam", user.getLang()), chatId, 5000, user);
                 return;
             }
             if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteUser") || user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")) {
