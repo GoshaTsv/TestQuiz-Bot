@@ -307,9 +307,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 Thread thread = new Thread(() -> {
                     System.out.println("thread launched!");
-                    sendMessage(translator.getTranslatedText("quiz.congrats", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()-user.getSurveyAnswers().size()), chatId);
+                    User teacher = users.stream().filter(x -> x.getChatId() == quiz.getTeacherId()).findFirst().orElse(null);
+
+                    if (teacher == null) {
+                        alertMessage(translator.getTranslatedText("user.not.found", DEFAULT_LANG), quiz.getTeacherId(), 10000, teacher);
+                        return;
+                    }
+
+                    sendMessage(translator.getTranslatedText("quiz.congrats", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size() - user.getSurveyAnswers().size()), chatId);
                     sendMessage(
-                            translator.getTranslatedText("quiz.finished", user.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size() - user.getSurveyAnswers().size()),
+                            translator.getTranslatedText("quiz.finished", teacher.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size() - user.getSurveyAnswers().size()),
                             quiz.getTeacherId()
                     );
 
@@ -325,9 +332,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.out.println("Question: " + test.getQuestions().get(i));
                         System.out.println("User answer: " + userAnswer);
                         System.out.println("Correct answer: " + correctAnswer);
-                        if (!test.getQuestions().get(i).getType().equalsIgnoreCase("srv")){
-                            sendMessage(translator.getTranslatedText("quiz.question.result", user.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
-                        }
+                        if (!test.getQuestions().get(i).getType().equalsIgnoreCase("srv"))
+                            sendMessage(translator.getTranslatedText("quiz.question.result", teacher.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
                         else{
                             surveyCount++;
                             sendMessage(translator.getTranslatedText("quiz.survey.result", user.getLang(), surveyCount, question, userName, userAnswer), quiz.getTeacherId());
@@ -335,9 +341,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                         try {
                             Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
-                        }
+                        } catch (InterruptedException ignored) {}
                     }
                     user.setQuizState(-1);
                     user.setCurrentQuiz(null);
