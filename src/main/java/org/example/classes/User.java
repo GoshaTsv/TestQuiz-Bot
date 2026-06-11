@@ -12,7 +12,10 @@ public class User {
     // user data
     private String state;
     private long chatId;
+
+    // language
     private String lang;
+    private Integer currentSetLangMessageId;
 
     // auto deleting
     private String autoDeleting;
@@ -57,6 +60,14 @@ public class User {
     private Integer lastMessageId;
     //WebRequest for importing classes into the web app
     private WebRequest lastWebReq;
+
+    public Integer getCurrentSetLangMessageId() {
+        return currentSetLangMessageId;
+    }
+
+    public void setCurrentSetLangMessageId(Integer currentSetLangMessageId) {
+        this.currentSetLangMessageId = currentSetLangMessageId;
+    }
 
     public String getLang() {
         return lang;

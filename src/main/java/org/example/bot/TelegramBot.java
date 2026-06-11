@@ -50,6 +50,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private List<User> users = Collections.synchronizedList(new ArrayList<>());
     private Translator translator;
     private final int MILLIS_IN_SECONDS = 1000;
+    private final String DEFAULT_LANG = "en";
 
     public List<User> getUsers() {
         return users;
@@ -84,17 +85,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
 
         if (!message.hasText() && !message.hasDocument() && !update.hasCallbackQuery()) {
-            alertMessage(translator.getTranslatedText("only.messages.or.files", user != null ? user.getLang() : "ru"), chatId, 10000, user);
+            alertMessage(translator.getTranslatedText("only.messages.or.files", user != null ? user.getLang() : DEFAULT_LANG), chatId, 10000, user);
             return;
         }
 
         if (user == null) {
-            User testUser = new User(chatId, "default", "ru", 0, 0, -1, null);
+            User testUser = new User(chatId, "default", DEFAULT_LANG, 0, 0, -1, null);
             System.out.println("User is null for " + chatId);
             if (message.hasText() && message.getText().startsWith("/start") && !(message.getText().startsWith("/startquiz")))
-                startRegistration(update, chatId);
+                startRegistration(update, chatId, null);
             else
-                alertMessage(translator.getTranslatedText("write.start.to.register", "ru"), chatId, 20000, testUser);
+                alertMessage(translator.getTranslatedText("write.start.to.register", DEFAULT_LANG), chatId, 20000, testUser);
             return;
         }
         messageId = message.getMessageId();
@@ -367,29 +368,43 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
-    private void startRegistration(Update update, long chatId) {
+    private void startRegistration(Update update, long chatId, User user) {
         String username = update.getMessage().getFrom().getUserName();
-        User testUser = new User(chatId, "default", "ru", 0, 0, -1, null);
 
-        if (username == null) {
-            alertMessage(translator.getTranslatedText("set.username", "ru"), chatId, 20000, testUser);
-            return;
-        }
+        if (user == null) {
+            String userLangCode = update.getMessage().getFrom().getLanguageCode();
+            ArrayList<String> languages = new ArrayList<>();
+            languages.add("ru");
+            languages.add("be");
+            languages.add("en");
 
-        int doesUserExit = DBManager.doesUserExist(username);
-        if (doesUserExit == 2) {
-            alertMessage(translator.getTranslatedText("error.checking.user", "ru"), chatId, 10000, testUser);
-            return;
-        }
+            if (!languages.contains(userLangCode))
+                userLangCode = DEFAULT_LANG;
 
-        if (doesUserExit == 0)
-            if (!DBManager.registerAccount(username, chatId)) {
-                alertMessage(translator.getTranslatedText("error.registering", "ru"), chatId, 10000, testUser);
+            User testUser = new User(chatId, "default", userLangCode, 0, 0, -1, null);
+
+            if (username == null) {
+                alertMessage(translator.getTranslatedText("set.username", userLangCode), chatId, 20000, testUser);
                 return;
             }
 
-        sendMessage(translator.getTranslatedText("start.message", "ru"), chatId);
-        users.add(new User(chatId, "default", "ru", 0, 0, -1, null));
+            int doesUserExit = DBManager.doesUserExist(username);
+            if (doesUserExit == 2) {
+                alertMessage(translator.getTranslatedText("error.checking.user", userLangCode), chatId, 10000, testUser);
+                return;
+            }
+
+            if (doesUserExit == 0) {
+                if (!DBManager.registerAccount(username, chatId)) {
+                    alertMessage(translator.getTranslatedText("error.registering", userLangCode), chatId, 10000, testUser);
+                    return;
+                }
+
+                sendMessage(translator.getTranslatedText("start.message", userLangCode), chatId);
+                users.add(new User(chatId, "default", userLangCode, 0, 0, -1, null));
+            }
+        }
+        sendMessage(translator.getTranslatedText("start.message", user.getLang()), chatId);
     }
 
     public boolean saveUser(User user) {
@@ -527,7 +542,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
         if (user == null){
-            alertMessage(translator.getTranslatedText("user.not.found.short", "ru"), chatId, 10000, new User(chatId, "default", "ru", 0, 0, -1, null));
+            alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, new User(chatId, "default", DEFAULT_LANG, 0, 0, -1, null));
             return null;
         }
         if (editMessageId == null) {
@@ -606,7 +621,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             return execute(sendPhotoRequest).getMessageId();
         } catch (TelegramApiException e) {
-            sendMessage(translator.getTranslatedText("error.try.again", "ru"), chatId);
+            sendMessage(translator.getTranslatedText("error.try.again", DEFAULT_LANG), chatId);
             return -1;
         }
     }
@@ -648,7 +663,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             return execute(sendPhotoRequest).getMessageId();
         } catch (TelegramApiException e) {
-            sendMessage(translator.getTranslatedText("error.try.again", "ru"), chatId);
+            sendMessage(translator.getTranslatedText("error.try.again", DEFAULT_LANG), chatId);
             return -1;
         }
     }
@@ -680,12 +695,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         AtomicInteger count = new AtomicInteger();
         List<List<InlineKeyboardButton>> rows = new ArrayList<>();
         User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().orElse(null);
-        String lang = user != null ? user.getLang() : "ru";
+        String lang = user != null ? user.getLang() : DEFAULT_LANG;
 
         buttons.forEach(x -> {
             List<InlineKeyboardButton> row = new ArrayList<>();
             InlineKeyboardButton button = new InlineKeyboardButton();
-            // x - это уже ключ перевода
+
             button.setText(translator.getTranslatedText(x, lang));
             if (callbacks.get(count.get()).equalsIgnoreCase("change_test")){
                 System.out.println("found change_test");
@@ -694,7 +709,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 button.setWebApp(webAppInfo);
 
                 if (user == null){
-                    alertMessage(translator.getTranslatedText("user.not.found.short", "ru"), chatId, 10000, null);
+                    alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, null);
                     return;
                 }
 
@@ -1081,11 +1096,30 @@ public class TelegramBot extends TelegramLongPollingBot {
             alertMessage(translator.getTranslatedText("auto.delete.changed", user.getLang()), chatId, 15000, user);
             sendAutoDeleteSettings(chatId, user);
         }
+        else if(data.startsWith("lang")) {
+            String lang = data.replaceAll("lang_", "");
+            if (lang.equals(user.getLang())) {
+                alertMessage(translator.getTranslatedText("language.already.chosen", user.getLang()), chatId, 10000, user);
+                return;
+            }
+
+            user.setLang(lang);
+            if (!saveUser(user)) {
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+                return;
+            }
+            if (!DBManager.updateUserLang(chatId, user.getLang())) {
+                alertMessage(translator.getTranslatedText("failed.language", user.getLang()), chatId, 10000, user);
+                return;
+            }
+
+            alertMessage(translator.getTranslatedText("language.changed", user.getLang()), chatId, 15000, user);
+        }
     }
 
     private void processCommands(Update update, String msg, long chatId, User user) {
         if (msg.startsWith("/start") && !(msg.startsWith("/startquiz")))
-            startRegistration(update, chatId);
+            startRegistration(update, chatId, user);
         else if (msg.startsWith("/newclass")) {
             if (user.getClassCount() >= 5) {
                 alertMessage(translator.getTranslatedText("class.limit", user.getLang()), chatId, 15000, user);
@@ -1246,6 +1280,17 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             sendAutoDeleteSettings(chatId, user);
         }
+        else if (msg.startsWith("/setlanguage")) {
+            if (user.getCurrentSetLangMessageId() != null)
+                deleteMessage(user.getCurrentSetLangMessageId(), chatId);
+            user.setCurrentSetLangMessageId(null);
+            if (!saveUser(user)) {
+                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+                return;
+            }
+
+            sendLangSet(chatId, user);
+        }
     }
 
     public void loadUsers() {
@@ -1317,6 +1362,30 @@ public class TelegramBot extends TelegramLongPollingBot {
             return;
 
         user.setAutoDeleteSetMessageId(messageId);
+        if (!saveUser(user))
+            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+    }
+
+    public void sendLangSet(long chatId, User user) {
+        ArrayList<String> langs = new ArrayList<>();
+        langs.add("Русский");
+        langs.add("Белорускi");
+        langs.add("English");
+        ArrayList<String> callbacks = new ArrayList<>();
+        callbacks.add("lang_ru");
+        callbacks.add("lang_be");
+        callbacks.add("lang_en");
+
+        Integer messageId = sendMessage(translator.getTranslatedText("language.choose", user.getLang()), chatId, langs, callbacks, user.getAutoDeleteSetMessageId());
+        if (messageId == null) {
+            alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
+            return;
+        }
+
+        if (messageId == -1)
+            return;
+
+        user.setCurrentSetLangMessageId(messageId);
         if (!saveUser(user))
             alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
     }
@@ -1435,7 +1504,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 .findFirst()
                 .orElse(null);
         if (user == null){
-            alertMessage(translator.getTranslatedText("user.not.found.short", "ru"), chatId, 10000, null);
+            alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, null);
             return;
         }
         String fileName = "newTest_" + chatId + "_" + System.currentTimeMillis() + ".json";
