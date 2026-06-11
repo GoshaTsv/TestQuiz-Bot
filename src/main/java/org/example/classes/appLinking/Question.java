@@ -51,6 +51,8 @@ public class Question {
         return "Question{" +
                 "question='" + question + '\'' +
                 ", answers=" + answers +
+                ", image=" + image +
+                ", type='" + type + '\'' +
                 '}';
     }
 }
