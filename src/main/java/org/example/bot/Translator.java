@@ -24,21 +24,4 @@ public class Translator {
         Locale locale = Locale.forLanguageTag(lang);
         return messageSource.getMessage(rawString, args, locale);
     }
-
-    @PostConstruct
-    public void init() {
-        System.out.println("=== Translator initialized ===");
-        System.out.println("MessageSource class: " + messageSource.getClass().getName());
-
-        String[] langs = {"ru", "be", "en"};
-        for (String lang : langs) {
-            Locale locale = Locale.forLanguageTag(lang);
-            try {
-                String msg = messageSource.getMessage("start.message", null, locale);
-                System.out.println("+ " + lang + ": " + msg);
-            } catch (Exception e) {
-                System.out.println("- " + lang + ": " + e.getMessage());
-            }
-        }
-    }
 }
