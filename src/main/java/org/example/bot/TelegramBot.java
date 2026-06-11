@@ -1376,7 +1376,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         callbacks.add("lang_be");
         callbacks.add("lang_en");
 
-        Integer messageId = sendMessage(translator.getTranslatedText("language.choose", user.getLang()), chatId, langs, callbacks, user.getAutoDeleteSetMessageId());
+        Integer messageId = sendMessage(translator.getTranslatedText("language.choose", user.getLang()), chatId, langs, callbacks, user.getCurrentSetLangMessageId());
         if (messageId == null) {
             alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
             return;
