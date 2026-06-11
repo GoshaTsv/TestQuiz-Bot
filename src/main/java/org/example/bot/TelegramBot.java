@@ -307,9 +307,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 Thread thread = new Thread(() -> {
                     System.out.println("thread launched!");
-                    sendMessage(translator.getTranslatedText("quiz.congrats", user.getLang(), user.getCorrectAnswers()-user.getSurveyAnswers().size(), quiz.getTest().getQuestions().size()-user.getSurveyAnswers().size()), chatId);
+                    sendMessage(translator.getTranslatedText("quiz.congrats", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()-user.getSurveyAnswers().size()), chatId);
                     sendMessage(
-                            translator.getTranslatedText("quiz.finished", user.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers()-user.getSurveyAnswers().size(), quiz.getTest().getQuestions().size()-user.getSurveyAnswers().size()),
+                            translator.getTranslatedText("quiz.finished", user.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()-user.getSurveyAnswers().size()),
                             quiz.getTeacherId()
                     );
 
@@ -322,7 +322,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         String userAnswer = userAnswers.get(i).split("\uD80C\uDE78")[1];
                         String correctAnswer = getCorrectAnswerForQuestion(quiz.getTest().getQuestions().get(i));
 
-                        System.out.println("Question: " + question);
+                        System.out.println("Question: " + test.getQuestions().get(i));
                         System.out.println("User answer: " + userAnswer);
                         System.out.println("Correct answer: " + correctAnswer);
                         if (test.getQuestions().get(i).getType().equalsIgnoreCase("srv")){
@@ -424,8 +424,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     callbacks.add("srv_" + j);
 
                 Integer quizMessageId = sendMessagePhoto(
-                        getTranslator().getTranslatedText("survey.number", user.getLang(), 1, question.getQuestion()),
-                        chatId, question.getImage(), variants, callbacks, null
+                        getTranslator().getTranslatedText("survey.number", user.getLang(), user.getQuizState(), question.getQuestion()),
+                        chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId()
                 );
                 user.setPrevType("srv");
 
