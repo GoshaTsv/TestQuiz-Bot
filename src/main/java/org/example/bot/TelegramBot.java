@@ -51,6 +51,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private Translator translator;
     private final int MILLIS_IN_SECONDS = 1000;
     private final String DEFAULT_LANG = "en";
+    private final long MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
     public List<User> getUsers() {
         return users;
@@ -101,14 +102,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         messageId = message.getMessageId();
         if (messageId != null) {
             if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteUser") || user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")) {
-                Integer finalMessageId = messageId;
                 new Thread(() -> {
                     try {
                         Thread.sleep((long) user.getAutoDeleteLength() * MILLIS_IN_SECONDS);
                     } catch (InterruptedException e) {
                         System.out.println("An exception in auto delete user's messages: " + e.getMessage());
                     }
-                    deleteMessage(finalMessageId, chatId);
+                    deleteMessage(messageId, chatId);
                 }).start();
             }
         }
@@ -131,6 +131,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 processCallbackData(data, user, update, chatId);
             }
             if (message.hasDocument()) {
+                if (update.getMessage().getDocument().getFileSize() > MAX_FILE_SIZE) {
+                    alertMessage(translator.getTranslatedText("max.file.size", user.getLang()), chatId, 10000, user);
+                    return;
+                }
+
                 if (!(update.getMessage().getDocument().getFileName().endsWith(".json"))) {
                     alertMessage(translator.getTranslatedText("send.json.file", user.getLang()), chatId, 10000, user);
                     return;
