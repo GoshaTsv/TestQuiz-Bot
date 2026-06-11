@@ -43,6 +43,7 @@ public class User {
     private LinkedHashMap<String, Boolean> userAnswers;
     private Integer currentQuizMessageId;
     private Integer currentQuizPhotoId;
+    private ArrayList<String> surveyAnswers;
 
     // change classes/tests
     private StudentClass currentChangingClass;
@@ -193,6 +194,14 @@ public class User {
         return autoDeleting;
     }
 
+    public ArrayList<String> getSurveyAnswers() {
+        return surveyAnswers;
+    }
+
+    public void setSurveyAnswers(ArrayList<String> surveyAnswers) {
+        this.surveyAnswers = surveyAnswers;
+    }
+
     public User(long chatId, String state, String lang, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
         this.chatId = chatId;
         this.state = state;
@@ -207,6 +216,7 @@ public class User {
         this.autoDeleting = "autoDeleteUser";
         lastWebReq = new WebRequest();
         autoDeleteLength = 60;
+        surveyAnswers = new ArrayList<>();
     }
 
     public String getState() {
