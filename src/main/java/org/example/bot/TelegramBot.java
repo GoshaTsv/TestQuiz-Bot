@@ -48,7 +48,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
     private List<User> users = Collections.synchronizedList(new ArrayList<>());
-    private Translator translator;
+    private final Translator translator;
+    private final RateLimiterManager rateLimiter = new RateLimiterManager();
     private final int MILLIS_IN_SECONDS = 1000;
     private final String DEFAULT_LANG = "en";
     private final long MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
@@ -101,6 +102,10 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         messageId = message.getMessageId();
         if (messageId != null) {
+            if (!rateLimiter.tryConsume(chatId)) {
+                alertMessage("message.spam", chatId, 5000, user);
+                return;
+            }
             if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteUser") || user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")) {
                 new Thread(() -> {
                     try {
