@@ -356,7 +356,7 @@ public class DBManager {
         }
 
         try {
-            PreparedStatement st = connection.prepareStatement("UPDATE public.users SET lang = ? WHERE id = ?");
+            PreparedStatement st = connection.prepareStatement("UPDATE public.users SET lang = ? WHERE chat_id = ?");
             st.setString(1, lang);
             st.setLong(2, chatId);
 
