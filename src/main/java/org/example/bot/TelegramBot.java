@@ -336,7 +336,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                             sendMessage(translator.getTranslatedText("quiz.question.result", teacher.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
                         else{
                             surveyCount++;
-                            sendMessage(translator.getTranslatedText("quiz.survey.result", user.getLang(), surveyCount, question, userName, userAnswer), quiz.getTeacherId());
+                            sendMessage(translator.getTranslatedText("quiz.survey.result", teacher.getLang(), surveyCount, question, userName, userAnswer), quiz.getTeacherId());
                         }
 
                         try {
