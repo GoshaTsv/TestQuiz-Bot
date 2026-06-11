@@ -309,14 +309,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                     System.out.println("thread launched!");
                     sendMessage(translator.getTranslatedText("quiz.congrats", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()-user.getSurveyAnswers().size()), chatId);
                     sendMessage(
-                            translator.getTranslatedText("quiz.finished", user.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()-user.getSurveyAnswers().size()),
+                            translator.getTranslatedText("quiz.finished", user.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size() - user.getSurveyAnswers().size()),
                             quiz.getTeacherId()
                     );
 
                     List<String> userAnswers = new ArrayList<>(user.getUserAnswers().keySet());
 
                     System.out.println("User answers: " + userAnswers);
-                    int surveyCount=0;
+                    int surveyCount = 0;
                     for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().getQuestions().size(); i++) {
                         String question = test.getQuestions().get(i).getQuestion();
                         String userAnswer = userAnswers.get(i).split("\uD80C\uDE78")[1];
@@ -325,7 +325,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.out.println("Question: " + test.getQuestions().get(i));
                         System.out.println("User answer: " + userAnswer);
                         System.out.println("Correct answer: " + correctAnswer);
-                        if (test.getQuestions().get(i).getType().equalsIgnoreCase("srv")){
+                        if (!test.getQuestions().get(i).getType().equalsIgnoreCase("srv")){
                             sendMessage(translator.getTranslatedText("quiz.question.result", user.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
                         }
                         else{
