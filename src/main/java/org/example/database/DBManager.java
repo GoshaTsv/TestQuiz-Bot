@@ -352,6 +352,26 @@ public class DBManager {
         return 1;
     }
 
+    public static boolean updateUserLang(long chatId, String lang) {
+        Connection connection = getConnection();
+        if (connection == null) {
+            System.out.println("Connection became null while updating user lang");
+            return false;
+        }
+
+        try {
+            PreparedStatement st = connection.prepareStatement("UPDATE public.user SET lang = ? WHERE id = ?");
+            st.setString(1, lang);
+            st.setLong(2, chatId);
+
+            st.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("An exception while updating user's lang: " + e.getMessage());
+            return false;
+        }
+    }
+
     public static ArrayList<User> getUsers() { // new method get users
         Connection connection = getConnection();
         if (connection == null) {
