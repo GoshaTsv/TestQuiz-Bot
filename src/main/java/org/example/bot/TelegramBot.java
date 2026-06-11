@@ -100,15 +100,17 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         messageId = message.getMessageId();
         if (messageId != null) {
-            if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteUser") || user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn"))
+            if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteUser") || user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")) {
+                Integer finalMessageId = messageId;
                 new Thread(() -> {
                     try {
                         Thread.sleep((long) user.getAutoDeleteLength() * MILLIS_IN_SECONDS);
                     } catch (InterruptedException e) {
                         System.out.println("An exception in auto delete user's messages: " + e.getMessage());
                     }
-                    deleteMessage(messageId, chatId);
+                    deleteMessage(finalMessageId, chatId);
                 }).start();
+            }
         }
         if (user.getQuizState() == -1) {
             if (message.hasText()) {
@@ -228,6 +230,41 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
             }
+            else if(user.getPrevType().equalsIgnoreCase("srv")){
+                if (update.hasCallbackQuery()) {
+                    String callbackData = update.getCallbackQuery().getData();
+                    AnswerCallbackQuery answer = new AnswerCallbackQuery();
+                    answer.setCallbackQueryId(update.getCallbackQuery().getId());
+
+                    String selectedAnswer = callbackData.replace("ans_", "");
+                    List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
+                    String correctAnswer = String.valueOf(keys.indexOf(getCorrectAnswerForQuestion(currentQuestion)));
+                    LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
+
+                    String userAnswer = keys.get(Integer.parseInt(selectedAnswer));
+
+                    newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, true);
+
+                    user.setUserAnswers(newUserAnswers);
+                    ArrayList<String> newUserSurveyAns = new ArrayList<>();
+                    newUserSurveyAns.add(userAnswer);
+                    user.setSurveyAnswers(newUserSurveyAns);
+
+                    System.out.println("Var");
+                    System.out.println("Selected answer: " + selectedAnswer);
+                    System.out.println("Correct answer: " + correctAnswer);
+                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
+                    System.out.println("new user answers: " + newUserAnswers);
+                    try {
+                        execute(answer);
+                    } catch (TelegramApiException e) {
+                        System.out.println("Exception while processing variant answer: " + e.getMessage());
+                    }
+                } else {
+                    alertMessage(translator.getTranslatedText("click.button", user.getLang()), chatId, 10000, user);
+                    return;
+                }
+            }
 
             if (!saveUser(user)) {
                 alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
@@ -260,16 +297,16 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
                 Thread thread = new Thread(() -> {
                     System.out.println("thread launched!");
-                    sendMessage(translator.getTranslatedText("quiz.congrats", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()), chatId);
+                    sendMessage(translator.getTranslatedText("quiz.congrats", user.getLang(), user.getCorrectAnswers()-user.getSurveyAnswers().size(), quiz.getTest().getQuestions().size()-user.getSurveyAnswers().size()), chatId);
                     sendMessage(
-                            translator.getTranslatedText("quiz.finished", user.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size()),
+                            translator.getTranslatedText("quiz.finished", user.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers()-user.getSurveyAnswers().size(), quiz.getTest().getQuestions().size()-user.getSurveyAnswers().size()),
                             quiz.getTeacherId()
                     );
 
                     List<String> userAnswers = new ArrayList<>(user.getUserAnswers().keySet());
 
                     System.out.println("User answers: " + userAnswers);
-
+                    int surveyCount=0;
                     for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().getQuestions().size(); i++) {
                         String question = test.getQuestions().get(i).getQuestion();
                         String userAnswer = userAnswers.get(i).split("\uD80C\uDE78")[1];
@@ -278,7 +315,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                         System.out.println("Question: " + question);
                         System.out.println("User answer: " + userAnswer);
                         System.out.println("Correct answer: " + correctAnswer);
-                        sendMessage(translator.getTranslatedText("quiz.question.result", user.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
+                        if (test.getQuestions().get(i).getType().equalsIgnoreCase("srv")){
+                            sendMessage(translator.getTranslatedText("quiz.question.result", user.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
+                        }
+                        else{
+                            surveyCount++;
+                            sendMessage(translator.getTranslatedText("quiz.survey.result", user.getLang(), surveyCount, question, userName, userAnswer), quiz.getTeacherId());
+                        }
 
                         try {
                             Thread.sleep(500);
@@ -336,7 +379,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (!saveUser(user))
                         alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 }).start();
-            } else {
+            } else if (question.getType().equalsIgnoreCase("ans")){
                 new Thread(() -> {
                     try {
                         Thread.sleep(250);
@@ -364,6 +407,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                     if (!saveUser(user))
                         alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 }).start();
+            } else if(question.getType().equalsIgnoreCase("srv")){
+                ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
+                ArrayList<String> callbacks = new ArrayList<>();
+                for (int j = 0; j < variants.size(); j++)
+                    callbacks.add("srv_" + j);
+
+                messageId = sendMessagePhoto(
+                        getTranslator().getTranslatedText("survey.number", user.getLang(), 1, question.getQuestion()),
+                        chatId, question.getImage(), variants, callbacks, null
+                );
+                user.setPrevType("srv");
+                if (!saveUser(user))
+                    alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
             }
         }
     }
@@ -1369,7 +1425,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void sendLangSet(long chatId, User user) {
         ArrayList<String> langs = new ArrayList<>();
         langs.add("Русский");
-        langs.add("Белорускi");
+        langs.add("Беларуская");
         langs.add("English");
         ArrayList<String> callbacks = new ArrayList<>();
         callbacks.add("lang_ru");

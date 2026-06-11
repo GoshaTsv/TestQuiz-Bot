@@ -98,6 +98,7 @@ public class Quiz {
                             bot.getTranslator().getTranslatedText("survey.number", userLang, 1, question.getQuestion()),
                             x, question.getImage(), variants, callbacks, null
                     );
+                    userCurrent.setPrevType("srv");
                 }
 
                 if (!bot.saveUser(userCurrent)) {
