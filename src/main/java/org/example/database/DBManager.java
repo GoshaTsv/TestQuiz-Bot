@@ -9,8 +9,6 @@ import org.example.classes.appLinking.Test;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 
 public class DBManager {
     private static final String USER = System.getenv("DB_USER");
@@ -22,7 +20,6 @@ public class DBManager {
             return DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (SQLException e) {
             System.out.println(e.getMessage());
-            e.printStackTrace();
             return null;
         }
     }
@@ -148,7 +145,7 @@ public class DBManager {
         Connection connection = getConnection();
         if (connection == null) {
             System.out.println("Connection became null while deleting " + userId + "'s test: " + content);
-            return false;
+            return true;
         }
 
         try {
@@ -156,10 +153,10 @@ public class DBManager {
             st.setLong(1, userId);
             st.setString(2, content);
             st.executeUpdate();
-            return true;
+            return false;
         } catch (SQLException e) {
             System.out.println("An exception while deleting " + userId + "'s test (" + content + "): " + e.getMessage());
-            return false;
+            return true;
         }
     }
 
@@ -179,7 +176,7 @@ public class DBManager {
             if (!res.next())
                 return null;
 
-            Long[] javaStudentsArray = (Long[]) res.getArray("students").getArray(); //changed primitive type to object
+            Long[] javaStudentsArray = (Long[]) res.getArray("students").getArray();
 
             return new StudentClass(teacherId, name, new ArrayList<>(Arrays.asList(javaStudentsArray)));
         } catch (SQLException e) {
@@ -250,9 +247,8 @@ public class DBManager {
         }
         ArrayList<String> usernames = new ArrayList<>();
         for (Long id: ids){
-            PreparedStatement st = null;
             try {
-                st = connection.prepareStatement("SELECT username FROM public.users WHERE chat_id = ?");
+                PreparedStatement st = connection.prepareStatement("SELECT username FROM public.users WHERE chat_id = ?");
                 st.setLong(1, id);
                 ResultSet res = st.executeQuery();
                 if (!res.next()) {
@@ -360,7 +356,7 @@ public class DBManager {
         }
 
         try {
-            PreparedStatement st = connection.prepareStatement("UPDATE public.user SET lang = ? WHERE id = ?");
+            PreparedStatement st = connection.prepareStatement("UPDATE public.users SET lang = ? WHERE id = ?");
             st.setString(1, lang);
             st.setLong(2, chatId);
 

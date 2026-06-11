@@ -920,7 +920,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
+            if (DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
                 alertMessage(translator.getTranslatedText("failed.delete.test", user.getLang()), chatId, 10000, user);
                 return;
             }
@@ -1539,7 +1539,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "changeTest" -> {
                     String prevContent = req.getPrev_content();
                     System.out.println("Prev content: " + prevContent);
-                    if (!DBManager.deleteTest(chatId, prevContent)) {
+                    if (DBManager.deleteTest(chatId, prevContent)) {
                         sendMessage(translator.getTranslatedText("failed.modify.test", user.getLang()), chatId);
                         return;
                     }
