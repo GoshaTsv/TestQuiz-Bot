@@ -12,6 +12,11 @@ public class User {
     // user data
     private String state;
     private long chatId;
+    private int permissionLevel;
+
+    // auto mute
+    private int warnings;
+    private long untilTime;
 
     // language
     private String lang;
@@ -61,6 +66,30 @@ public class User {
     private Integer lastMessageId;
     //WebRequest for importing classes into the web app
     private WebRequest lastWebReq;
+
+    public int getWarnings() {
+        return warnings;
+    }
+
+    public long getUntilTime() {
+        return untilTime;
+    }
+
+    public void setWarnings(int warnings) {
+        this.warnings = warnings;
+    }
+
+    public void setUntilTime(long untilTime) {
+        this.untilTime = untilTime;
+    }
+
+    public int getPermissionLevel() {
+        return permissionLevel;
+    }
+
+    public void setPermissionLevel(int permissionLevel) {
+        this.permissionLevel = permissionLevel;
+    }
 
     public Integer getCurrentSetLangMessageId() {
         return currentSetLangMessageId;
@@ -202,9 +231,10 @@ public class User {
         this.surveyAnswers = surveyAnswers;
     }
 
-    public User(long chatId, String state, String lang, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
+    public User(long chatId, String state, String lang, int permissionLevel, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
         this.chatId = chatId;
         this.state = state;
+        this.permissionLevel = permissionLevel;
         this.classCount = classCount;
         this.testsCount = testsCount;
         this.quizState = quizState;
@@ -217,6 +247,9 @@ public class User {
         lastWebReq = new WebRequest();
         autoDeleteLength = 60;
         surveyAnswers = new ArrayList<>();
+        warnings = 0;
+        untilTime = 0;
+
     }
 
     public String getState() {
