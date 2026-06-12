@@ -1153,6 +1153,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             });
             quizThread.start();
         }
+        else if(data.startsWith("startQuizUser")){
+            user.getCurrentQuiz().startQuizing(this, user, user.getCurrentQuiz().getTeacherId(), (ArrayList<User>) users, chatId);
+        }
         else if(data.startsWith("changeAutoDelete")){
             switch(data){
                 case "changeAutoDelete" -> {
