@@ -10,7 +10,7 @@ public class Question {
     private String type;
 
     public Question(HashMap<String, Boolean> answers, String question) {
-        this.answers = (LinkedHashMap<String, Boolean>) answers;
+        this.answers = new LinkedHashMap<>(answers);
         this.question = question;
     }
 

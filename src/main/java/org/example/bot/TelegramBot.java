@@ -179,6 +179,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
         }
         if (user.getQuizState() > -1) {
+            if (user.getQuizState() < 1) return;
             String userName;
             if (update.hasMessage()) {
                 userName = update.getMessage().getFrom().getUserName();
@@ -297,11 +298,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
-                return;
-            }
-
             user.setQuizState(user.getQuizState() + 1);
 
             if (messageId != null)
@@ -363,6 +359,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     user.setCurrentQuiz(null);
                     user.setCorrectAnswers(0);
                     user.setUserAnswers(new LinkedHashMap<>());
+                    user.setSurveyAnswers(new ArrayList<>());
                     user.setCurrentQuizPhotoId(null);
 
                     if (!saveUser(user))
@@ -504,6 +501,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage(translator.getTranslatedText("start.message", userLangCode), chatId);
                 users.add(new User(chatId, "default", userLangCode, 0, 0, 0, -1, null));
             }
+            return;
         }
         sendMessage(translator.getTranslatedText("start.message", user.getLang()), chatId);
     }
@@ -518,19 +516,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     public void deleteMessage(Integer deleteMessageId, long chatId) {
-        ForwardMessage forward = new ForwardMessage();
-        forward.setChatId(String.valueOf(chatId));
-        forward.setFromChatId(String.valueOf(chatId));
-        forward.setMessageId(deleteMessageId);
-        try {
-            DeleteMessage deleteForwarded = new DeleteMessage();
-            deleteForwarded.setChatId(String.valueOf(chatId));
-            deleteForwarded.setMessageId(forward.getMessageId());
-            execute(deleteForwarded);
-        } catch (TelegramApiException e) {
-            System.out.println("An exception while deleting message: " + e.getMessage());
-            return;
-        }
         DeleteMessage deleteMessage = new DeleteMessage();
         deleteMessage.setChatId(String.valueOf(chatId));
         deleteMessage.setMessageId(deleteMessageId);
@@ -1021,7 +1006,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
+            if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
                 alertMessage(translator.getTranslatedText("failed.delete.test", user.getLang()), chatId, 10000, user);
                 return;
             }
@@ -1671,13 +1656,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         try (FileWriter fileWriter = new FileWriter(writtenFile)) {
             fileWriter.write(jsonData);
             fileWriter.flush();
-            fileWriter.close();
-            BufferedReader br = new BufferedReader(new FileReader(writtenFile));
+        }
+        try(BufferedReader br = new BufferedReader(new FileReader(writtenFile))) {
             String line;
             System.out.println("reading file:");
-            while ((line = br.readLine()) != null){
+            while ((line = br.readLine()) != null)
                 System.out.println(line);
-            }
+
             br.close();
             System.out.println("finished reading the file.");
             System.out.println("JSON сохранен в файл: " + fileName);
@@ -1696,7 +1681,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "changeTest" -> {
                     String prevContent = req.getPrev_content();
                     System.out.println("Prev content: " + prevContent);
-                    if (DBManager.deleteTest(chatId, prevContent)) {
+                    if (!DBManager.deleteTest(chatId, prevContent)) {
                         sendMessage(translator.getTranslatedText("failed.modify.test", user.getLang()), chatId);
                         return;
                     }
