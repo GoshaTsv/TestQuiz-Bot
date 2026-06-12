@@ -8,8 +8,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Objects;
+import java.util.Set;
 
 public class Test {
     private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -41,6 +40,25 @@ public class Test {
     public void setTestName(String testName) { this.testName = testName; }
     public String getTestName() { return testName; }
 
+    private static final java.util.regex.Pattern INVISIBLE_CHARS =
+            java.util.regex.Pattern.compile(
+                    "[\\p{Cc}\\p{Cf}\\p{Cs}\\u00A0\\u00AD\\u034F\\u061C\\u115F\\u1160" +
+                            "\\u17B4\\u17B5\\u180B-\\u180E\\u2000-\\u200F\\u202A-\\u202E" +
+                            "\\u2060-\\u206F\\u3000\\uFEFF\\uFFA0\\uFFF0-\\uFFF8]"
+            );
+
+    private static boolean hasOnlyVisibleChars(String s) {
+        return !INVISIBLE_CHARS.matcher(s).find();
+    }
+
+    private static boolean isValidText(String s, int maxLen) {
+        if (s == null) return true;
+        String stripped = s.strip();
+        if (stripped.isEmpty()) return true;
+        if (stripped.length() > maxLen) return true;
+        return !hasOnlyVisibleChars(stripped);
+    }
+
     public static String checkForTest(String json) {
         if (json == null || json.isBlank()) {
             return "Ваш тест пустой!";
@@ -52,62 +70,79 @@ public class Test {
                 return "Некорректный формат теста!";
             }
 
-            JsonNode quizName = root.get("quizName");
-            if (quizName == null || !quizName.isTextual()) {
+            JsonNode quizNameNode = root.get("quizName");
+            if (quizNameNode == null || !quizNameNode.isTextual()) {
                 return "Неправильный заголовок теста!";
             }
+            String quizName = quizNameNode.asText();
+            if (isValidText(quizName, 200)) {
+                return "Заголовок теста пустой, слишком длинный или содержит недопустимые символы!";
+            }
 
-            JsonNode questions = root.get("questions");
-            if (questions == null || !questions.isArray() || questions.isEmpty() || questions.size() > 30) {
+            JsonNode questionsNode = root.get("questions");
+            if (questionsNode == null || !questionsNode.isArray() || questionsNode.isEmpty() || questionsNode.size() > 30) {
                 return "Неправильная структура вопросов!";
             }
 
-            for (JsonNode questionNode : questions) {
+            for (JsonNode questionNode : questionsNode) {
                 if (!questionNode.isObject()) {
                     return "Неправильная структура вопросов!";
                 }
-                JsonNode questionType = questionNode.get("type");
-                JsonNode questionText = questionNode.get("question");
-                if (questionText == null || !questionText.isTextual() || questionText.asText().length() > 3000) {
-                    return "Неправильная структура вопросов!";
-                }
-                if (!(Objects.equals(questionType.asText(), "var") || Objects.equals(questionType.asText(), "ans") || Objects.equals(questionType.asText(), "srv"))) {
+
+                JsonNode questionTypeNode = questionNode.get("type");
+                if (questionTypeNode == null || !questionTypeNode.isTextual()) {
                     return "Неправильно заданный вид вопроса!";
                 }
-                JsonNode answers = questionNode.get("answers");
-                if (answers == null || !answers.isObject() || answers.isEmpty() || answers.size() > 8) {
-                    return "Неправильная структура ответов!";
+                String questionType = questionTypeNode.asText();
+                if (!(questionType.equals("var") || questionType.equals("ans") || questionType.equals("srv"))) {
+                    return "Неправильно заданный вид вопроса!";
                 }
 
-                var fields = answers.fields();
+                JsonNode questionTextNode = questionNode.get("question");
+                if (questionTextNode == null || !questionTextNode.isTextual())
+                    return "Неправильная структура вопросов!";
+                if (isValidText(questionTextNode.asText(), 512))
+                    return "Текст вопроса пустой, слишком длинный или содержит недопустимые символы!";
+
+                JsonNode answersNode = questionNode.get("answers");
+                if (answersNode == null || !answersNode.isObject() || answersNode.isEmpty())
+                    return "Неправильная структура ответов!";
+
+                int minAnswers = (questionType.equals("ans")) ? 1 : 2;
+                int maxAnswers = 8;
+                if (answersNode.size() < minAnswers || answersNode.size() > maxAnswers)
+                    return "Неправильное количество вариантов ответа!";
+
+                boolean hasCorrect = false;
+                Set<String> seenAnswers = new java.util.HashSet<>();
+
+                var fields = answersNode.fields();
                 while (fields.hasNext()) {
                     var field = fields.next();
                     String answerKey = field.getKey();
                     JsonNode answerValue = field.getValue();
 
-                    if (answerKey == null || answerKey.length() > 3000)
-                        return "Неправильная структура вариантов ответа в одном из вопросов! 2";
+                    if (isValidText(answerKey, 256))
+                        return "Вариант ответа пустой, слишком длинный или содержит недопустимые символы!";
+
+                    String normalizedKey = answerKey.strip().toLowerCase();
+                    if (!seenAnswers.add(normalizedKey))
+                        return "В одном из вопросов есть повторяющиеся варианты ответа!";
 
                     if (!answerValue.isBoolean())
                         return "Неправильная структура ответов!";
+
+                    if (answerValue.asBoolean())
+                        hasCorrect = true;
                 }
+
+                if (!questionType.equals("srv") && !hasCorrect)
+                    return "В вопросе с вариантами ответа не отмечен ни один правильный вариант!";
             }
         } catch (Exception e) {
             return "Некорректный формат теста!";
         }
 
-        System.out.println("Starting checking questions 2");
-
-        Test test = gson.fromJson(json, Test.class);
-
-        ArrayList<Question> questions = test.questions;
-
-        for (Question question : questions) {
-            HashMap<String, Boolean> map = question.getAnswers();
-            if ((!map.containsValue(Boolean.TRUE) && map.size()==1)) {
-                return "Неправильная структура вопросов!";
-            }
-        }
         return "";
     }
 }
