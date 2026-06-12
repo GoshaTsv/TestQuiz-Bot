@@ -1393,7 +1393,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendLangSet(chatId, user);
         }
         else if (msg.startsWith("/mute")) { // admin commands
-            if (user.getPermissionLevel() < 2)
+            if (user.getPermissionLevel() <= 2)
                 return;
             String username = msg.split(" ")[1];
             long seconds = Long.parseLong(msg.split(" ")[2]);
@@ -1419,7 +1419,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
         }
         else if (msg.startsWith("/unmute")) {
-            if (user.getPermissionLevel() < 2)
+            if (user.getPermissionLevel() <= 2)
                 return;
             String username = msg.split(" ")[1];
 
