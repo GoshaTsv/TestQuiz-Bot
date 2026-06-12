@@ -1417,6 +1417,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             muteUser.setUntilTime(System.currentTimeMillis() + seconds * MILLIS_IN_SECONDS);
             if (!saveUser(muteUser))
                 alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+            sendMessage(translator.getTranslatedText("user.muted", user.getLang()), chatId);
         }
         else if (msg.startsWith("/unmute")) {
             if (user.getPermissionLevel() < 2)
@@ -1442,6 +1443,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             unmuteUser.setUntilTime(0);
             if (!saveUser(unmuteUser))
                 alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+            sendMessage(translator.getTranslatedText("user.unmuted", user.getLang()), chatId);
         }
     }
 
