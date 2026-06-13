@@ -460,8 +460,15 @@ public class User {
                     return;
                 }
                 ArrayList<String> usernames = new ArrayList<>(Arrays.asList(msg.split(" ")));
-                if (usernames.size() < 2) {
-                    bot.alertMessage(bot.getTranslator().getTranslatedText("class.min.students", lang), chatId, 15000, user);
+                int minStudents;
+
+                if (user.getPermissionLevel() >= 1)
+                    minStudents = 1;
+                else
+                    minStudents = 2;
+
+                if (usernames.size() < minStudents) {
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("class.min.students", lang, minStudents), chatId, 15000, user);
                     return;
                 }
 
