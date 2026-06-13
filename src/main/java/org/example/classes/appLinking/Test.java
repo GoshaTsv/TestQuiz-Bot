@@ -9,21 +9,17 @@ import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class Test {
     private static final ObjectMapper objectMapper = new ObjectMapper();
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    @SerializedName("quizName") //added serialized name to match the generated json's field
+    @SerializedName("quizName")
     private String testName;
     private ArrayList<Question> questions;
 
-    public ArrayList<Question> getQuestions() {
-        return questions;
-    }
-
-    public void setQuestions(ArrayList<Question> questions) {
-        this.questions = questions;
-    }
+    public ArrayList<Question> getQuestions() { return questions; }
+    public void setQuestions(ArrayList<Question> questions) { this.questions = questions; }
 
     public String toString() {
         return "Quiz{" +
@@ -40,15 +36,31 @@ public class Test {
     public void setTestName(String testName) { this.testName = testName; }
     public String getTestName() { return testName; }
 
-    private static final java.util.regex.Pattern INVISIBLE_CHARS =
-            java.util.regex.Pattern.compile(
-                    "[\\p{Cc}\\p{Cf}\\p{Cs}\\u00A0\\u00AD\\u034F\\u061C\\u115F\\u1160" +
-                            "\\u17B4\\u17B5\\u180B-\\u180E\\u2000-\\u200F\\u202A-\\u202E" +
-                            "\\u2060-\\u206F\\u3000\\uFEFF\\uFFA0\\uFFF0-\\uFFF8]"
-            );
+    private static final Pattern ALLOWED_CHAR = Pattern.compile(
+            "[a-zA-Z" +
+                    "\u0410-\u044F\u0401\u0451" +                    // Ru
+                    "\u0406\u0456\u0407\u0457\u0404\u0454\u0490\u0491" + // Uk
+                    "\u040E\u045E" +                                 // Be
+                    "0-9" +
+                    " \n" +
+                    ".,!?;:\\-\u2013\u2014'\"\u00AB\u00BB()\\[\\]/%+=@#\u2116\\*\\^~_&|<>" +
+                    "]"
+    );
 
-    private static boolean hasOnlyVisibleChars(String s) {
-        return !INVISIBLE_CHARS.matcher(s).find();
+    private static boolean hasOnlyAllowedChars(String s) {
+        for (int i = 0; i < s.length(); i++)
+            if (!ALLOWED_CHAR.matcher(String.valueOf(s.charAt(i))).matches())
+                return false;
+        return true;
+    }
+
+    private static Character findDisallowedChar(String s) {
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (!ALLOWED_CHAR.matcher(String.valueOf(c)).matches())
+                return c;
+        }
+        return null;
     }
 
     private static boolean isValidText(String s, int maxLen) {
@@ -56,7 +68,7 @@ public class Test {
         String stripped = s.strip();
         if (stripped.isEmpty()) return true;
         if (stripped.length() > maxLen) return true;
-        return !hasOnlyVisibleChars(stripped);
+        return !hasOnlyAllowedChars(stripped);
     }
 
     public static String checkForTest(String json) {
@@ -74,70 +86,79 @@ public class Test {
             if (quizNameNode == null || !quizNameNode.isTextual()) {
                 return "Неправильный заголовок теста!";
             }
-            String quizName = quizNameNode.asText();
-            if (isValidText(quizName, 200)) {
-                return "Заголовок теста пустой, слишком длинный или содержит недопустимые символы!";
+            if (isValidText(quizNameNode.asText(), 200)) {
+                Character bad = findDisallowedChar(quizNameNode.asText().strip());
+                return bad != null
+                        ? "Недопустимый символ в заголовке теста: '" + bad + "' (U+" + String.format("%04X", (int) bad) + ")"
+                        : "Заголовок теста пустой или слишком длинный!";
             }
 
             JsonNode questionsNode = root.get("questions");
-            if (questionsNode == null || !questionsNode.isArray() || questionsNode.isEmpty() || questionsNode.size() > 30) {
+            if (questionsNode == null || !questionsNode.isArray()
+                    || questionsNode.isEmpty() || questionsNode.size() > 30) {
                 return "Неправильная структура вопросов!";
             }
 
+            int qIndex = 0;
             for (JsonNode questionNode : questionsNode) {
-                if (!questionNode.isObject()) {
-                    return "Неправильная структура вопросов!";
+                qIndex++;
+                if (!questionNode.isObject())
+                    return "Неправильная структура вопроса #" + qIndex + "!";
+
+                JsonNode typeNode = questionNode.get("type");
+                if (typeNode == null || !typeNode.isTextual())
+                    return "Не указан тип вопроса #" + qIndex + "!";
+
+                String qType = typeNode.asText();
+                if (!qType.equals("var") && !qType.equals("ans") && !qType.equals("srv")) {
+                    return "Неправильный тип вопроса #" + qIndex + "!";
                 }
 
-                JsonNode questionTypeNode = questionNode.get("type");
-                if (questionTypeNode == null || !questionTypeNode.isTextual()) {
-                    return "Неправильно заданный вид вопроса!";
+                JsonNode textNode = questionNode.get("question");
+                if (textNode == null || !textNode.isTextual()) {
+                    return "Неправильная структура вопроса #" + qIndex + "!";
                 }
-                String questionType = questionTypeNode.asText();
-                if (!(questionType.equals("var") || questionType.equals("ans") || questionType.equals("srv"))) {
-                    return "Неправильно заданный вид вопроса!";
+                String qText = textNode.asText();
+                if (isValidText(qText, 256)) {
+                    Character bad = findDisallowedChar(qText.strip());
+                    return bad != null
+                            ? "Недопустимый символ в вопросе #" + qIndex + ": '" + bad + "' (U+" + String.format("%04X", (int) bad) + ")"
+                            : "Текст вопроса #" + qIndex + " пустой или слишком длинный!";
                 }
-
-                JsonNode questionTextNode = questionNode.get("question");
-                if (questionTextNode == null || !questionTextNode.isTextual())
-                    return "Неправильная структура вопросов!";
-                if (isValidText(questionTextNode.asText(), 512))
-                    return "Текст вопроса пустой, слишком длинный или содержит недопустимые символы!";
 
                 JsonNode answersNode = questionNode.get("answers");
                 if (answersNode == null || !answersNode.isObject() || answersNode.isEmpty())
-                    return "Неправильная структура ответов!";
+                    return "Неправильная структура ответов в вопросе #" + qIndex + "!";
 
-                int minAnswers = (questionType.equals("ans")) ? 1 : 2;
-                int maxAnswers = 8;
-                if (answersNode.size() < minAnswers || answersNode.size() > maxAnswers)
-                    return "Неправильное количество вариантов ответа!";
+                int minAnswers = qType.equals("ans") ? 1 : 2;
+                if (answersNode.size() < minAnswers || answersNode.size() > 8)
+                    return "Неправильное количество вариантов ответа в вопросе #" + qIndex + "!";
 
                 boolean hasCorrect = false;
                 Set<String> seenAnswers = new java.util.HashSet<>();
-
                 var fields = answersNode.fields();
                 while (fields.hasNext()) {
                     var field = fields.next();
-                    String answerKey = field.getKey();
-                    JsonNode answerValue = field.getValue();
+                    String key = field.getKey();
+                    JsonNode val = field.getValue();
 
-                    if (isValidText(answerKey, 256))
-                        return "Вариант ответа пустой, слишком длинный или содержит недопустимые символы!";
+                    if (isValidText(key, 3000)) {
+                        Character bad = findDisallowedChar(key.strip());
+                        return bad != null
+                                ? "Недопустимый символ в варианте ответа (вопрос #" + qIndex + "): '" + bad + "' (U+" + String.format("%04X", (int) bad) + ")"
+                                : "Вариант ответа в вопросе #" + qIndex + " пустой или слишком длинный!";
+                    }
+                    if (!seenAnswers.add(key.strip().toLowerCase()))
+                        return "Повторяющийся вариант ответа в вопросе #" + qIndex + "!";
 
-                    String normalizedKey = answerKey.strip().toLowerCase();
-                    if (!seenAnswers.add(normalizedKey))
-                        return "В одном из вопросов есть повторяющиеся варианты ответа!";
+                    if (!val.isBoolean())
+                        return "Неправильная структура ответов в вопросе #" + qIndex + "!";
 
-                    if (!answerValue.isBoolean())
-                        return "Неправильная структура ответов!";
-
-                    if (answerValue.asBoolean())
-                        hasCorrect = true;
+                    if (val.asBoolean()) hasCorrect = true;
                 }
 
-                if (!questionType.equals("srv") && !hasCorrect)
-                    return "В вопросе с вариантами ответа не отмечен ни один правильный вариант!";
+                if (!qType.equals("srv") && !hasCorrect)
+                    return "В вопросе #" + qIndex + " не отмечен ни один правильный вариант!";
             }
         } catch (Exception e) {
             return "Некорректный формат теста!";
