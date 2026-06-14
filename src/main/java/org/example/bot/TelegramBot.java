@@ -17,7 +17,6 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.ForwardMessage;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -41,8 +40,9 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import static org.example.classes.User.getCorrectAnswerForQuestion;
+import static org.example.classes.User.getCorrectAnswersForQuestion;
 @Component
 public class TelegramBot extends TelegramLongPollingBot {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -202,7 +202,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (user.getPrevType().equalsIgnoreCase("ans")) {
                 if (update.hasMessage() && update.getMessage().hasText()) {
                     String userAnswer = update.getMessage().getText();
-                    String correctAnswer = getCorrectAnswerForQuestion(currentQuestion);
+                    String correctAnswer = getCorrectAnswersForQuestion(currentQuestion).getFirst();
                     System.out.println("Ans");
                     System.out.println("User answer: " + userAnswer);
                     System.out.println("Correct answer: " + correctAnswer);
@@ -228,13 +228,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                     AnswerCallbackQuery answer = new AnswerCallbackQuery();
                     answer.setCallbackQueryId(update.getCallbackQuery().getId());
 
-                    String selectedAnswer = callbackData.replace("ans_", "");
+                    int selectedAnswer = Integer.parseInt(callbackData.replace("ans_", ""));
                     List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
-                    String correctAnswer = String.valueOf(keys.indexOf(getCorrectAnswerForQuestion(currentQuestion)));
+                    ArrayList<String> correctAnswers = getCorrectAnswersForQuestion(currentQuestion);
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
-                    String userAnswer = keys.get(Integer.parseInt(selectedAnswer));
-                    boolean isCorrect = selectedAnswer.equals(correctAnswer);
+                    String userAnswer = keys.get(selectedAnswer);
+                    boolean isCorrect = correctAnswers.contains(keys.get(selectedAnswer));
 
                     newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, isCorrect);
                     if (isCorrect)
@@ -244,7 +244,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     System.out.println("Var");
                     System.out.println("Selected answer: " + selectedAnswer);
-                    System.out.println("Correct answer: " + correctAnswer);
+                    System.out.println("Correct answers: " + correctAnswers);
                     System.out.println("added new user answer. size: " + user.getUserAnswers().size());
                     System.out.println("new user answers: " + newUserAnswers);
                     try {
@@ -265,7 +265,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     String selectedAnswer = callbackData.replace("srv_", "");
                     List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
-                    String correctAnswer = String.valueOf(keys.indexOf(getCorrectAnswerForQuestion(currentQuestion)));
+                    String correctAnswer = String.valueOf(keys.indexOf(getCorrectAnswersForQuestion(currentQuestion)));
                     LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
                     String userAnswer = keys.get(Integer.parseInt(selectedAnswer));
@@ -339,13 +339,18 @@ public class TelegramBot extends TelegramLongPollingBot {
                     for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().getQuestions().size(); i++) {
                         String question = test.getQuestions().get(i).getQuestion();
                         String userAnswer = userAnswers.get(i).split("\uD80C\uDE78")[1];
-                        String correctAnswer = getCorrectAnswerForQuestion(quiz.getTest().getQuestions().get(i));
+                        ArrayList<String> correctAnswers = getCorrectAnswersForQuestion(quiz.getTest().getQuestions().get(i));
 
                         System.out.println("Question: " + test.getQuestions().get(i));
                         System.out.println("User answer: " + userAnswer);
-                        System.out.println("Correct answer: " + correctAnswer);
+                        System.out.println("Correct answers: " + correctAnswers);
+
+                        String formattedAnswers = correctAnswers.stream()
+                                .map(answer -> "\"" + answer + "\"")
+                                .collect(Collectors.joining(", "));
+
                         if (!test.getQuestions().get(i).getType().equalsIgnoreCase("srv"))
-                            sendMessage(translator.getTranslatedText("quiz.question.result", teacher.getLang(), i + 1, question, userName, userAnswer, correctAnswer), quiz.getTeacherId());
+                            sendMessage(translator.getTranslatedText("quiz.question.result", teacher.getLang(), i + 1, question, userName, userAnswer, formattedAnswers), quiz.getTeacherId());
                         else{
                             surveyCount++;
                             sendMessage(translator.getTranslatedText("quiz.survey.result", teacher.getLang(), surveyCount, question, userName, userAnswer), quiz.getTeacherId());
@@ -377,9 +382,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     try {
                         Thread.sleep(250);
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+                    } catch (InterruptedException ignored) {}
 
                     ArrayList<String> callbacks = new ArrayList<>();
 
