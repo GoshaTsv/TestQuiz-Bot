@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
+import org.example.bot.TelegramBot;
+import org.example.classes.User;
+import org.example.database.DBManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +74,7 @@ public class Test {
         return !hasOnlyAllowedChars(stripped);
     }
 
-    public static String checkForTest(String json) {
+    public static String checkForTest(TelegramBot bot, String json, User user, long chatId) {
         if (json == null || json.isBlank()) {
             return "Ваш тест пустой!";
         }
@@ -162,6 +165,63 @@ public class Test {
             }
         } catch (Exception e) {
             return "Некорректный формат теста!";
+        }
+
+        Test test = gson.fromJson(json, Test.class);
+        test.setTestName(test.getTestName().toLowerCase());
+        json = gson.toJson(test);
+
+        ArrayList<Test> tests = DBManager.getTests(chatId);
+        if (tests == null)
+            return bot.getTranslator().getTranslatedText("failed.get.tests", user.getLang());
+
+        if (tests.stream().filter(t -> t.getTestName().equalsIgnoreCase(test.getTestName())).findFirst().orElse(null) != null)
+            return bot.getTranslator().getTranslatedText("test.already.exists", user.getLang());
+
+        user.setState("default");
+        if (!bot.saveUser(user))
+            return bot.getTranslator().getTranslatedText("failed.update.user.ellipsis", user.getLang());
+
+        if (!DBManager.createTest(json, chatId))
+            return bot.getTranslator().getTranslatedText("test.add.failed", user.getLang());
+
+        user.setTestsCount(user.getTestsCount() + 1);
+        if (!bot.saveUser(user))
+            return bot.getTranslator().getTranslatedText("failed.update.user.ellipsis", user.getLang());
+
+        if (user.getLastMessageId() != null) {
+            bot.deleteMessage(user.getLastMessageId(), chatId);
+            user.setLastMessageId(null);
+            if (!bot.saveUser(user))
+                return bot.getTranslator().getTranslatedText("failed.update.user.ellipsis", user.getLang());
+        }
+
+        if (user.getCurrentStartQuizClassMessageId() != null) {
+            bot.deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
+            user.setCurrentStartQuizClass(null);
+            if (!bot.saveUser(user))
+                return bot.getTranslator().getTranslatedText("failed.update.user.ellipsis", user.getLang());
+        }
+
+        if (user.getCurrentMyClassesMessageId() != null) {
+            bot.deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
+            user.setCurrentMyClassesMessageId(null);
+            if (!bot.saveUser(user))
+                return bot.getTranslator().getTranslatedText("failed.update.user.ellipsis", user.getLang());
+        }
+
+        if (user.getCurrentStartQuizTestMessageId() != null) {
+            bot.deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
+            user.setCurrentStartQuizTestMessageId(null);
+            if (!bot.saveUser(user))
+                return bot.getTranslator().getTranslatedText("failed.update.user.ellipsis", user.getLang());
+        }
+
+        if (user.getCurrentMyTestsMessageId() != null) {
+            bot.deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
+            user.setCurrentMyTestsMessageId(null);
+            if (!bot.saveUser(user))
+                return bot.getTranslator().getTranslatedText("failed.update.user.ellipsis", user.getLang());
         }
 
         return null;
