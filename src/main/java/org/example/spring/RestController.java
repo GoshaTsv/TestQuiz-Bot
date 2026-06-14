@@ -2,7 +2,6 @@ package org.example.spring;
 
 import org.example.bot.TelegramBot;
 import org.example.classes.User;
-import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;

@@ -145,7 +145,7 @@ public class DBManager {
         Connection connection = getConnection();
         if (connection == null) {
             System.out.println("Connection became null while deleting " + userId + "'s test: " + content);
-            return false;
+            return true;
         }
 
         try {
@@ -153,10 +153,10 @@ public class DBManager {
             st.setLong(1, userId);
             st.setString(2, content);
             st.executeUpdate();
-            return true;
+            return false;
         } catch (SQLException e) {
             System.out.println("An exception while deleting " + userId + "'s test (" + content + "): " + e.getMessage());
-            return false;
+            return true;
         }
     }
 
@@ -239,7 +239,7 @@ public class DBManager {
         }
         return ids;
     }
-    public static ArrayList<String> getUsernamesByIds(ArrayList<Long> ids){
+    public static ArrayList<String> getUsernamesByIds(ArrayList<Long> ids) {
         Connection connection = getConnection();
         if (connection==null){
             System.out.println("Connection became null while getting " + ids + "'s usernames");
@@ -260,7 +260,6 @@ public class DBManager {
                 System.out.println("An exception while getting " + id + "'s username: " + e.getMessage());
                 return null;
             }
-
         }
         return usernames;
     }

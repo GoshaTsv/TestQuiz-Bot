@@ -1,12 +1,10 @@
 package org.example.classes;
 import org.example.bot.TelegramBot;
-import org.example.classes.appLinking.Image;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
+import org.example.database.DBManager;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
-import java.util.Base64;
 
 public class Quiz {
     private long teacherId;
@@ -26,31 +24,39 @@ public class Quiz {
     public void setStudentClass(StudentClass studentClass) { this.studentClass = studentClass; }
     public void setTest(Test test) { this.test = test; }
 
-    public void startQuiz(TelegramBot bot, ArrayList<User> users, long chatId) {
+    public void startQuiz(TelegramBot bot, ArrayList<User> users, long teacherId) {
         Quiz quiz = this;
-        User teacher = users.stream().filter(u -> u.getChatId() == chatId).findFirst().orElse(null);
+        User teacher = users.stream().filter(u -> u.getChatId() == teacherId).findFirst().orElse(null);
         String teacherLang = (teacher != null) ? teacher.getLang() : "ru";
 
         quiz.getStudentClass().getStudents().forEach(x -> {
             User userCurrent = users.stream().filter(user1 -> user1.getChatId() == x).findFirst().orElse(null);
             if (userCurrent == null) {
                 System.out.println("User not found in thread when starting test");
-                bot.sendMessage(
-                        bot.getTranslator().getTranslatedText("something.went.wrong", teacherLang),
-                        chatId
-                );
+                bot.alertMessage(bot.getTranslator().getTranslatedText("something.went.wrong", teacherLang), teacherId,10000, teacher);
                 return;
             }
-            ArrayList<String> callbacks1 = new ArrayList<>();
-            callbacks1.add("startQuizUser");
-            ArrayList<String> buttons1 = new ArrayList<>();
-            buttons1.add(bot.getTranslator().getTranslatedText("test.send.confirm", userCurrent.getLang()));
-            Integer messageId1 = bot.sendMessage(bot.getTranslator().getTranslatedText("test.send.message", userCurrent.getLang(), quiz.getTest().getTestName()), x, buttons1, callbacks1, null );
-            userCurrent.setCurrentQuizMessageId(messageId1);
+
+            ArrayList<String> rawTeacherUsername = DBManager.getUsernamesByIds(new ArrayList<>(Math.toIntExact(teacherId)));
+
+            if (rawTeacherUsername == null || rawTeacherUsername.isEmpty()) {
+                bot.alertMessage(bot.getTranslator().getTranslatedText("failed.get.your.username", teacherLang), teacherId, 10000, teacher);
+                return;
+            }
+
+            ArrayList<String> callbacks = new ArrayList<>();
+            callbacks.add("start_quiz_user_" + rawTeacherUsername.getFirst() + "\uD80C\uDE78" + quiz.getTest().getTestName());
+            ArrayList<String> buttons = new ArrayList<>();
+            buttons.add(bot.getTranslator().getTranslatedText("test.send.confirm", userCurrent.getLang()));
+            Integer messageId = bot.sendMessage(bot.getTranslator().getTranslatedText("test.send.message", userCurrent.getLang(), quiz.getTest().getTestName()), x, buttons, callbacks, null );
+            userCurrent.setCurrentQuizMessageId(messageId);
             userCurrent.setCurrentQuiz(quiz);
+
+            if (!bot.saveUser(userCurrent))
+                bot.alertMessage(bot.getTranslator().getTranslatedText("failed.update.user", userCurrent.getLang()), x, 10000, userCurrent);
         });
     }
-    public void startQuizing(TelegramBot bot, User userCurrent, long chatId, ArrayList<User> users, long x){
+    public void startQuizzing(TelegramBot bot, User userCurrent, long chatId, ArrayList<User> users, long studentId){
         Quiz quiz = this;
         User teacher = users.stream().filter(u -> u.getChatId() == quiz.getTeacherId()).findFirst().orElse(null);
         String teacherLang = (teacher != null) ? teacher.getLang() : "ru";
@@ -59,10 +65,7 @@ public class Quiz {
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
-                    bot.sendMessage(
-                            bot.getTranslator().getTranslatedText("something.went.wrong", teacherLang),
-                            chatId
-                    );
+                    bot.sendMessage(bot.getTranslator().getTranslatedText("something.went.wrong", teacherLang), chatId);
                 }
             }
 
@@ -90,14 +93,14 @@ public class Quiz {
 
                 messageId = bot.sendMessagePhoto(
                         bot.getTranslator().getTranslatedText("question.number", userLang, 1, question.getQuestion()),
-                        x, question.getImage(), variants, callbacks, userCurrent.getCurrentQuizMessageId()
+                        studentId, question.getImage(), variants, callbacks, userCurrent.getCurrentQuizMessageId()
                 );
                 userCurrent.setPrevType("var");
 
             } else if (questionType.equalsIgnoreCase("ans")) {
                 messageId = bot.sendMessagePhoto(
                         bot.getTranslator().getTranslatedText("question.number", userLang, 1, question.getQuestion()),
-                        x, question.getImage(), userCurrent.getCurrentQuizMessageId()
+                        studentId, question.getImage(), userCurrent.getCurrentQuizMessageId()
                 );
                 userCurrent.setPrevType("ans");
             } else {
@@ -108,7 +111,7 @@ public class Quiz {
 
                 messageId = bot.sendMessagePhoto(
                         bot.getTranslator().getTranslatedText("survey.number", userLang, 1, question.getQuestion()),
-                        x, question.getImage(), variants, callbacks, userCurrent.getCurrentQuizMessageId()
+                        studentId, question.getImage(), variants, callbacks, userCurrent.getCurrentQuizMessageId()
                 );
                 userCurrent.setPrevType("srv");
             }
@@ -122,10 +125,7 @@ public class Quiz {
             }
 
             if (messageId == null) {
-                bot.alertMessage(
-                        bot.getTranslator().getTranslatedText("failed.get.message.id", teacherLang),
-                        chatId, 10000, userCurrent
-                );
+                bot.alertMessage(bot.getTranslator().getTranslatedText("failed.get.message.id", teacherLang), chatId, 10000, userCurrent);
                 return;
             }
 

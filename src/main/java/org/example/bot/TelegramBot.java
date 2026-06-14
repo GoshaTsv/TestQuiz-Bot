@@ -880,12 +880,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                 callbacks.add("real_delete_student_" + i);
 
             studentsNames.add("back");
-            callbacks.add("back_delete_student_" + data.replaceAll("delete_student_", ""));
+            callbacks.add("back_delete_student_" + data.replaceFirst("delete_student_", ""));
 
             sendMessage(translator.getTranslatedText("select.student.to.remove", user.getLang()), chatId, studentsNames, callbacks, user.getCurrentMyClassesMessageId());
         }
         else if (data.startsWith("real_delete_student")) {
-            String deleteStudentId = data.replaceAll("real_delete_student_", "");
+            String deleteStudentId = data.replaceFirst("real_delete_student_", "");
             StudentClass chosenClass = user.getCurrentChangingClass();
 
             ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
@@ -902,7 +902,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendClasses(chatId, user);
         }
         else if (data.startsWith("back_delete_student")) {
-            String classId = data.replaceAll("back_delete_student_", "");
+            String classId = data.replaceFirst("back_delete_student_", "");
             viewClass(classId, chatId, user);
         }
         else if (data.startsWith("add_student")) {
@@ -944,7 +944,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
+            if (DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
                 alertMessage(translator.getTranslatedText("failed.delete.test", user.getLang()), chatId, 10000, user);
                 return;
             }
@@ -973,12 +973,12 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         else if (data.startsWith("view_classes")) {
             System.out.println("Viewing classes");
-            String classId = data.replaceAll("view_classes_", "");
+            String classId = data.replaceFirst("view_classes_", "");
             viewClass(classId, chatId, user);
         }
         else if (data.startsWith("view_tests")) {
             System.out.println("Viewing tests");
-            String testId = data.replaceAll("view_tests_", "");
+            String testId = data.replaceFirst("view_tests_", "");
 
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
@@ -1011,7 +1011,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (user.getCurrentStartQuizClassMessageId() != null)
                 deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
 
-            String classId = data.replaceAll("start_quiz_class_", "");
+            String classId = data.replaceFirst("start_quiz_class_", "");
             ArrayList<StudentClass> classes = DBManager.getClasses(chatId);
             if (classes == null) {
                 alertMessage(translator.getTranslatedText("failed.get.user.classes", user.getLang()), chatId, 10000, user);
@@ -1058,7 +1058,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (user.getCurrentStartQuizTestMessageId() != null)
                 deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
 
-            String testId = data.replaceAll("start_quiz_test_", "");
+            String testId = data.replaceFirst("start_quiz_test_", "");
             ArrayList<Test> tests = DBManager.getTests(chatId);
             if (tests == null) {
                 alertMessage(translator.getTranslatedText("failed.get.user.tests", user.getLang()), chatId, 10000, user);
@@ -1079,8 +1079,37 @@ public class TelegramBot extends TelegramLongPollingBot {
             });
             quizThread.start();
         }
-        else if(data.startsWith("startQuizUser")){
-            user.getCurrentQuiz().startQuizing(this, user, user.getCurrentQuiz().getTeacherId(), (ArrayList<User>) users, chatId);
+        else if(data.startsWith("start_quiz_user")){
+            ArrayList<String> params = new ArrayList<>(List.of(data.replaceFirst("start_quiz_user_", "").split("\uD80C\uDE78")));
+            String teacherUsername = params.getFirst();
+            String testName = params.getLast();
+
+            ArrayList<Long> rawTeacherId = DBManager.getIdsByUsernames(new ArrayList<>(Collections.singleton(teacherUsername)));
+            if (rawTeacherId == null) {
+                alertMessage(translator.getTranslatedText("teacher.not.found", user.getLang()), chatId, 15000, user);
+                return;
+            }
+
+            long teacherId = rawTeacherId.getFirst();
+
+            ArrayList<Test> tests = DBManager.getTests(teacherId);
+
+            if (tests == null) {
+                alertMessage(translator.getTranslatedText("failed.get.user.tests", user.getLang()), chatId, 10000, user);
+                return;
+            }
+            
+            Test test = null;
+            for (Test t : tests)
+                if (t.getTestName().equals(testName))
+                    test = t;
+            
+            if (test == null) {
+                alertMessage(translator.getTranslatedText("failed.get.current.test", user.getLang()), chatId, 10000, user);
+                return;
+            }
+
+            new Quiz(teacherId, null, test).startQuizzing(this, user, user.getCurrentQuiz().getTeacherId(), (ArrayList<User>) users, chatId);
         }
         else if(data.startsWith("changeAutoDelete")){
             switch(data){
@@ -1127,7 +1156,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendAutoDeleteSettings(chatId, user);
         }
         else if(data.startsWith("lang")) {
-            String lang = data.replaceAll("lang_", "");
+            String lang = data.replaceFirst("lang_", "");
             if (lang.equals(user.getLang())) {
                 alertMessage(translator.getTranslatedText("language.already.chosen", user.getLang()), chatId, 10000, user);
                 return;
