@@ -931,6 +931,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
+            if (user.getCurrentStartQuizClassMessageId() != null)
+                deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
+
             sendClasses(chatId, user);
         }
         else if (data.startsWith("delete_test")) {
@@ -950,6 +953,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                 alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
                 return;
             }
+
+            if (user.getCurrentStartQuizTestMessageId() != null)
+                deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
 
             sendTests(chatId, user);
         }
