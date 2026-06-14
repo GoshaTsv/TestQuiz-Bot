@@ -51,7 +51,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final Translator translator;
     private final RateLimiterManager rateLimiter = new RateLimiterManager();
     private final int MILLIS_IN_SECONDS = 1000;
-    private final String DEFAULT_LANG = "en";
+    public final String DEFAULT_LANG = "en";
 
     public List<User> getUsers() {
         return users;
@@ -175,7 +175,9 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                createTest(chatId, user, fileName);
+                String response = createTest(chatId, user, fileName);
+                if (response != null)
+                    alertMessage(response, chatId, 10000, user);
             }
         }
         if (user.getQuizState() > -1) {
@@ -824,7 +826,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         return keyboard;
     }
 
-    private void createTest(long chatId, User user, String fileName) {
+    public String createTest(long chatId, User user, String fileName) {
         try {
             BufferedReader br = new BufferedReader(new FileReader(fileName));
             StringBuilder json = new StringBuilder();
@@ -832,94 +834,17 @@ public class TelegramBot extends TelegramLongPollingBot {
             while ((line = br.readLine()) != null)
                 json.append(line);
 
-            String response = Test.checkForTest(json.toString());
+            String response = Test.checkForTest(this, json.toString(), user, chatId);
             System.out.println("Checked test: " + response);
-            if (response != null) {
-                sendMessage(response, chatId);
-                return;
-            }
-
-            Test test = gson.fromJson(json.toString(), Test.class);
-            test.setTestName(test.getTestName().toLowerCase());
-            json = new StringBuilder(gson.toJson(test));
-
-            ArrayList<Test> tests = DBManager.getTests(chatId);
-            if (tests == null) {
-                alertMessage(translator.getTranslatedText("failed.get.tests", user.getLang()), chatId, 10000, user);
-                return;
-            }
-
-            if (tests.stream().filter(t -> t.getTestName().equalsIgnoreCase(test.getTestName())).findFirst().orElse(null) != null) {
-                alertMessage(translator.getTranslatedText("test.already.exists", user.getLang()), chatId, 10000, user);
-                return;
-            }
-
-            user.setState("default");
-            if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
-                return;
-            }
-
-            if (!DBManager.createTest(json.toString(), chatId)) {
-                alertMessage(translator.getTranslatedText("test.add.failed", user.getLang()), chatId, 10000, user);
-                return;
-            }
-
-            user.setTestsCount(user.getTestsCount() + 1);
-            if (!saveUser(user)) {
-                alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
-                return;
-            }
-
-            if (user.getLastMessageId() != null) {
-                deleteMessage(user.getLastMessageId(), chatId);
-                user.setLastMessageId(null);
-                if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
-                    return;
-                }
-            }
-
-            if (user.getCurrentStartQuizClassMessageId() != null) {
-                deleteMessage(user.getCurrentStartQuizClassMessageId(), chatId);
-                user.setCurrentStartQuizClass(null);
-                if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
-                    return;
-                }
-            }
-
-            if (user.getCurrentMyClassesMessageId() != null) {
-                deleteMessage(user.getCurrentMyClassesMessageId(), chatId);
-                user.setCurrentMyClassesMessageId(null);
-                if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
-                    return;
-                }
-            }
-
-            if (user.getCurrentStartQuizTestMessageId() != null) {
-                deleteMessage(user.getCurrentStartQuizTestMessageId(), chatId);
-                user.setCurrentStartQuizTestMessageId(null);
-                if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
-                    return;
-                }
-            }
-
-            if (user.getCurrentMyTestsMessageId() != null) {
-                deleteMessage(user.getCurrentMyTestsMessageId(), chatId);
-                user.setCurrentMyTestsMessageId(null);
-                if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("failed.update.user.ellipsis", user.getLang()), chatId, 10000, user);
-                    return;
-                }
-            }
+            if (response != null)
+                return response;
 
             alertMessage(translator.getTranslatedText("test.saved", user.getLang()), chatId, 15000, user);
         } catch (IOException e) {
             alertMessage(translator.getTranslatedText("error.adding.test", user.getLang()), chatId, 10000, user);
         }
+
+        return null;
     }
 
     private void processCallbackData(String data, User user, Update update, long chatId) {
@@ -1634,72 +1559,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                     .allowedOrigins("*")
                     .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                     .allowedHeaders("*");
-        }
-    }
-
-    public void handleQuizFromServer(org.example.spring.Message req) throws IOException {
-        System.out.println("Got a message: " + req.toString());
-        String request = req.getRequest();
-        long chatId = Long.parseLong(req.getUserId());
-        String jsonData = req.getContent();
-
-        System.out.println("jsonData: " + jsonData);
-        User user = users.stream()
-                .filter(x -> x.getChatId() == chatId)
-                .findFirst()
-                .orElse(null);
-        if (user == null){
-            alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, null);
-            return;
-        }
-        String fileName = "newTest_" + chatId + "_" + System.currentTimeMillis() + ".json";
-        File writtenFile = new File(fileName);
-
-        System.out.println("Clean JSON to write: " + jsonData);
-        try (FileWriter fileWriter = new FileWriter(writtenFile)) {
-            fileWriter.write(jsonData);
-            fileWriter.flush();
-        }
-        try(BufferedReader br = new BufferedReader(new FileReader(writtenFile))) {
-            String line;
-            System.out.println("reading file:");
-            while ((line = br.readLine()) != null)
-                System.out.println(line);
-
-            br.close();
-            System.out.println("finished reading the file.");
-            System.out.println("JSON сохранен в файл: " + fileName);
-            switch (request) {
-                case "" -> createTest(chatId, user, writtenFile.getName());
-                case "exportJSON" -> {
-                    InputFile inputFile = new InputFile();
-                    inputFile.setMedia(writtenFile);
-                    SendDocument sendDocument = new SendDocument(String.valueOf(chatId), inputFile);
-                    try {
-                        execute(sendDocument);
-                    } catch (TelegramApiException e) {
-                        System.err.println("An exception while sending document: \" " + inputFile.getMediaName() + "\" to " + chatId);
-                    }
-                }
-                case "changeTest" -> {
-                    String prevContent = req.getPrev_content();
-                    System.out.println("Prev content: " + prevContent);
-                    if (!DBManager.deleteTest(chatId, prevContent)) {
-                        sendMessage(translator.getTranslatedText("failed.modify.test", user.getLang()), chatId);
-                        return;
-                    }
-                    createTest(chatId, user, writtenFile.getName());
-                }
-            }
-        }
-        finally{
-            if (writtenFile.exists()) {
-                boolean deleted = writtenFile.delete();
-                if (!deleted) {
-                    System.err.println("Не удалось удалить файл: " + fileName);
-                    writtenFile.deleteOnExit();
-                }
-            }
         }
     }
 
