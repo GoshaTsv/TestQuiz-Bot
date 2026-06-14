@@ -880,7 +880,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 callbacks.add("real_delete_student_" + i);
 
             studentsNames.add("back");
-            callbacks.add("delete_student_back_" + data.replaceAll("delete_student_", ""));
+            callbacks.add("back_delete_student_" + data.replaceAll("delete_student_", ""));
 
             sendMessage(translator.getTranslatedText("select.student.to.remove", user.getLang()), chatId, studentsNames, callbacks, user.getCurrentMyClassesMessageId());
         }
@@ -901,8 +901,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             alertMessage(translator.getTranslatedText("user.removed", user.getLang()), chatId, 10000, user);
             sendClasses(chatId, user);
         }
-        else if (data.startsWith("delete_student_back")) {
-            String classId = data.replaceAll("delete_student_back_", "");
+        else if (data.startsWith("back_delete_student")) {
+            String classId = data.replaceAll("back_delete_student_", "");
             viewClass(classId, chatId, user);
         }
         else if (data.startsWith("add_student")) {
