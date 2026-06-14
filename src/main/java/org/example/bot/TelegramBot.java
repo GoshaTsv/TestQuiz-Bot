@@ -793,7 +793,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             InlineKeyboardButton button = new InlineKeyboardButton();
 
             button.setText(translator.getTranslatedText(x, lang));
-            if (callbacks.get(count.get()).equalsIgnoreCase("change_test")){
+            if (callbacks.get(count.get()).equalsIgnoreCase("change_test")) {
                 System.out.println("found change_test");
                 WebAppInfo webAppInfo = new WebAppInfo();
                 webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=changeTest");
@@ -851,7 +851,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
         } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
+            alertMessage(translator.getTranslatedText("error.try.again", user.getLang()), chatId, 10000, user);
         }
 
         if (data.startsWith("delete_student")) {
@@ -879,6 +879,9 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (int i = 0; i < chosenClass.getStudents().size(); i++)
                 callbacks.add("real_delete_student_" + i);
 
+            studentsNames.add("back");
+            callbacks.add("delete_student_back_" + data.replaceAll("delete_student_", ""));
+
             sendMessage(translator.getTranslatedText("select.student.to.remove", user.getLang()), chatId, studentsNames, callbacks, user.getCurrentMyClassesMessageId());
         }
         else if (data.startsWith("real_delete_student")) {
@@ -897,6 +900,10 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             alertMessage(translator.getTranslatedText("user.removed", user.getLang()), chatId, 10000, user);
             sendClasses(chatId, user);
+        }
+        else if (data.startsWith("delete_student_back")) {
+            String classId = data.replaceAll("delete_student_back_", "");
+            viewClass(classId, chatId, user);
         }
         else if (data.startsWith("add_student")) {
             sendMessage(translator.getTranslatedText("enter.student.name", user.getLang()), chatId);
@@ -1400,7 +1407,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         options.add("delete.class");
 
         ArrayList<String> callbacks = new ArrayList<>();
-        callbacks.add("delete_student");
+        callbacks.add("delete_student_" + classId);
         callbacks.add("add_student");
         callbacks.add("view_class_back");
         callbacks.add("delete_class");
