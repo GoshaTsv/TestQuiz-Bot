@@ -2,14 +2,14 @@ package org.example.spring;
 
 import org.example.classes.appLinking.Test;
 
-public class WebRequest {
+public class ImportClassRequest {
     private Test test;
     private ButtonDTO button;
     private String firstContent;
 
-    public WebRequest() {}
+    public ImportClassRequest() {}
 
-    public WebRequest(Test test, String firstContent, ButtonDTO button) {
+    public ImportClassRequest(Test test, String firstContent, ButtonDTO button) {
         this.test = test;
         this.button = button;
         this.firstContent = firstContent;

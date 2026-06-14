@@ -164,6 +164,6 @@ public class Test {
             return "Некорректный формат теста!";
         }
 
-        return "";
+        return null;
     }
 }

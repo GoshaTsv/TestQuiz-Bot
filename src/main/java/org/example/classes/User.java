@@ -4,7 +4,7 @@ import org.example.bot.TelegramBot;
 import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
-import org.example.spring.WebRequest;
+import org.example.spring.ImportClassRequest;
 
 import java.util.*;
 
@@ -65,7 +65,7 @@ public class User {
     private String currentNewClassName;
     private Integer lastMessageId;
     //WebRequest for importing classes into the web app
-    private WebRequest lastWebReq;
+    private ImportClassRequest lastWebReq;
 
     public int getWarnings() {
         return warnings;
@@ -123,15 +123,15 @@ public class User {
         this.currentQuizMessageId = currentQuizMessageId;
     }
 
-    public WebRequest getLastWebReqFromUser(User user) {
+    public ImportClassRequest getLastWebReqFromUser(User user) {
         return user.getLastWebReq();
     }
 
-    public WebRequest getLastWebReq() {
+    public ImportClassRequest getLastWebReq() {
         return lastWebReq;
     }
 
-    public void setLastWebReq(WebRequest lastWebReq) {
+    public void setLastWebReq(ImportClassRequest lastWebReq) {
         this.lastWebReq = lastWebReq;
     }
 
@@ -244,7 +244,7 @@ public class User {
         correctAnswers = 0;
         userAnswers = new LinkedHashMap<>();
         this.autoDeleting = "autoDeleteUser";
-        lastWebReq = new WebRequest();
+        lastWebReq = new ImportClassRequest();
         autoDeleteLength = 60;
         surveyAnswers = new ArrayList<>();
         warnings = 0;

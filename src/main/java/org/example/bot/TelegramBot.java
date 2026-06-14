@@ -9,7 +9,7 @@ import org.example.classes.appLinking.Question;
 import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
 import org.example.spring.ButtonDTO;
-import org.example.spring.WebRequest;
+import org.example.spring.ImportClassRequest;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
@@ -52,7 +52,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final RateLimiterManager rateLimiter = new RateLimiterManager();
     private final int MILLIS_IN_SECONDS = 1000;
     private final String DEFAULT_LANG = "en";
-    private final long MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
     public List<User> getUsers() {
         return users;
@@ -152,6 +151,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 processCallbackData(data, user, update, chatId);
             }
             if (message.hasDocument()) {
+                long MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
                 if (update.getMessage().getDocument().getFileSize() > MAX_FILE_SIZE) {
                     alertMessage(translator.getTranslatedText("max.file.size", user.getLang()), chatId, 10000, user);
                     return;
@@ -809,7 +809,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                user.setLastWebReq(new WebRequest(currentTest, gson.toJson(currentTest), new ButtonDTO("change_test", chatId)));
+                user.setLastWebReq(new ImportClassRequest(currentTest, gson.toJson(currentTest), new ButtonDTO("change_test", chatId)));
                 System.out.println(button.getWebApp().toString());
             }
             else{
@@ -834,7 +834,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             String response = Test.checkForTest(json.toString());
             System.out.println("Checked test: " + response);
-            if (!response.isBlank()) {
+            if (response != null) {
                 sendMessage(response, chatId);
                 return;
             }
