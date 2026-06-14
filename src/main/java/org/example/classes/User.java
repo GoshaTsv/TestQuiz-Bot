@@ -348,13 +348,14 @@ public class User {
                 '}';
     }
 
-    public static String getCorrectAnswerForQuestion(Question question) {
+    public static ArrayList<String> getCorrectAnswersForQuestion(Question question) {
+        ArrayList<String> correctAnswers = new ArrayList<>();
         for (Map.Entry<String, Boolean> entry : question.getAnswers().entrySet()) {
             if (entry.getValue()) {
-                return entry.getKey();
+                correctAnswers.add(entry.getKey());
             }
         }
-        return null;
+        return correctAnswers;
     }
 
     public void processMessageStates(TelegramBot bot, String msg, long chatId, ArrayList<User> users) {
@@ -556,6 +557,7 @@ public class User {
                 user.setState("default");
                 if (!bot.saveUser(user)) {
                     bot.alertMessage(bot.getTranslator().getTranslatedText("failed.update.user", lang), chatId, 10000, user);
+                    return;
                 }
                 bot.alertMessage(bot.getTranslator().getTranslatedText("user.added", lang), chatId, 10000, user);
                 bot.sendClasses(chatId, user);
