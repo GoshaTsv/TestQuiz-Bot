@@ -5,6 +5,7 @@ import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Quiz {
     private long teacherId;
@@ -37,7 +38,7 @@ public class Quiz {
                 return;
             }
 
-            ArrayList<String> rawTeacherUsername = DBManager.getUsernamesByIds(new ArrayList<>(Math.toIntExact(teacherId)));
+            ArrayList<String> rawTeacherUsername = DBManager.getUsernamesByIds(new ArrayList<>(List.of(teacherId)));
 
             if (rawTeacherUsername == null || rawTeacherUsername.isEmpty()) {
                 bot.alertMessage(bot.getTranslator().getTranslatedText("failed.get.your.username", teacherLang), teacherId, 10000, teacher);

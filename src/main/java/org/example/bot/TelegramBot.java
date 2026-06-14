@@ -1084,7 +1084,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             String teacherUsername = params.getFirst();
             String testName = params.getLast();
 
-            ArrayList<Long> rawTeacherId = DBManager.getIdsByUsernames(new ArrayList<>(Collections.singleton(teacherUsername)));
+            ArrayList<Long> rawTeacherId = DBManager.getIdsByUsernames(new ArrayList<>(List.of(teacherUsername)));
             if (rawTeacherId == null) {
                 alertMessage(translator.getTranslatedText("teacher.not.found", user.getLang()), chatId, 15000, user);
                 return;
