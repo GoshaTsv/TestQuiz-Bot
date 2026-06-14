@@ -145,7 +145,7 @@ public class DBManager {
         Connection connection = getConnection();
         if (connection == null) {
             System.out.println("Connection became null while deleting " + userId + "'s test: " + content);
-            return true;
+            return false;
         }
 
         try {
@@ -153,10 +153,10 @@ public class DBManager {
             st.setLong(1, userId);
             st.setString(2, content);
             st.executeUpdate();
-            return false;
+            return true;
         } catch (SQLException e) {
             System.out.println("An exception while deleting " + userId + "'s test (" + content + "): " + e.getMessage());
-            return true;
+            return false;
         }
     }
 
