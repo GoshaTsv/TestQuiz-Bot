@@ -17,7 +17,7 @@ public class DBManager {
     private static final String PASSWORD = System.getenv("DB_PASS");
     private static final String URL = System.getenv("DB_URL");
 
-    private static HikariDataSource dataSource;
+    private static final HikariDataSource dataSource;
 
     static {
         HikariConfig config = new HikariConfig();

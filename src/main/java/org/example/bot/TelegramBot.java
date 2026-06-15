@@ -1,5 +1,5 @@
 package org.example.bot;
-// 8032286461 superwarden0
+
 import com.google.gson.*;
 import org.example.classes.Quiz;
 import org.example.classes.StudentClass;
@@ -948,7 +948,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-            if (DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
+            if (!DBManager.deleteTest(chatId, DBManager.getTestContent(chatId, currentTest.getTestName()))) {
                 alertMessage(translator.getTranslatedText("failed.delete.test", user.getLang()), chatId, 10000, user);
                 return;
             }
