@@ -41,22 +41,14 @@ public class RestController {
             registry.addMapping("/api/**")
                     .allowedOrigins(allowedOrigin)
                     .allowedMethods("GET", "POST")
-                    .allowedHeaders("Content-Type", "X-Timestamp", "X-Signature")
+                    .allowedHeaders("Content-Type", "X-Timestamp", "X-Signature", "X-Chat-Id")
                     .maxAge(3600);
             registry.addMapping("/health").allowedOrigins("*");
         }
     }
-    @CrossOrigin(origins = "*")
+
     @PostMapping("/api/messages")
     public ResponseEntity<String> addClassFromWeb(@Valid @RequestBody Message req, HttpServletRequest httpRequest) throws IOException {
-        String ip = httpRequest.getHeader("X-Real-IP"); // от Nginx
-        if (ip == null) ip = httpRequest.getRemoteAddr();
-
-        if (!rateLimiter.tryConsumeRest(ip)) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body("Too many requests");
-        }
-
         long chatId = (Long) httpRequest.getAttribute("verified_chat_id");
         String response = handleQuizFromServer(req, chatId);
 
@@ -66,7 +58,8 @@ public class RestController {
         return ResponseEntity.ok("OK");
     }
     @GetMapping("/api/importquiz")
-    public ResponseEntity<ImportClassRequest> importClassToWeb(@RequestParam("chat_id") long chatId){
+    public ResponseEntity<ImportClassRequest> importClassToWeb(HttpServletRequest httpRequest) {
+        long chatId = (Long) httpRequest.getAttribute("verified_chat_id");
         User neededUser = telegramBot.getUsers().stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
 
         if (neededUser == null) {

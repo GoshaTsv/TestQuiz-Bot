@@ -49,8 +49,8 @@ public class TelegramBot extends TelegramLongPollingBot {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final String WEB_APP_URL = System.getenv("WEBAPP_URL");
     private List<User> users = Collections.synchronizedList(new ArrayList<>());
+    private final RateLimiterManager rateLimiter;
     private final Translator translator;
-    private final RateLimiterManager rateLimiter = new RateLimiterManager();
     private final int MILLIS_IN_SECONDS = 1000;
     public final String DEFAULT_LANG = "en";
 
@@ -74,8 +74,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         return botToken;
     }
 
-    public TelegramBot(Translator translator) {
+    public TelegramBot(Translator translator, RateLimiterManager rateLimiter) {
         this.translator = translator;
+        this.rateLimiter = rateLimiter;
     }
 
     @Override

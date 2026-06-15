@@ -47,5 +47,12 @@ public class RateLimiterManager {
             }
             return false;
         });
+        restCache.entrySet().removeIf(e -> {
+            if (e.getValue() instanceof LocalBucket lb) {
+                long max = lb.getConfiguration().getBandwidths()[0].getCapacity();
+                return lb.getAvailableTokens() == max;
+            }
+            return false;
+        });
     }
 }
