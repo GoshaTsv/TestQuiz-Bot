@@ -1,10 +1,18 @@
 package org.example.spring;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 public class Message {
+    @NotBlank
+    @Size(max = 15 * 1024 * 1024)
     private String content;
-    private String prev_content;
-    private String userId;
+
+    @Pattern(regexp = "^(|exportJSON|changeTest)$")
     private String request;
+
+    private String prev_content;
 
     public String getRequest() {
         return request;
@@ -35,16 +43,7 @@ public class Message {
         return "Message{" +
                 "content='" + content + '\'' +
                 ", prev_content='" + prev_content + '\'' +
-                ", userId='" + userId + '\'' +
                 ", request='" + request + '\'' +
                 '}';
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
     }
 }

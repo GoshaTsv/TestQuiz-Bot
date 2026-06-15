@@ -10,6 +10,7 @@ import org.example.classes.appLinking.Test;
 import org.example.database.DBManager;
 import org.example.spring.ButtonDTO;
 import org.example.spring.ImportClassRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
@@ -57,14 +58,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         return users;
     }
 
+    @Value("${telegram.bot.token}")
+    private String botToken;
+
+    @Value("${telegram.bot.username}")
+    private String botUsername;
+
     @Override
     public String getBotUsername() {
-        return "TestQuizBot";
+        return botUsername;
     }
 
     @Override
     public String getBotToken() {
-        return System.getenv("BOT_TOKEN");
+        return botToken;
     }
 
     public TelegramBot(Translator translator) {
@@ -111,7 +118,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 }
             }
-            if (!rateLimiter.tryConsume(chatId)) {
+            if (!rateLimiter.tryConsumeTelegram(chatId)) {
                 alertMessage(translator.getTranslatedText("message.spam", user.getLang()), chatId, 5000, user);
 
                 user.setWarnings(user.getWarnings() + 1);
@@ -1595,17 +1602,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     @GetMapping("/health")
     public String index(){
         return "Hello, sufferings!";
-    }
-
-    @Configuration
-    public class CorsConfig implements WebMvcConfigurer {
-        @Override
-        public void addCorsMappings(CorsRegistry registry) {
-            registry.addMapping("/**")
-                    .allowedOrigins("*")
-                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                    .allowedHeaders("*");
-        }
     }
 
     public Translator getTranslator() {

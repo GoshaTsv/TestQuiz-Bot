@@ -1,10 +1,15 @@
 package org.example.spring;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import org.example.bot.RateLimiterManager;
 import org.example.bot.TelegramBot;
 import org.example.classes.User;
 import org.example.database.DBManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -19,24 +24,41 @@ import java.io.*;
 public class RestController {
     @Autowired
     private TelegramBot telegramBot;
+    @Autowired
+    private RateLimiterManager rateLimiter;
+
     @GetMapping("/health")
     public String index() {
         return "Hello, sufferings!";
     }
     @Configuration
     public static class CorsConfig implements WebMvcConfigurer {
+        @Value("${app.allowed-origin}")
+        private String allowedOrigin;
+
         @Override
         public void addCorsMappings(CorsRegistry registry) {
-            registry.addMapping("/**")
-                    .allowedOrigins("*")
-                    .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                    .allowedHeaders("*");
+            registry.addMapping("/api/**")
+                    .allowedOrigins(allowedOrigin)
+                    .allowedMethods("GET", "POST")
+                    .allowedHeaders("Content-Type", "X-Timestamp", "X-Signature")
+                    .maxAge(3600);
+            registry.addMapping("/health").allowedOrigins("*");
         }
     }
     @CrossOrigin(origins = "*")
     @PostMapping("/api/messages")
-    public ResponseEntity<String> addClassFromWeb(@RequestBody org.example.spring.Message req) throws IOException {
-        String response = handleQuizFromServer(req);
+    public ResponseEntity<String> addClassFromWeb(@Valid @RequestBody Message req, HttpServletRequest httpRequest) throws IOException {
+        String ip = httpRequest.getHeader("X-Real-IP"); // от Nginx
+        if (ip == null) ip = httpRequest.getRemoteAddr();
+
+        if (!rateLimiter.tryConsumeRest(ip)) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body("Too many requests");
+        }
+
+        long chatId = (Long) httpRequest.getAttribute("verified_chat_id");
+        String response = handleQuizFromServer(req, chatId);
 
         if (response != null)
             return ResponseEntity.badRequest().body(response);
@@ -57,10 +79,9 @@ public class RestController {
         return ResponseEntity.ok(presses);
     }
 
-    public String handleQuizFromServer(org.example.spring.Message req) throws IOException {
+    public String handleQuizFromServer(Message req, long chatId) throws IOException {
         System.out.println("Got a message: " + req.toString());
         String request = req.getRequest();
-        long chatId = Long.parseLong(req.getUserId());
         String jsonData = req.getContent();
 
         System.out.println("jsonData: " + jsonData);
