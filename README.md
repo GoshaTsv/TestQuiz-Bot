@@ -19,3 +19,4 @@ Future plans
  - Add new kinds of testing
  - Quality Of Life changes
  - User's statistics
+ - Time limit on questions
