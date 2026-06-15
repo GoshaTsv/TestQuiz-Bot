@@ -497,63 +497,377 @@ public class TelegramBot extends TelegramLongPollingBot {
                 return;
             }
 
-                        user.setState("default");
-                        if (!DBManager.deleteClass(chatId, msg)) {
-                            sendMessage("Не удалось удалить класс, попробуйте ещё...", chatId);
-                            return;
-                        }
-                        user.setClassCount(user.getClassCount() - 1);
-                        if (!saveUser(user)) {
-                            sendMessage("Не удалось обновить состояние пользователя, попробуйте ещё...", chatId);
-                            return;
-                        }
+            if (doesUserExit == 0) {
+                if (!DBManager.registerAccount(username, chatId)) {
+                    alertMessage(translator.getTranslatedText("error.registering", userLangCode), chatId, 10000, testUser);
+                    return;
+                }
 
+                sendMessage(translator.getTranslatedText("start.message", userLangCode), chatId);
+                users.add(new User(chatId, "default", userLangCode, 0, 0, 0, -1, null));
+            }
+            return;
+        }
+        sendMessage(translator.getTranslatedText("start.message", user.getLang()), chatId);
+    }
 
-                        sendMessage("Класс успешно удалён!", chatId);
-                    }
-                    //sent most of the logic of case "create_test" outside the if-clause as for it to be activated the message needs to have text
-                    case "create_test" -> {
-                     /* added an if-clause to check for any command and the /exit command specifically
-                    if the user sent just a command, the bot tells them they can exit using /exit
-                    * the bot sends a message telling the person that they have cancelled the import of the test
-                    * then it sets the state to default, checks for it being done and goes back to the start
-                    also added an if-clause for checking the state
-                    * */
-                        if (!user.getState().equalsIgnoreCase("create_test")) {
-                            System.out.println("чё");
-                            return;
-                        }
-                        if (update.getMessage().hasText()) {
-                            if (update.getMessage().getText().startsWith("/")) {
-                                if (update.getMessage().getText().startsWith("/exit")) {
-                                    sendMessage("Вы отменили загрузку теста.", chatId);
-                                    user.setState("default");
-                                    if (!saveUser(user)) {
-                                        sendMessage("Не удалось обновить состояние пользователя.", chatId);
-                                    }
-                                    return;
-                                }
-                                sendMessage("Вы можете отменить загрузку файла с помощью команды /exit.", chatId);
-                                return;
-                            }
-                        }
-                        if (!(update.getMessage().hasDocument())) {
-                            sendMessage("Пожалуйста, отправьте файл.", chatId);
-                            return;
-                        }
-                        sendMessage("test", chatId);
-                    }
-                    case "delete_test" -> { // new state
-                        if (msg.startsWith("/")) {
-                            if (msg.startsWith("/exit")) {
-                                sendMessage("Удаление теста отменено.", chatId);
-                                user.setState("default");
-                                saveUser(user);
-                                return;
-                            }
-                            sendMessage("Вы не можете отправлять команды во время удаления теста (/exit для отмены удаления теста).", chatId);
-                            return;
-                        }
+    public boolean saveUser(User user) {
+        int index = IntStream.range(0, users.size()).filter(i -> users.get(i).getChatId() == user.getChatId()).findFirst().orElse(-1);
+        if (index == -1)
+            return false;
+
+        users.set(index, user);
+        return true;
+    }
+
+    public void deleteMessage(Integer deleteMessageId, long chatId) {
+        DeleteMessage deleteMessage = new DeleteMessage();
+        deleteMessage.setChatId(String.valueOf(chatId));
+        deleteMessage.setMessageId(deleteMessageId);
+
+        try {
+            execute(deleteMessage);
+        } catch (TelegramApiException e) {
+            System.out.println("An exception while deleting message: " + e.getMessage());
+        }
+    }
+
+    public void sendTextAsDocument(String content, String fileName, long chatId) {
+        try {
+            SendDocument sendDocument = new SendDocument();
+            sendDocument.setChatId(chatId);
+
+            byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+            InputFile inputFile = new InputFile(new ByteArrayInputStream(bytes), fileName);
+
+            sendDocument.setDocument(inputFile);
+            execute(sendDocument);
+        } catch (TelegramApiException e) {
+            System.out.println("An exception while sending document: " + e.getMessage());
+        }
+    }
+
+    public void alertMessage(String msg, long chatId, long length, User user) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(chatId));
+        sendMessage.setText(msg);
+        Integer messageId;
+        try {
+            messageId = execute(sendMessage).getMessageId();
+        }
+        catch (TelegramApiException e){
+            System.out.println("An exception in alert: " + e.getMessage());
+            return;
+        }
+        if(user != null && user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
+            new Thread(() -> {
+                System.out.println("Alert thread started");
+                try {
+                    Thread.sleep(length);
+                } catch (InterruptedException e) {
+                    System.out.println("An exception in alert thread: " + e.getMessage());
+                }
+                deleteMessage(messageId, chatId);
+                System.out.println("Deleting alert message");
+            }).start();
+        }
+    }
+
+    public Integer sendMessage(String msg, long chatId) {
+        AtomicReference<Integer> messageId = new AtomicReference<>();
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(chatId));
+        sendMessage.setText(msg);
+        try {
+            messageId.set(execute(sendMessage).getMessageId());
+        } catch (TelegramApiException e) {
+            System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+        }
+        return messageId.get();
+    }
+
+    public Integer sendMessage(String msg, long chatId, Integer editMessageId) {
+        if (editMessageId == null) {
+            Integer messageId = null;
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(chatId));
+            sendMessage.setText(msg);
+            try {
+                messageId = execute(sendMessage).getMessageId();
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            }
+            return messageId;
+        }
+        else {
+            System.out.println("Edit message id: " + editMessageId);
+            EditMessageText editMessage = new EditMessageText();
+            editMessage.setChatId(String.valueOf(chatId));
+            editMessage.setMessageId(editMessageId);
+            editMessage.setText(msg);
+
+            try {
+                execute(editMessage);
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setChatId(String.valueOf(chatId));
+                sendMessage.setText(msg);
+
+                Integer messageId = null;
+                try {
+                    messageId = execute(sendMessage).getMessageId();
+                } catch (TelegramApiException e1) {
+                    System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                }
+                return messageId;
+            }
+
+            return -1;
+        }
+    }
+
+    public Integer sendMessage(String msg, long chatId, ArrayList<String> buttons, ArrayList<String> callbacks, Integer editMessageId) {
+        System.out.println("Buttons: " + buttons);
+        System.out.println("Callbacks: " + callbacks);
+        InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
+        User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
+        if (user == null){
+            alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, new User(chatId, "default", DEFAULT_LANG, 0, 0, 0, -1, null));
+            return null;
+        }
+        if (editMessageId == null) {
+            System.out.println("Edit message id = null");
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(chatId));
+            sendMessage.setReplyMarkup(keyboard);
+            sendMessage.setText(msg);
+
+            Integer messageId = null;
+            try {
+                messageId = execute(sendMessage).getMessageId();
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            }
+            return messageId;
+        } else {
+            System.out.println("Edit message id: " + editMessageId);
+            EditMessageText editMessage = new EditMessageText();
+            editMessage.setChatId(String.valueOf(chatId));
+            editMessage.setMessageId(editMessageId);
+            editMessage.setText(msg);
+            editMessage.setReplyMarkup(keyboard);
+
+            try {
+                execute(editMessage);
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setChatId(String.valueOf(chatId));
+                sendMessage.setReplyMarkup(keyboard);
+                sendMessage.setText(msg);
+
+                Integer messageId = null;
+                try {
+                    messageId = execute(sendMessage).getMessageId();
+                } catch (TelegramApiException e1) {
+                    System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                }
+                return messageId;
+            }
+
+            return -1;
+        }
+    }
+
+    public Integer sendMessagePhoto(String msg, long chatId, Image image, Integer editPhotoMessageId) {
+        if (image == null) {
+            if (editPhotoMessageId != null && editPhotoMessageId != -1)
+                deleteMessage(editPhotoMessageId, chatId);
+
+            Integer messageId = null;
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(chatId));
+            sendMessage.setText(msg);
+            try {
+                messageId = execute(sendMessage).getMessageId();
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            }
+            return messageId;
+        }
+
+        if (editPhotoMessageId != null && editPhotoMessageId != -1)
+            deleteMessage(editPhotoMessageId, chatId);
+
+        InputFile file = getInputFileFromImage(image, chatId);
+
+        System.out.println("Message id = null");
+        SendPhoto sendPhotoRequest = SendPhoto.builder()
+                .chatId(chatId)
+                .caption(msg)
+                .photo(file)
+                .build();
+
+        try {
+            return execute(sendPhotoRequest).getMessageId();
+        } catch (TelegramApiException e) {
+            sendMessage(translator.getTranslatedText("error.try.again", DEFAULT_LANG), chatId);
+            return -1;
+        }
+    }
+
+    public Integer sendMessagePhoto(String msg, long chatId, Image image, ArrayList<String> buttons, ArrayList<String> callbacks, Integer editPhotoMessageId) {
+        System.out.println("Buttons: " + buttons);
+        System.out.println("Callbacks: " + callbacks);
+
+        InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
+        if (image == null) {
+            if (editPhotoMessageId != null && editPhotoMessageId != -1)
+                deleteMessage(editPhotoMessageId, chatId);
+
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(String.valueOf(chatId));
+            sendMessage.setReplyMarkup(keyboard);
+            sendMessage.setText(msg);
+
+            Integer messageId = null;
+            try {
+                messageId = execute(sendMessage).getMessageId();
+            } catch (TelegramApiException e) {
+                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            }
+            return messageId;
+        }
+
+        if (editPhotoMessageId != null && editPhotoMessageId != -1)
+            deleteMessage(editPhotoMessageId, chatId);
+
+        InputFile file = getInputFileFromImage(image, chatId);
+
+        SendPhoto sendPhotoRequest = SendPhoto.builder()
+                .chatId(chatId)
+                .caption(msg)
+                .photo(file)
+                .replyMarkup(keyboard)
+                .build();
+        try {
+            return execute(sendPhotoRequest).getMessageId();
+        } catch (TelegramApiException e) {
+            sendMessage(translator.getTranslatedText("error.try.again", DEFAULT_LANG), chatId);
+            return -1;
+        }
+    }
+
+    public Integer sendMessagePhoto(String msg, long chatId, Image image) {
+        return sendMessagePhoto(msg, chatId, image, null);
+    }
+
+    public InputFile getInputFileFromImage(Image image, long chatId) {
+        String[] base64String = image.getDataURL().split(",");
+        StringBuilder pureBase64 = new StringBuilder();
+        for(String base64: base64String){
+            if (base64.equalsIgnoreCase(base64String[0])){
+                continue;
+            }
+            pureBase64.append(base64);
+        }
+        String realBase64 = pureBase64.toString();
+        byte[] imageBytes = Base64.getDecoder().decode(realBase64);
+
+        return new InputFile(
+                new ByteArrayInputStream(imageBytes),
+                "image" + chatId + "_" + System.currentTimeMillis() + ".png"
+        );
+    }
+
+    private InlineKeyboardMarkup getKeyboardMarkup(ArrayList<String> buttons, ArrayList<String> callbacks, long chatId) {
+        InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
+        AtomicInteger count = new AtomicInteger();
+        List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+        User user = users.stream().filter(z -> z.getChatId()==chatId).findFirst().orElse(null);
+        String lang = user != null ? user.getLang() : DEFAULT_LANG;
+
+        buttons.forEach(x -> {
+            List<InlineKeyboardButton> row = new ArrayList<>();
+            InlineKeyboardButton button = new InlineKeyboardButton();
+
+            button.setText(translator.getTranslatedText(x, lang));
+            if (callbacks.get(count.get()).equalsIgnoreCase("change_test")) {
+                System.out.println("found change_test");
+                WebAppInfo webAppInfo = new WebAppInfo();
+                webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=changeTest");
+                button.setWebApp(webAppInfo);
+
+                if (user == null){
+                    alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, null);
+                    return;
+                }
+
+                Test currentTest = user.getCurrentChangingTest();
+                if (currentTest == null) {
+                    alertMessage(translator.getTranslatedText("failed.get.current.test", user.getLang()), chatId, 10000, user);
+                    sendClasses(chatId, user);
+                    return;
+                }
+
+                user.setLastWebReq(new ImportClassRequest(currentTest, gson.toJson(currentTest), new ButtonDTO("change_test", chatId)));
+                System.out.println(button.getWebApp().toString());
+            }
+            else{
+                button.setCallbackData(callbacks.get(count.get()));
+            }
+            count.getAndIncrement();
+            row.add(button);
+            rows.add(row);
+        });
+        keyboard.setKeyboard(rows);
+
+        return keyboard;
+    }
+
+    public String createTest(long chatId, User user, String fileName) {
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(fileName));
+            StringBuilder json = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null)
+                json.append(line);
+
+            String response = Test.checkForTest(this, json.toString(), user, chatId);
+            System.out.println("Checked test: " + response);
+            if (response != null)
+                return response;
+
+            alertMessage(translator.getTranslatedText("test.saved", user.getLang()), chatId, 15000, user);
+        } catch (IOException e) {
+            alertMessage(translator.getTranslatedText("error.adding.test", user.getLang()), chatId, 10000, user);
+        }
+
+        return null;
+    }
+
+    private void processCallbackData(String data, User user, Update update, long chatId) {
+        try {
+            execute(new AnswerCallbackQuery(update.getCallbackQuery().getId()));
+        } catch (TelegramApiException e) {
+            alertMessage(translator.getTranslatedText("error.try.again", user.getLang()), chatId, 10000, user);
+        }
+
+        if (data.startsWith("delete_student")) {
+            System.out.println("Deleting student class");
+
+            StudentClass chosenClass = user.getCurrentChangingClass();
+            if (chosenClass == null) {
+                alertMessage(translator.getTranslatedText("failed.get.current.class", user.getLang()), chatId, 10000, user);
+                sendClasses(chatId, user);
+                return;
+            }
+
+            if (chosenClass.getStudents().size() <= 2){
+                alertMessage(translator.getTranslatedText("cannot.remove.students.limit", user.getLang()), chatId, 10000, user);
+                return;
+            }
 
             ArrayList<String> studentsNames = DBManager.getUsernamesByIds(chosenClass.getStudents());
             if (studentsNames == null) {
