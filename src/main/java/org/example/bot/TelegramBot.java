@@ -827,24 +827,28 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     public String createTest(long chatId, User user, String fileName) {
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(fileName));
-            StringBuilder json = new StringBuilder();
-            String line;
-            while ((line = br.readLine()) != null)
-                json.append(line);
+        if (user.getTestsCount() < 10){
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(fileName));
+                StringBuilder json = new StringBuilder();
+                String line;
+                while ((line = br.readLine()) != null)
+                    json.append(line);
 
-            String response = Test.checkForTest(this, json.toString(), user, chatId);
-            System.out.println("Checked test: " + response);
-            if (response != null)
-                return response;
+                String response = Test.checkForTest(this, json.toString(), user, chatId);
+                System.out.println("Checked test: " + response);
+                if (response != null)
+                    return response;
+                alertMessage(translator.getTranslatedText("test.saved", user.getLang()), chatId, 15000, user);
+            } catch (IOException e) {
+                alertMessage(translator.getTranslatedText("error.adding.test", user.getLang()), chatId, 10000, user);
+            }
 
-            alertMessage(translator.getTranslatedText("test.saved", user.getLang()), chatId, 15000, user);
-        } catch (IOException e) {
-            alertMessage(translator.getTranslatedText("error.adding.test", user.getLang()), chatId, 10000, user);
+            return null;
         }
-
-        return null;
+        else{
+            return translator.getTranslatedText("test.limit", user.getLang());
+        }
     }
 
     private void processCallbackData(String data, User user, Update update, long chatId) {
