@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -45,6 +46,22 @@ public class RestController {
                     .maxAge(3600);
             registry.addMapping("/health").allowedOrigins("*");
         }
+    }
+
+    @Value("${app.hmac-secret}")
+    private String hmacSecret;
+
+    @Value("${app.public-url}")
+    private String publicUrl;
+
+    @GetMapping("/config.js")
+    public ResponseEntity<String> getConfigJs() {
+        String js = "window.APP_SECRET = '" + hmacSecret + "';\n" +
+                "window.APP_API_URL = '" + publicUrl + "';\n";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/javascript"))
+                .header("Cache-Control", "no-store, no-cache")
+                .body(js);
     }
 
     @PostMapping("/api/messages")

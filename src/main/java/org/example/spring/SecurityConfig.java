@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SecurityConfig {
     @Bean
-    public FilterRegistrationBean<HmacAuthFilter> hmacFilter(HmacAuthFilter filter) {
-        FilterRegistrationBean<HmacAuthFilter> reg = new FilterRegistrationBean<>(filter);
+    public FilterRegistrationBean<TelegramInitDataFilter> hmacFilter(TelegramInitDataFilter filter) {
+        FilterRegistrationBean<TelegramInitDataFilter> reg = new FilterRegistrationBean<>(filter);
         reg.addUrlPatterns("/api/*");
         reg.setOrder(1);
         return reg;
