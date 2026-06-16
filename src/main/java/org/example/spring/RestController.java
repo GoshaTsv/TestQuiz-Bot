@@ -39,6 +39,7 @@ public class RestController {
 
         @Override
         public void addCorsMappings(CorsRegistry registry) {
+            System.out.println("Allowed: " + allowedOrigin);
             registry.addMapping("/api/**")
                     .allowedOrigins(allowedOrigin)
                     .allowedMethods("GET", "POST", "OPTIONS")
