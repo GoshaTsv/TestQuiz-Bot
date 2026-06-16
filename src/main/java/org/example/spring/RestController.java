@@ -41,10 +41,11 @@ public class RestController {
         public void addCorsMappings(CorsRegistry registry) {
             registry.addMapping("/api/**")
                     .allowedOrigins(allowedOrigin)
-                    .allowedMethods("GET", "POST")
+                    .allowedMethods("GET", "POST", "OPTIONS")
                     .allowedHeaders("Content-Type", "X-Timestamp", "X-Signature", "X-Chat-Id")
                     .maxAge(3600);
             registry.addMapping("/health").allowedOrigins("*");
+            registry.addMapping("/config.js").allowedOrigins("*");
         }
     }
 
