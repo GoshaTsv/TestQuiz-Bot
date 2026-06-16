@@ -1223,6 +1223,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
             sendClasses(chatId, user);
         } else if (msg.startsWith("/newtest")) {
+            System.out.println("User tests: " + user.getTestsCount());
             if (user.getTestsCount() >= 10) {
                 alertMessage(translator.getTranslatedText("test.limit", user.getLang()), chatId, 10000, user);
                 return;
