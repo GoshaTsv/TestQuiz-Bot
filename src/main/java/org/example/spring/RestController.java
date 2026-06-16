@@ -43,7 +43,8 @@ public class RestController {
             registry.addMapping("/api/**")
                     .allowedOrigins(allowedOrigin)
                     .allowedMethods("GET", "POST", "OPTIONS")
-                    .allowedHeaders("Content-Type", "X-Timestamp", "X-Signature", "X-Chat-Id")
+                    .allowedHeaders("*")
+                    .exposedHeaders("*")
                     .maxAge(3600);
             registry.addMapping("/health").allowedOrigins("*");
             registry.addMapping("/config.js").allowedOrigins("*");
