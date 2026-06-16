@@ -1240,21 +1240,22 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage.setChatId(String.valueOf(chatId));
             sendMessage.setText(translator.getTranslatedText("send.json.or.miniapp", user.getLang()));
 
-            ReplyKeyboardMarkup keyboard = new ReplyKeyboardMarkup();
-            keyboard.setResizeKeyboard(true);
-            keyboard.setOneTimeKeyboard(false);
+            InlineKeyboardMarkup keyboard = new InlineKeyboardMarkup();
 
-            KeyboardButton webAppButton = new KeyboardButton();
+            InlineKeyboardButton webAppButton = new InlineKeyboardButton();
             webAppButton.setText(translator.getTranslatedText("create.test", user.getLang()));
 
             WebAppInfo webAppInfo = new WebAppInfo();
             webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=newTest");
             webAppButton.setWebApp(webAppInfo);
 
-            KeyboardRow row = new KeyboardRow();
+            List<InlineKeyboardButton> row = new ArrayList<>();
             row.add(webAppButton);
 
-            keyboard.setKeyboard(List.of(row));
+            List<List<InlineKeyboardButton>> rows = new ArrayList<>();
+            rows.add(row);
+
+            keyboard.setKeyboard(rows);
             sendMessage.setReplyMarkup(keyboard);
 
             Integer messageId = null;
