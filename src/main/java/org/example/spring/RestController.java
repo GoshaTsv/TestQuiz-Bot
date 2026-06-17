@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.example.bot.RateLimiterManager;
 import org.example.bot.TelegramBot;
+import org.example.bot.Translator;
 import org.example.classes.User;
 import org.example.database.DBManager;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.*;
+import java.util.HashMap;
 
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
@@ -158,5 +160,11 @@ public class RestController {
             }
         }
         return null;
+    }
+    @GetMapping("/api/language")
+    public ResponseEntity<HashMap<String, String>> getWebLang(@RequestParam String lang){
+        System.out.println("received getWebLang query, lang: " + lang);
+
+
     }
 }
