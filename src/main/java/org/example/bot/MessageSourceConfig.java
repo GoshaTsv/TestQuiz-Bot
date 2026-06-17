@@ -10,7 +10,7 @@ public class MessageSourceConfig {
 
     @Bean
     public MessageSource messageSource() {
-        ReloadableResourceBundleMessageSource messageSource = new ReloadableResourceBundleMessageSource();
+        YamlMessageSource messageSource = new YamlMessageSource();
         messageSource.setBasenames(
                 "classpath:messages",
                 "classpath:web_messages"
