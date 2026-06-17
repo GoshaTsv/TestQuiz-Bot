@@ -188,19 +188,6 @@ public class RestController {
                 strings.put(key, translated);
             }
         }
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(new MediaType("application", "json", StandardCharsets.UTF_8));
-
-        return new ResponseEntity<>(strings, headers, HttpStatus.OK);
-    }
-    @GetMapping("/api/test-utf8")
-    public ResponseEntity<String> testUtf8() {
-        // Direct hardcoded string - no files, no translator
-        String test = "Загаловак тэсту...";
-        System.out.println("Sending: " + test);
-
-        return ResponseEntity.ok()
-                .contentType(new MediaType("text", "plain", java.nio.charset.StandardCharsets.UTF_8))
-                .body(test);
+        return ResponseEntity.ok(strings);
     }
 }
