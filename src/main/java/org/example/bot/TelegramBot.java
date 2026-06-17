@@ -800,14 +800,15 @@ public class TelegramBot extends TelegramLongPollingBot {
             button.setText(translator.getTranslatedText(x, lang));
             if (callbacks.get(count.get()).equalsIgnoreCase("change_test")) {
                 System.out.println("found change_test");
-                WebAppInfo webAppInfo = new WebAppInfo();
-                webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=changeTest");
-                button.setWebApp(webAppInfo);
+
 
                 if (user == null){
                     alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, null);
                     return;
                 }
+                WebAppInfo webAppInfo = new WebAppInfo();
+                webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=changeTest&userLang=" + user.getLang());
+                button.setWebApp(webAppInfo);
 
                 Test currentTest = user.getCurrentChangingTest();
                 if (currentTest == null) {
@@ -1244,7 +1245,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             webAppButton.setText(translator.getTranslatedText("create.test", user.getLang()));
 
             WebAppInfo webAppInfo = new WebAppInfo();
-            webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=newTest");
+            webAppInfo.setUrl(WEB_APP_URL + "?chat_id=" + chatId + "&method=newTest&userLang=" + user.getLang());
             webAppButton.setWebApp(webAppInfo);
 
             List<InlineKeyboardButton> row = new ArrayList<>();
