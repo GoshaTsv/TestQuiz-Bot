@@ -164,7 +164,7 @@ public class RestController {
         }
         return null;
     }
-    @GetMapping("/api/language")
+    @GetMapping(value = "/api/language", produces = "application/json;charset=UTF-8")
     public ResponseEntity<Map<String, String>> getWebLang(@RequestParam(defaultValue = "ru") String lang){
         System.out.println("received getWebLang query, lang: " + lang);
         Map<String, String> strings = new HashMap<>();
