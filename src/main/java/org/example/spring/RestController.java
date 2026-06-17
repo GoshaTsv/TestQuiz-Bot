@@ -180,7 +180,8 @@ public class RestController {
                 "export_btn", "new_test_btn", "old_test_btn", "image_choice_wrongType", "image_choice_tooBig", "imageReader_error", "get_test_no_data",
                 "change_current_question_first", "change_current_question_last", "add_variant_too_much", "repeating_variant", "less_than_two_vars",
                 "no_right_vars", "too_much_questions", "no_questions_left_to_delete", "empty_quiz_name", "no_questions_to_add", "json_saved", "web_error",
-                "please_add_questions", "unfixed_question", "telegram_non_existent", "no_user_id"
+                "please_add_questions", "unfixed_question", "telegram_non_existent", "no_user_id", "cant_be_empty", "too_long", "unallowed_symbols",
+                "question_text_web", "answer_option_web", "exact_answer_web", "surver_option_web", "quiz_name_web"
         };
         for (String key : keys) {
             String translated = translator.getTranslatedText(key, lang);
