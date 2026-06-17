@@ -9,6 +9,7 @@ import org.example.classes.User;
 import org.example.database.DBManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.NoSuchMessageException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +23,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
@@ -162,9 +165,27 @@ public class RestController {
         return null;
     }
     @GetMapping("/api/language")
-    public ResponseEntity<HashMap<String, String>> getWebLang(@RequestParam String lang){
+    public ResponseEntity<Map<String, String>> getWebLang(@RequestParam(defaultValue = "en") String lang){
         System.out.println("received getWebLang query, lang: " + lang);
-        HashMap<String, String> strings = new HashMap<>();
+        Map<String, String> strings = new HashMap<>();
+        Translator translator = telegramBot.getTranslator();
+        if (translator == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        String[] keys = {
+                "quiz_name_field_plchdr", "quest_count", "question_field_plchdr", "choice_var", "choice_ans", "choice_srv", "var_field_plchdr",
+                "var_checkbox_right", "ans_field_plchdr", "new_var_btn", "new_quest_btn", "old_quest_btn", "dlt_quest_btn", "add_img_btn", "dlt_img_btn",
+                "export_btn", "new_test_btn", "old_test_btn", "image_choice_wrongType", "image_choice_tooBig", "imageReader_error", "get_test_no_data",
+                "change_current_question_first", "change_current_question_last", "add_variant_too_much", "repeating_variant", "less_than_two_vars",
+                "no_right_vars", "too_much_questions", "no_questions_left_to_delete", "empty_quiz_name", "no_questions_to_add", "json_saved", "web_error",
+                "please_add_questions", "unfixed_question", "telegram_non_existent", "no_user_id"
+        };
+        for (String key : keys) {
+            String translated = translator.getTranslatedText(key, lang);
+            if (translated != null) {
+                strings.put(key, translated);
+            }
+        }
         return ResponseEntity.ok(strings);
 
     }
