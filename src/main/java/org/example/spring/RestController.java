@@ -165,7 +165,7 @@ public class RestController {
         return null;
     }
     @GetMapping("/api/language")
-    public ResponseEntity<Map<String, String>> getWebLang(@RequestParam(defaultValue = "en") String lang){
+    public ResponseEntity<Map<String, String>> getWebLang(@RequestParam(defaultValue = "ru") String lang){
         System.out.println("received getWebLang query, lang: " + lang);
         Map<String, String> strings = new HashMap<>();
         Translator translator = telegramBot.getTranslator();
