@@ -1,4 +1,4 @@
-8package org.example.spring;
+q8package org.example.spring;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -165,7 +165,7 @@ public class RestController {
     public ResponseEntity<HashMap<String, String>> getWebLang(@RequestParam String lang){
         System.out.println("received getWebLang query, lang: " + lang);
         HashMap<String, String> strings = new HashMap<>();
-        return strings;
+        return ResponseEntity.ok(strings);
 
     }
 }
