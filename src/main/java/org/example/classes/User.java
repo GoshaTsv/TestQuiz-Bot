@@ -64,6 +64,16 @@ public class User {
     private StudentClass currentStartQuizClass;
     private String currentNewClassName;
     private Integer lastMessageId;
+    private StudentClass currentClassForQuiz;
+
+    public StudentClass getCurrentClassForQuiz() {
+        return currentClassForQuiz;
+    }
+
+    public void setCurrentClassForQuiz(StudentClass currentClassForQuiz) {
+        this.currentClassForQuiz = currentClassForQuiz;
+    }
+
     //WebRequest for importing classes into the web app
     private ImportClassRequest lastWebReq;
 

@@ -368,19 +368,20 @@ public class TelegramBot extends TelegramLongPollingBot {
                             Thread.sleep(500);
                         } catch (InterruptedException ignored) {}
                     }
-                    StudentClass currentClass = quiz.getStudentClass();
+
+                    StudentClass currentClass = user.getCurrentClassForQuiz();
                     long newTotalAnswers = currentClass.getTotalAnswersCount()+quiz.getTest().getQuestions().size()-surveyCount;
                     long newCorrectAnswers = currentClass.getCorrectAnswersCount()+user.getCorrectAnswers();
                     long newClassExperience = Math.round(0.5 * ((newTotalAnswers * newCorrectAnswers)/Math.sqrt(currentClass.getStudents().size())));
                     DBManager.deleteClass(currentClass.getTeacherId(), currentClass.getName());
                     DBManager.createClass(currentClass.getName(), currentClass.getTeacherId(), currentClass.getStudents(), newTotalAnswers, newCorrectAnswers, newClassExperience);
-
                     user.setQuizState(-1);
                     user.setCurrentQuiz(null);
                     user.setCorrectAnswers(0);
                     user.setUserAnswers(new LinkedHashMap<>());
                     user.setSurveyAnswers(new ArrayList<>());
                     user.setCurrentQuizPhotoId(null);
+                    user.setCurrentClassForQuiz(null);
 
                     if (!saveUser(user))
                         alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
@@ -1043,7 +1044,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                 alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 return;
             }
-
+            for (Long ids: chosenClass.getStudents()){
+                User user13 = users.stream().filter(x -> x.getChatId() == ids).findFirst().get();
+                if (user13==null){
+                    System.out.println("user with the id " + ids + " is empty");
+                    continue;
+                }
+                user13.setCurrentClassForQuiz(chosenClass);
+            }
             ArrayList<Test> tests = DBManager.getTests(chatId);
 
             if (tests == null) {
@@ -1126,7 +1134,6 @@ public class TelegramBot extends TelegramLongPollingBot {
                 alertMessage(translator.getTranslatedText("failed.get.current.test", user.getLang()), chatId, 10000, user);
                 return;
             }
-
             new Quiz(teacherId, null, test).startQuizzing(this, user, user.getCurrentQuiz().getTeacherId(), (ArrayList<User>) users, chatId);
         }
         else if(data.startsWith("changeAutoDelete")){
