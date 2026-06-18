@@ -482,7 +482,7 @@ public class User {
                     return;
                 }
 
-                if (!DBManager.createClass(user.getCurrentNewClassName(), chatId, students)) {
+                if (!DBManager.createClass(user.getCurrentNewClassName(), chatId, students, 0, 0, 0)) {
                     bot.alertMessage(bot.getTranslator().getTranslatedText("failed.create.class", lang), chatId, 10000, user);
                     return;
                 }
@@ -552,7 +552,7 @@ public class User {
                 ArrayList<Long> newSetOfStudents = chosenClass.getStudents();
                 newSetOfStudents.add(userId.getFirst());
                 DBManager.deleteClass(chatId, chosenClass.getName());
-                DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
+                DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents, chosenClass.getTotalAnswersCount(), chosenClass.getCorrectAnswersCount(), chosenClass.getClassExperience());
                 user.setCurrentChangingClass(null);
                 user.setState("default");
                 if (!bot.saveUser(user)) {

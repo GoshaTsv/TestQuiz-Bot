@@ -95,17 +95,20 @@ public class DBManager {
         }
     }
 
-    public static boolean createClass(String name, long teacherId, ArrayList<Long> students) {
+    public static boolean createClass(String name, long teacherId, ArrayList<Long> students, long totalAnswers, long correctAnswers, long experience) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
                 System.out.println("Connection became null while creating new class");
                 return false;
             }
 
-            try (PreparedStatement st = connection.prepareStatement("INSERT INTO public.classes (name, teacher_id, students) VALUES (?, ?, ?)")) {
+            try (PreparedStatement st = connection.prepareStatement("INSERT INTO public.classes (name, teacher_id, students, totalanswerscount, correctanswerscount, experience) VALUES (?, ?, ?, ?, ?, ?)")) {
                 st.setString(1, name.toLowerCase());
                 st.setLong(2, teacherId);
                 st.setArray(3, connection.createArrayOf("BIGINT", students.toArray()));
+                st.setLong(4, totalAnswers);
+                st.setLong(5, correctAnswers);
+                st.setLong(6, experience);
 
                 st.executeUpdate();
                 return true;
@@ -207,10 +210,13 @@ public class DBManager {
                 try (ResultSet res = st.executeQuery()) {
                     if (!res.next())
                         return null;
+                    long experience = res.getLong("experience");
+                    long totalanswers = res.getLong("totalanswerscount");
+                    long correctanswers = res.getLong("correctanswerscount");
 
                     Long[] javaStudentsArray = (Long[]) res.getArray("students").getArray();
 
-                    return new StudentClass(teacherId, name, new ArrayList<>(Arrays.asList(javaStudentsArray)));
+                    return new StudentClass(teacherId, name, new ArrayList<>(Arrays.asList(javaStudentsArray)), totalanswers, correctanswers, experience);
                 }
             }
         } catch (SQLException e) {
@@ -234,8 +240,10 @@ public class DBManager {
                         Array studentsArray = res.getArray("students");
                         Long[] javaStudentArray = (Long[]) studentsArray.getArray(); // long -> Long
                         ArrayList<Long> students = new ArrayList<>(Arrays.asList(javaStudentArray));
-
-                        StudentClass studentClass = new StudentClass(chatId, res.getString("name"), students);
+                        long experience = res.getLong("experience");
+                        long totalanswers = res.getLong("totalanswerscount");
+                        long correctanswers = res.getLong("correctanswerscount");
+                        StudentClass studentClass = new StudentClass(chatId, res.getString("name"), students, totalanswers, correctanswers, experience);
 
                         classes.add(studentClass);
                     }

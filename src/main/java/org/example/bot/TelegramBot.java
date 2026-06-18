@@ -343,6 +343,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                     System.out.println("User answers: " + userAnswers);
                     int surveyCount = 0;
+
                     for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().getQuestions().size(); i++) {
                         String question = test.getQuestions().get(i).getQuestion();
                         String userAnswer = userAnswers.get(i).split("\uD80C\uDE78")[1];
@@ -367,6 +368,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                             Thread.sleep(500);
                         } catch (InterruptedException ignored) {}
                     }
+                    StudentClass currentClass = quiz.getStudentClass();
+                    long newTotalAnswers = currentClass.getTotalAnswersCount()+quiz.getTest().getQuestions().size()-surveyCount;
+                    long newCorrectAnswers = currentClass.getCorrectAnswersCount()+user.getCorrectAnswers();
+                    long newClassExperience = Math.round(0.5 * ((newTotalAnswers * newCorrectAnswers)/Math.sqrt(currentClass.getStudents().size())));
+                    DBManager.deleteClass(currentClass.getTeacherId(), currentClass.getName());
+                    DBManager.createClass(currentClass.getName(), currentClass.getTeacherId(), currentClass.getStudents(), newTotalAnswers, newCorrectAnswers, newClassExperience);
+
                     user.setQuizState(-1);
                     user.setCurrentQuiz(null);
                     user.setCorrectAnswers(0);
@@ -902,7 +910,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             newSetOfStudents.remove(newSetOfStudents.get(Integer.parseInt(deleteStudentId)));
 
             DBManager.deleteClass(chatId, chosenClass.getName());
-            DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents);
+            DBManager.createClass(chosenClass.getName(), chatId, newSetOfStudents, chosenClass.getTotalAnswersCount(), chosenClass.getCorrectAnswersCount(), chosenClass.getClassExperience());
 
             user.setCurrentChangingClass(null);
             if (!saveUser(user))
@@ -1441,7 +1449,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         StringBuilder classString = new StringBuilder();
-        classString.append(translator.getTranslatedText("class.name.label", user.getLang(), chosenClass.getName()));
+        long classLevel = chosenClass.findLevel();
+        long experienceLeft = ((classLevel+1)*(classLevel+2)/2)-chosenClass.getClassExperience();
+        classString.append(translator.getTranslatedText("class.name.label", user.getLang(), chosenClass.getName(), classLevel, experienceLeft));
         for (String username: userUsernames)
             classString.append("- @").append(username).append("\n");
 
