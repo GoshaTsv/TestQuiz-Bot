@@ -122,7 +122,7 @@ configure.time: 'Configure time'
 create.test: 'Create test'
 test.name.label: 'Test name: "{0}"'
 test.send.message: 'You got a quiz: "{0}"!'
-test.send.confirm: 'Start quiz '
+test.send.confirm: 'Start quiz'
 test.list.item: |
   - {0} ({1} questions).
 your.tests: |

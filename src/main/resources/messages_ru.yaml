@@ -120,7 +120,7 @@ configure.behavior: 'Настроить поведение'
 configure.time: 'Настроить время'
 create.test: 'Создать тест'
 test.send.message: 'Вам отправили тест: "{0}"!'
-test.send.confirm: 'Начать тест '
+test.send.confirm: 'Начать тест'
 test.name.label: 'Название теста: "{0}"'
 test.list.item: |
   - {0} ({1} вопросов).

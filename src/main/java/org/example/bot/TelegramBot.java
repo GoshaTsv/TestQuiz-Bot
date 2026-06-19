@@ -1111,7 +1111,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         else if(data.startsWith("start_quiz_user")){
             ArrayList<String> params = new ArrayList<>(List.of(data.replaceFirst("start_quiz_user_", "").split("\uD80C\uDE78")));
             String teacherUsername = params.getFirst();
-            String testName = params.getLast();
+            String testName = params.getLast().replaceAll("_", " ");
 
             ArrayList<Long> rawTeacherId = DBManager.getIdsByUsernames(new ArrayList<>(List.of(teacherUsername)));
             if (rawTeacherId == null) {
