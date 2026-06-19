@@ -595,7 +595,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             messageId.set(execute(sendMessage).getMessageId());
         } catch (TelegramApiException e) {
-            System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            System.err.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            e.printStackTrace();
         }
         return messageId.get();
     }
@@ -662,6 +663,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 messageId = execute(sendMessage).getMessageId();
             } catch (TelegramApiException e) {
                 System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                e.printStackTrace();
             }
             return messageId;
         } else {
@@ -686,6 +688,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     messageId = execute(sendMessage).getMessageId();
                 } catch (TelegramApiException e1) {
                     System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                    e1.printStackTrace();
                 }
                 return messageId;
             }
