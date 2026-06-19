@@ -133,7 +133,7 @@ your.classes: |
   Your classes ({0}):
 class.name.label: |
   Class name: "{0}"
-  Class' level: {1}
+  Class level: {1}
   You need {2} experience left to reach the next level
   Students:
 failed.language: 'Failed to change the language, please try again...'
