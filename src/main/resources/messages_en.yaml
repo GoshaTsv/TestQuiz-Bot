@@ -14,14 +14,14 @@ failed.update.user.short: 'Failed to update user status.'
 quiz.congrats: 'Congratulations! You answered on {0} out of {1} questions correctly! We hope you have enjoyed it!'
 quiz.finished: |
   Hello. @{0} has finished your test "{1}" and answered on {2} out of {3} questions correctly. 
-  Student's answers:
+  Students answers:
 quiz.question.result: |
   Question #{0}: "{1}"
-  Your student's answer (@{2}): "{3}"
+  Your students answer (@{2}): "{3}"
   Correct answer(-s): {4}
 quiz.survey.result: |
   Survey #{0}: "{1}"
-  Your student's answer (@{2}): "{3}"
+  Your students answer (@{2}): "{3}"
 failed.send.question: 'Failed to send the question.'
 question.number: 'Question #{0}: {1}'
 set.username: 'Set a username for your account to continue.'
