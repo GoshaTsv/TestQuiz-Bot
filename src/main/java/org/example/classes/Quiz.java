@@ -46,7 +46,7 @@ public class Quiz {
             }
 
             ArrayList<String> callbacks = new ArrayList<>();
-            callbacks.add("start_quiz_user_" + rawTeacherUsername.getFirst() + "\uD80C\uDE78" + quiz.getTest().getTestName().trim());
+            callbacks.add("start_quiz_user_" + rawTeacherUsername.getFirst() + "\uD80C\uDE78" + quiz.getTest().getTestName().replaceAll(" ", "_"));
             ArrayList<String> buttons = new ArrayList<>();
             buttons.add(bot.getTranslator().getTranslatedText("test.send.confirm", userCurrent.getLang()));
             Integer messageId = bot.sendMessage(bot.getTranslator().getTranslatedText("test.send.message", userCurrent.getLang(), quiz.getTest().getTestName()), x, buttons, callbacks, null );
