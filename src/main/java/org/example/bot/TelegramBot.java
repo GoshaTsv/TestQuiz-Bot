@@ -372,7 +372,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     StudentClass currentClass = user.getCurrentClassForQuiz();
                     long newTotalAnswers = currentClass.getTotalAnswersCount()+quiz.getTest().getQuestions().size()-surveyCount;
                     long newCorrectAnswers = currentClass.getCorrectAnswersCount()+user.getCorrectAnswers();
-                    long newClassExperience = Math.round(0.5 * ((newTotalAnswers * newCorrectAnswers)/Math.sqrt(currentClass.getStudents().size())));
+                    long newClassExperience = (long) (1+Math.ceil(0.5 * ((newTotalAnswers * newCorrectAnswers)/Math.sqrt(currentClass.getStudents().size()))));
                     DBManager.deleteClass(currentClass.getTeacherId(), currentClass.getName());
                     DBManager.createClass(currentClass.getName(), currentClass.getTeacherId(), currentClass.getStudents(), newTotalAnswers, newCorrectAnswers, newClassExperience);
                     user.setQuizState(-1);
