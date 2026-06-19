@@ -12,15 +12,30 @@ click.button: 'Please choose one of the buttons'
 failed.update.user: 'Failed to update user status, please try again...'
 failed.update.user.short: 'Failed to update user status.'
 quiz.congrats: 'Congratulations! You answered on {0} out of {1} questions correctly! We hope you have enjoyed it!'
-quiz.finished: 'Hello. @{0} has finished your test "{1}" and answered on {2} out of {3} questions correctly. \nStudent''s answers:'
-quiz.question.result: 'Question #{0}: "{1}"\nYour student''s answer (@{2}): "{3}"\nCorrect answer(-s): {4}'
-quiz.survey.result: 'Survey #{0}: "{1}"\nYour student''s answer (@{2}): "{3}"'
+quiz.finished: |
+  Hello. @{0} has finished your test "{1}" and answered on {2} out of {3} questions correctly. 
+  Student's answers:
+quiz.question.result: |
+  Question #{0}: "{1}"
+  Your student's answer (@{2}): "{3}"
+  Correct answer(-s): {4}
+quiz.survey.result: |
+  Survey #{0}: "{1}"
+  Your student's answer (@{2}): "{3}"
 failed.send.question: 'Failed to send the question.'
 question.number: 'Question #{0}: {1}'
 set.username: 'Set a username for your account to continue.'
 error.checking.user: 'An error occurred while checking user existence, please try again...'
 error.registering: 'An error occurred during registration, please try again... (/start)'
-start.message: 'Hello, this is a bot for organising quizes, here are the commands you can use:\n - /newclass - create a new class (5 classes at max)\n - /myclasses - view your classes\n - /newtest - create a new test (10 tests at max)\n - /mytests - view your tests\n - /startquiz - start a quiz\n - /setautodelete - configure the automatic deletion of the messages\n - /setlanguage - set the language'
+start.message: |
+  Hello, this is a bot for organising quizes, here are the commands you can use:
+   - /newclass - create a new class (5 classes at max)
+   - /myclasses - view your classes
+   - /newtest - create a new test (10 tests at max)
+   - /mytests - view your tests
+   - /startquiz - start a quiz
+   - /setautodelete - configure the automatic deletion of the messages
+   - /setlanguage - set the language
 user.not.found.short: 'Could not find the user...'
 failed.get.current.test: 'Failed to get the current test, please try again...'
 failed.get.tests: 'Failed to get the tests, please try again...'
@@ -108,11 +123,18 @@ create.test: 'Create test'
 test.name.label: 'Test name: "{0}"'
 test.send.message: 'You got a quiz: "{0}"!'
 test.send.confirm: 'Start quiz '
-test.list.item: ' - {0} ({1} questions).\n'
-your.tests: 'Your tests ({0}): \n'
-class.list.item: '{0} ({1} students)\n'
-your.classes: 'Your classes ({0}): \n'
-class.name.label: 'Class name: "{0}"\nClass'' level: {1} ({2} experience left to reach the next level)\nStudents: \n'
+test.list.item: |
+  - {0} ({1} questions).
+your.tests: |
+  Your tests ({0}):
+class.list.item: |
+  {0} ({1} students)
+your.classes: |
+  Your classes ({0}):
+class.name.label: |
+  Class name: "{0}"
+  Class' level: {1} ({2} experience left to reach the next level)
+  Students:
 failed.language: 'Failed to change the language, please try again...'
 language.changed: 'Language successfully changed!'
 language.already.chosen: 'This language is already chosen!'
