@@ -423,6 +423,44 @@ public class DBManager {
         }
     }
 
+    public static boolean setAutodeleteMode(long chatId, int autodelete) {
+        try (Connection connection = getConnection()) {
+            if (connection == null) {
+                System.out.println("Connection became null while setting autodelet mode");
+                return false;
+            }
+
+            try (PreparedStatement st = connection.prepareStatement("UPDATE PUBLIC.users SET autodelete = ? WHERE chat_id = ?")) {
+                st.setInt(1, autodelete);
+                st.setLong(2, chatId);
+                st.executeUpdate();
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("An exception while setting autodelete mode: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean setAutodeleteDelay(long chatId, int delay) {
+        try (Connection connection = getConnection()) {
+            if (connection == null) {
+                System.out.println("Connection became null while setting autodelete delay");
+                return false;
+            }
+
+            try (PreparedStatement st = connection.prepareStatement("UPDATE PUBLIC.users SET autodelete_delay = ? WHERE chat_id = ?")) {
+                st.setInt(1, delay);
+                st.setLong(2, chatId);
+                st.executeUpdate();
+                return true;
+            }
+        } catch (SQLException e) {
+            System.out.println("An exception while setting autodelete delay: " + e.getMessage());
+            return false;
+        }
+    }
+
     public static ArrayList<User> getUsers() { // new method get users
         try (Connection connection = getConnection()) {
             if (connection == null) {
@@ -449,7 +487,7 @@ public class DBManager {
                         return null;
                     }
 
-                    users.add(new User(res.getLong("chat_id"), "default", res.getString("lang"), res.getInt("permission_level"), classes.size(), tests.size(), -1, null, res.getInt("autodelete")));
+                    users.add(new User(res.getLong("chat_id"), "default", res.getString("lang"), res.getInt("permission_level"), classes.size(), tests.size(), -1, null, res.getInt("autodelete"), res.getInt("autodelete_delay")));
                 }
                 return users;
             }

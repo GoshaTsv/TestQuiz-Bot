@@ -96,7 +96,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         if (user == null) {
-            User testUser = new User(chatId, "default", DEFAULT_LANG, 0, 0, 0, -1, null, 2);
+            User testUser = new User(chatId, "default", DEFAULT_LANG, 0, 0, 0, -1, null, 2, 60);
             System.out.println("User is null for " + chatId);
             if (message.hasText() && message.getText().startsWith("/start") && !(message.getText().startsWith("/startquiz")))
                 startRegistration(update, chatId, null);
@@ -498,7 +498,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (!languages.contains(userLangCode))
                 userLangCode = DEFAULT_LANG;
 
-            User testUser = new User(chatId, "default", userLangCode, 0, 0, 0, -1, null, 2);
+            User testUser = new User(chatId, "default", userLangCode, 0, 0, 0, -1, null, 2, 60);
 
             if (username == null) {
                 alertMessage(translator.getTranslatedText("set.username", userLangCode), chatId, 20000, testUser);
@@ -518,7 +518,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
 
                 sendMessage(translator.getTranslatedText("start.message", userLangCode), chatId);
-                users.add(new User(chatId, "default", userLangCode, 0, 0, 0, -1, null, 2));
+                users.add(new User(chatId, "default", userLangCode, 0, 0, 0, -1, null, 2, 60));
             }
             return;
         }
@@ -648,7 +648,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
         if (user == null){
-            alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, new User(chatId, "default", DEFAULT_LANG, 0, 0, 0, -1, null, 2));
+            alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, new User(chatId, "default", DEFAULT_LANG, 0, 0, 0, -1, null, 2, 60));
             return null;
         }
         if (editMessageId == null) {
@@ -1180,6 +1180,12 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
             }
+
+            if (!DBManager.setAutodeleteMode(chatId, user.getAutoDeleting())) {
+                alertMessage(translator.getTranslatedText("auto.delete.failed", user.getLang()), chatId, 15000, user);
+                return;
+            }
+
             alertMessage(translator.getTranslatedText("auto.delete.changed", user.getLang()), chatId, 15000, user);
             sendAutoDeleteSettings(chatId, user);
         }

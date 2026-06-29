@@ -241,7 +241,7 @@ public class User {
         this.surveyAnswers = surveyAnswers;
     }
 
-    public User(long chatId, String state, String lang, int permissionLevel, int classCount, int testsCount, int quizState, Quiz currentQuiz, int autoDeleting) {
+    public User(long chatId, String state, String lang, int permissionLevel, int classCount, int testsCount, int quizState, Quiz currentQuiz, int autoDeleting, int autoDeleteLength) {
         this.chatId = chatId;
         this.state = state;
         this.permissionLevel = permissionLevel;
@@ -255,7 +255,7 @@ public class User {
         userAnswers = new LinkedHashMap<>();
         this.autoDeleting = autoDeleting;
         lastWebReq = new ImportClassRequest();
-        autoDeleteLength = 60;
+        this.autoDeleteLength = autoDeleteLength;
         surveyAnswers = new ArrayList<>();
         warnings = 0;
         untilTime = 0;
@@ -403,6 +403,11 @@ public class User {
 
                 if (user.getCurrentAutoDeleteSetSecondsMessageId() != null)
                     bot.deleteMessage(user.getCurrentAutoDeleteSetSecondsMessageId(), chatId);
+
+                if (!DBManager.setAutodeleteDelay(chatId, length)) {
+                    bot.alertMessage(bot.getTranslator().getTranslatedText("delay.failed", user.getLang()), chatId, 15000, user);
+                    return;
+                }
 
                 bot.alertMessage(bot.getTranslator().getTranslatedText("delay.changed", lang), chatId, 10000, user);
             }
