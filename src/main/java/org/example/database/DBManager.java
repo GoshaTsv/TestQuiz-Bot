@@ -449,7 +449,7 @@ public class DBManager {
                         return null;
                     }
 
-                    users.add(new User(res.getLong("chat_id"), "default", res.getString("lang"), res.getInt("permission_level"), classes.size(), tests.size(), -1, null));
+                    users.add(new User(res.getLong("chat_id"), "default", res.getString("lang"), res.getInt("permission_level"), classes.size(), tests.size(), -1, null, res.getInt("autodelete")));
                 }
                 return users;
             }

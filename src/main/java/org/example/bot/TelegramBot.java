@@ -96,7 +96,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         if (user == null) {
-            User testUser = new User(chatId, "default", DEFAULT_LANG, 0, 0, 0, -1, null);
+            User testUser = new User(chatId, "default", DEFAULT_LANG, 0, 0, 0, -1, null, 2);
             System.out.println("User is null for " + chatId);
             if (message.hasText() && message.getText().startsWith("/start") && !(message.getText().startsWith("/startquiz")))
                 startRegistration(update, chatId, null);
@@ -126,7 +126,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
                 return;
             }
-            if (user.getAutoDeleting().equalsIgnoreCase("autoDeleteUser") || user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")) {
+            if (user.getAutoDeleting() > 0) {
                 new Thread(() -> {
                     try {
                         Thread.sleep((long) user.getAutoDeleteLength() * MILLIS_IN_SECONDS);
@@ -498,7 +498,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (!languages.contains(userLangCode))
                 userLangCode = DEFAULT_LANG;
 
-            User testUser = new User(chatId, "default", userLangCode, 0, 0, 0, -1, null);
+            User testUser = new User(chatId, "default", userLangCode, 0, 0, 0, -1, null, 2);
 
             if (username == null) {
                 alertMessage(translator.getTranslatedText("set.username", userLangCode), chatId, 20000, testUser);
@@ -518,7 +518,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
 
                 sendMessage(translator.getTranslatedText("start.message", userLangCode), chatId);
-                users.add(new User(chatId, "default", userLangCode, 0, 0, 0, -1, null));
+                users.add(new User(chatId, "default", userLangCode, 0, 0, 0, -1, null, 2));
             }
             return;
         }
@@ -573,7 +573,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             System.out.println("An exception in alert: " + e.getMessage());
             return;
         }
-        if(user != null && user.getAutoDeleting().equalsIgnoreCase("autoDeleteOn")){
+        if(user != null && user.getAutoDeleting() == 2){
             new Thread(() -> {
                 System.out.println("Alert thread started");
                 try {
@@ -648,7 +648,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         InlineKeyboardMarkup keyboard = getKeyboardMarkup(buttons, callbacks, chatId);
         User user = users.stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
         if (user == null){
-            alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, new User(chatId, "default", DEFAULT_LANG, 0, 0, 0, -1, null));
+            alertMessage(translator.getTranslatedText("user.not.found.short", DEFAULT_LANG), chatId, 10000, new User(chatId, "default", DEFAULT_LANG, 0, 0, 0, -1, null, 2));
             return null;
         }
         if (editMessageId == null) {
@@ -1172,9 +1172,9 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
         else if(data.startsWith("autoDelete")){
             switch(data){
-                case "autoDeleteOn" -> user.setAutoDeleting("autoDeleteOn");
-                case "autoDeleteUser" -> user.setAutoDeleting("autoDeleteUser");
-                case "autoDeleteOff" -> user.setAutoDeleting("autoDeleteOff");
+                case "autoDeleteOn" -> user.setAutoDeleting(2);
+                case "autoDeleteUser" -> user.setAutoDeleting(1);
+                case "autoDeleteOff" -> user.setAutoDeleting(0);
                 default -> {
                     alertMessage(translator.getTranslatedText("press.button", user.getLang()), chatId, 5000, user);
                     return;

@@ -23,7 +23,7 @@ public class User {
     private Integer currentSetLangMessageId;
 
     // auto deleting
-    private String autoDeleting;
+    private int autoDeleting;
     private int autoDeleteLength;
     private Integer autoDeleteSetMessageId;
     private Integer currentAutoDeleteSetSecondsMessageId;
@@ -229,7 +229,7 @@ public class User {
         this.lastMessageId = lastMessageId;
     }
 
-    public String getAutoDeleting() {
+    public int getAutoDeleting() {
         return autoDeleting;
     }
 
@@ -241,7 +241,7 @@ public class User {
         this.surveyAnswers = surveyAnswers;
     }
 
-    public User(long chatId, String state, String lang, int permissionLevel, int classCount, int testsCount, int quizState, Quiz currentQuiz) {
+    public User(long chatId, String state, String lang, int permissionLevel, int classCount, int testsCount, int quizState, Quiz currentQuiz, int autoDeleting) {
         this.chatId = chatId;
         this.state = state;
         this.permissionLevel = permissionLevel;
@@ -253,7 +253,7 @@ public class User {
         prevType = "";
         correctAnswers = 0;
         userAnswers = new LinkedHashMap<>();
-        this.autoDeleting = "autoDeleteUser";
+        this.autoDeleting = autoDeleting;
         lastWebReq = new ImportClassRequest();
         autoDeleteLength = 60;
         surveyAnswers = new ArrayList<>();
@@ -330,7 +330,7 @@ public class User {
         return lastMessageId;
     }
 
-    public void setAutoDeleting(String autoDeleting) {
+    public void setAutoDeleting(int autoDeleting) {
         this.autoDeleting = autoDeleting;
     }
 
