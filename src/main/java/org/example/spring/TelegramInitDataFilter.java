@@ -5,8 +5,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -23,12 +21,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component
 public class TelegramInitDataFilter extends OncePerRequestFilter {
-    @Value("${telegram.bot.token}")
-    private String botToken;
+    private final String botToken;
 
-    private static final Set<String> PUBLIC_PATHS = Set.of("/health", "/config.js");
+    private static final Set<String> PUBLIC_PATHS = Set.of("/health", "/config.js", "/api/language");
+
+    public TelegramInitDataFilter(String botToken) {
+        this.botToken = botToken;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest req,

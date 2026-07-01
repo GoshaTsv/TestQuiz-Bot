@@ -11,11 +11,8 @@ import org.example.database.DBManager;
 import org.example.spring.ButtonDTO;
 import org.example.spring.ImportClassRequest;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -180,9 +177,23 @@ public class TelegramBot extends TelegramLongPollingBot {
                     return;
                 }
 
-                String response = createTest(chatId, user, fileName);
+                File testFile = new File(fileName);
+                StringBuilder json = new StringBuilder();
+
+                try (BufferedReader br = new BufferedReader(new FileReader(testFile))) {
+                    String line;
+                    while ((line = br.readLine()) != null)
+                        json.append(line);
+                } catch (IOException e) {
+                    alertMessage(translator.getTranslatedText("error.adding.test", user.getLang()), chatId, 10000, user);
+                }
+
+                String response = createTest(chatId, user, json.toString());
                 if (response != null)
                     alertMessage(response, chatId, 10000, user);
+
+                if (testFile.exists())
+                    testFile.delete();
             }
         }
         if (user.getQuizState() > -1) {
@@ -844,24 +855,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         return keyboard;
     }
 
-    public String createTest(long chatId, User user, String fileName) {
+    public String createTest(long chatId, User user, String json) {
         if (user.getTestsCount() < 10){
-            try {
-                BufferedReader br = new BufferedReader(new FileReader(fileName));
-                StringBuilder json = new StringBuilder();
-                String line;
-                while ((line = br.readLine()) != null)
-                    json.append(line);
-
-                String response = Test.checkForTest(this, json.toString(), user, chatId);
-                System.out.println("Checked test: " + response);
-                if (response != null)
-                    return response;
-                alertMessage(translator.getTranslatedText("test.saved", user.getLang()), chatId, 15000, user);
-            } catch (IOException e) {
-                alertMessage(translator.getTranslatedText("error.adding.test", user.getLang()), chatId, 10000, user);
-            }
-
+            String response = Test.checkForTest(this, json, user, chatId);
+            System.out.println("Checked test: " + response);
+            if (response != null)
+                return response;
+            alertMessage(translator.getTranslatedText("test.saved", user.getLang()), chatId, 15000, user);
             return null;
         }
         else{
@@ -1624,11 +1624,6 @@ public class TelegramBot extends TelegramLongPollingBot {
         user.setCurrentMyClassesMessageId(messageId);
         if (!saveUser(user))
             alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
-    }
-
-    @GetMapping("/health")
-    public String index(){
-        return "Hello, sufferings!";
     }
 
     public Translator getTranslator() {
