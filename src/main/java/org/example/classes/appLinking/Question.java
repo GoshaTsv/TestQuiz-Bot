@@ -8,6 +8,15 @@ public class Question {
     private LinkedHashMap<String, Boolean> answers;
     private Image image;
     private String type;
+    private String kind;
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
+    }
 
     public Question(HashMap<String, Boolean> answers, String question) {
         this.answers = new LinkedHashMap<>(answers);

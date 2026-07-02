@@ -44,6 +44,16 @@ public class User {
     private int quizState;
     private Quiz currentQuiz;
     private String prevType;
+    private String prevKind;
+
+    public String getPrevKind() {
+        return prevKind;
+    }
+
+    public void setPrevKind(String prevKind) {
+        this.prevKind = prevKind;
+    }
+
     private int correctAnswers;
     private LinkedHashMap<String, Boolean> userAnswers;
     private Integer currentQuizMessageId;

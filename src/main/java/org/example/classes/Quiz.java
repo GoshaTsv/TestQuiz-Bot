@@ -83,6 +83,7 @@ public class Quiz {
 
             Question question = quiz.getTest().getQuestions().getFirst();
             String questionType = question.getType();
+            String questionKind = question.getKind();
             Integer messageId;
             String userLang = userCurrent.getLang();
 

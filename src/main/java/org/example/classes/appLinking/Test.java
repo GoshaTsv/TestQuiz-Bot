@@ -107,13 +107,20 @@ public class Test {
                 qIndex++;
                 if (!questionNode.isObject())
                     return "Неправильная структура вопроса #" + qIndex + "!";
-
+                JsonNode kindNode = questionNode.get("kind");
+                if (kindNode == null || !kindNode.isTextual()){
+                    return "Не указан вид вопроса #" + qIndex + "!";
+                }
+                String qKind = kindNode.asText();
+                if (!qKind.equals("que") && !qKind.equals("srv")){
+                    return "Неправильный тип вопроса #" + qIndex + "!";
+                }
                 JsonNode typeNode = questionNode.get("type");
                 if (typeNode == null || !typeNode.isTextual())
                     return "Не указан тип вопроса #" + qIndex + "!";
 
                 String qType = typeNode.asText();
-                if (!qType.equals("var") && !qType.equals("ans") && !qType.equals("srv")) {
+                if (!qType.equals("var") && !qType.equals("ans")) {
                     return "Неправильный тип вопроса #" + qIndex + "!";
                 }
 
@@ -130,7 +137,7 @@ public class Test {
                 }
 
                 JsonNode answersNode = questionNode.get("answers");
-                if (answersNode == null || !answersNode.isObject() || answersNode.isEmpty())
+                if (answersNode == null || !answersNode.isObject() || (answersNode.isEmpty() && !qKind.equals("srv") && !qType.equals("ans")))
                     return "Неправильная структура ответов в вопросе #" + qIndex + "!";
 
                 int minAnswers = qType.equals("ans") ? 1 : 2;
