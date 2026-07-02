@@ -166,9 +166,6 @@ public class Test {
 
                     if (val.asBoolean()) hasCorrect = true;
                 }
-
-                if (!qType.equals("srv") && !hasCorrect)
-                    return "В вопросе #" + qIndex + " не отмечен ни один правильный вариант!";
             }
         } catch (Exception e) {
             return "Некорректный формат теста!";
