@@ -217,97 +217,122 @@ public class TelegramBot extends TelegramLongPollingBot {
                 alertMessage(translator.getTranslatedText("send.answer", user.getLang()), chatId, 10000, user);
                 return;
             }
-            if (user.getPrevType().equalsIgnoreCase("ans")) {
-                if (update.hasMessage() && update.getMessage().hasText()) {
-                    String userAnswer = update.getMessage().getText();
-                    String correctAnswer = getCorrectAnswersForQuestion(currentQuestion).getFirst();
-                    System.out.println("Ans");
-                    System.out.println("User answer: " + userAnswer);
-                    System.out.println("Correct answer: " + correctAnswer);
-                    LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
+            if (user.getPrevKind().equalsIgnoreCase("que")){
+                if (user.getPrevType().equalsIgnoreCase("ans")) {
+                    if (update.hasMessage() && update.getMessage().hasText()) {
+                        String userAnswer = update.getMessage().getText();
+                        String correctAnswer = getCorrectAnswersForQuestion(currentQuestion).getFirst();
+                        System.out.println("Ans");
+                        System.out.println("User answer: " + userAnswer);
+                        System.out.println("Correct answer: " + correctAnswer);
+                        LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
-                    boolean isCorrect = userAnswer.equalsIgnoreCase(correctAnswer);
-                    newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, isCorrect);
+                        boolean isCorrect = userAnswer.equalsIgnoreCase(correctAnswer);
+                        newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, isCorrect);
 
-                    if (isCorrect)
-                        user.setCorrectAnswers(user.getCorrectAnswers() + 1);
+                        if (isCorrect)
+                            user.setCorrectAnswers(user.getCorrectAnswers() + 1);
 
-                    user.setUserAnswers(newUserAnswers);
-                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
-                    System.out.println("new user answers: " + newUserAnswers);
-                } else {
-                    alertMessage(translator.getTranslatedText("answer.with.word", user.getLang()), chatId, 10000, user);
-                    return;
+                        user.setUserAnswers(newUserAnswers);
+                        System.out.println("added new user answer. size: " + user.getUserAnswers().size());
+                        System.out.println("new user answers: " + newUserAnswers);
+                    } else {
+                        alertMessage(translator.getTranslatedText("answer.with.word", user.getLang()), chatId, 10000, user);
+                        return;
+                    }
+                }
+                if (user.getPrevType().equalsIgnoreCase("var")) {
+                    if (update.hasCallbackQuery()) {
+                        String callbackData = update.getCallbackQuery().getData();
+                        AnswerCallbackQuery answer = new AnswerCallbackQuery();
+                        answer.setCallbackQueryId(update.getCallbackQuery().getId());
+
+                        int selectedAnswer = Integer.parseInt(callbackData.replace("ans_", ""));
+                        List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
+                        ArrayList<String> correctAnswers = getCorrectAnswersForQuestion(currentQuestion);
+                        LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
+
+                        String userAnswer = keys.get(selectedAnswer);
+                        boolean isCorrect = correctAnswers.contains(keys.get(selectedAnswer));
+
+                        newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, isCorrect);
+                        if (isCorrect)
+                            user.setCorrectAnswers(user.getCorrectAnswers() + 1);
+
+                        user.setUserAnswers(newUserAnswers);
+
+                        System.out.println("Var");
+                        System.out.println("Selected answer: " + selectedAnswer);
+                        System.out.println("Correct answers: " + correctAnswers);
+                        System.out.println("added new user answer. size: " + user.getUserAnswers().size());
+                        System.out.println("new user answers: " + newUserAnswers);
+                        try {
+                            execute(answer);
+                        } catch (TelegramApiException e) {
+                            System.out.println("Exception while processing variant answer: " + e.getMessage());
+                        }
+                    } else {
+                        alertMessage(translator.getTranslatedText("click.button", user.getLang()), chatId, 10000, user);
+                        return;
+                    }
                 }
             }
-            if (user.getPrevType().equalsIgnoreCase("var")) {
-                if (update.hasCallbackQuery()) {
-                    String callbackData = update.getCallbackQuery().getData();
-                    AnswerCallbackQuery answer = new AnswerCallbackQuery();
-                    answer.setCallbackQueryId(update.getCallbackQuery().getId());
+            else if(user.getPrevKind().equalsIgnoreCase("srv")){
+                if (user.getPrevType().equalsIgnoreCase("var")){
+                    if (update.hasCallbackQuery()) {
+                        String callbackData = update.getCallbackQuery().getData();
+                        AnswerCallbackQuery answer = new AnswerCallbackQuery();
+                        answer.setCallbackQueryId(update.getCallbackQuery().getId());
 
-                    int selectedAnswer = Integer.parseInt(callbackData.replace("ans_", ""));
-                    List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
-                    ArrayList<String> correctAnswers = getCorrectAnswersForQuestion(currentQuestion);
-                    LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
+                        String selectedAnswer = callbackData.replace("srv_", "");
+                        List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
+                        String correctAnswer = String.valueOf(keys.indexOf(getCorrectAnswersForQuestion(currentQuestion)));
+                        LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
-                    String userAnswer = keys.get(selectedAnswer);
-                    boolean isCorrect = correctAnswers.contains(keys.get(selectedAnswer));
+                        String userAnswer = keys.get(Integer.parseInt(selectedAnswer));
 
-                    newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, isCorrect);
-                    if (isCorrect)
-                        user.setCorrectAnswers(user.getCorrectAnswers() + 1);
+                        newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, true);
 
-                    user.setUserAnswers(newUserAnswers);
+                        user.setUserAnswers(newUserAnswers);
+                        ArrayList<String> newUserSurveyAns = new ArrayList<>();
+                        newUserSurveyAns.add(userAnswer);
+                        user.setSurveyAnswers(newUserSurveyAns);
 
-                    System.out.println("Var");
-                    System.out.println("Selected answer: " + selectedAnswer);
-                    System.out.println("Correct answers: " + correctAnswers);
-                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
-                    System.out.println("new user answers: " + newUserAnswers);
-                    try {
-                        execute(answer);
-                    } catch (TelegramApiException e) {
-                        System.out.println("Exception while processing variant answer: " + e.getMessage());
+                        System.out.println("Var");
+                        System.out.println("Selected answer: " + selectedAnswer);
+                        System.out.println("Correct answer: " + correctAnswer);
+                        System.out.println("added new user answer. size: " + user.getUserAnswers().size());
+                        System.out.println("new user answers: " + newUserAnswers);
+                        try {
+                            execute(answer);
+                        } catch (TelegramApiException e) {
+                            System.out.println("Exception while processing variant answer: " + e.getMessage());
+                        }
+                    } else {
+                        alertMessage(translator.getTranslatedText("click.button", user.getLang()), chatId, 10000, user);
+                        return;
                     }
-                } else {
-                    alertMessage(translator.getTranslatedText("click.button", user.getLang()), chatId, 10000, user);
-                    return;
                 }
-            }
-            else if(user.getPrevType().equalsIgnoreCase("srv")){
-                if (update.hasCallbackQuery()) {
-                    String callbackData = update.getCallbackQuery().getData();
-                    AnswerCallbackQuery answer = new AnswerCallbackQuery();
-                    answer.setCallbackQueryId(update.getCallbackQuery().getId());
+                else {
+                    if (update.hasMessage() && update.getMessage().hasText()) {
+                        String userAnswer = update.getMessage().getText();
+                        System.out.println("Ans");
+                        System.out.println("User answer: " + userAnswer);
+                        LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
 
-                    String selectedAnswer = callbackData.replace("srv_", "");
-                    List<String> keys = new ArrayList<>(quiz.getTest().getQuestions().get(user.getQuizState() - 1).getAnswers().keySet());
-                    String correctAnswer = String.valueOf(keys.indexOf(getCorrectAnswersForQuestion(currentQuestion)));
-                    LinkedHashMap<String, Boolean> newUserAnswers = user.getUserAnswers();
+                        newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, true);
 
-                    String userAnswer = keys.get(Integer.parseInt(selectedAnswer));
+                        ArrayList<String> newUserSurveyAns = new ArrayList<>();
+                        newUserSurveyAns.add(userAnswer);
+                        user.setSurveyAnswers(newUserSurveyAns);
 
-                    newUserAnswers.put(user.getQuizState() + "\uD80C\uDE78" + userAnswer, true);
-
-                    user.setUserAnswers(newUserAnswers);
-                    ArrayList<String> newUserSurveyAns = new ArrayList<>();
-                    newUserSurveyAns.add(userAnswer);
-                    user.setSurveyAnswers(newUserSurveyAns);
-
-                    System.out.println("Var");
-                    System.out.println("Selected answer: " + selectedAnswer);
-                    System.out.println("Correct answer: " + correctAnswer);
-                    System.out.println("added new user answer. size: " + user.getUserAnswers().size());
-                    System.out.println("new user answers: " + newUserAnswers);
-                    try {
-                        execute(answer);
-                    } catch (TelegramApiException e) {
-                        System.out.println("Exception while processing variant answer: " + e.getMessage());
+                        user.setUserAnswers(newUserAnswers);
+                        System.out.println("added new user answer. size: " + user.getUserAnswers().size());
+                        System.out.println("new user answers: " + newUserAnswers);
+                    } else {
+                        alertMessage(translator.getTranslatedText("answer.with.word", user.getLang()), chatId, 10000, user);
+                        return;
                     }
-                } else {
-                    alertMessage(translator.getTranslatedText("click.button", user.getLang()), chatId, 10000, user);
-                    return;
                 }
             }
 
@@ -368,7 +393,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                                 .map(answer -> "\"" + answer + "\"")
                                 .collect(Collectors.joining(", "));
 
-                        if (!test.getQuestions().get(i).getType().equalsIgnoreCase("srv"))
+                        if (!test.getQuestions().get(i).getKind().equalsIgnoreCase("srv"))
                             sendMessage(translator.getTranslatedText("quiz.question.result", teacher.getLang(), i + 1, question, userName, userAnswer, formattedAnswers), quiz.getTeacherId());
                         else{
                             surveyCount++;
@@ -402,49 +427,82 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
 
             Question question = quiz.getTest().getQuestions().get(user.getQuizState() - 1);
+            if(question.getKind().equalsIgnoreCase("que")){
+                user.setPrevKind("que");
+                if (question.getType().equalsIgnoreCase("var")) {
+                    new Thread(() -> {
+                        ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
 
-            if (question.getType().equalsIgnoreCase("var")) {
-                new Thread(() -> {
+                        try {
+                            Thread.sleep(250);
+                        } catch (InterruptedException ignored) {}
+
+                        ArrayList<String> callbacks = new ArrayList<>();
+
+                        for (int i = 0; i < variants.size(); i++)
+                            callbacks.add("ans_" + i);
+                        System.out.println(user.getCurrentQuizPhotoId());
+                        Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("question.number", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId());
+                        user.setPrevType("var");
+
+                        if (!saveUser(user)) {
+                            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+                            return;
+                        }
+
+                        if (quizMessageId == null || quizMessageId == -5) {
+                            alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
+                            return;
+                        }
+
+                        if (quizMessageId == -1)
+                            return;
+
+                        user.setCurrentQuizMessageId(quizMessageId);
+                        if (!saveUser(user))
+                            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+                    }).start();
+                } else if (question.getType().equalsIgnoreCase("ans")){
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(250);
+                        } catch (InterruptedException e) {
+                            sendMessage(translator.getTranslatedText("failed.send.question", user.getLang()), chatId);
+                        }
+                        System.out.println(user.getCurrentQuizPhotoId());
+                        Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("question.number", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), user.getCurrentQuizMessageId());
+                        user.setPrevType("ans");
+
+                        if (!saveUser(user)) {
+                            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+                            return;
+                        }
+
+                        if (quizMessageId == null || quizMessageId == -5) {
+                            alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
+                            return;
+                        }
+
+                        if (quizMessageId == -1)
+                            return;
+
+                        user.setCurrentQuizMessageId(quizMessageId);
+                        if (!saveUser(user))
+                            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+                    }).start();
+                }
+            } else if(question.getKind().equalsIgnoreCase("srv")){
+                user.setPrevKind("srv");
+                if (question.getType().equalsIgnoreCase("var")){
                     ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
-
-                    try {
-                        Thread.sleep(250);
-                    } catch (InterruptedException ignored) {}
-
                     ArrayList<String> callbacks = new ArrayList<>();
+                    for (int j = 0; j < variants.size(); j++)
+                        callbacks.add("srv_" + j);
 
-                    for (int i = 0; i < variants.size(); i++)
-                        callbacks.add("ans_" + i);
-                    System.out.println(user.getCurrentQuizPhotoId());
-                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("question.number", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId());
-                    user.setPrevType("var");
-
-                    if (!saveUser(user)) {
-                        alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
-                        return;
-                    }
-
-                    if (quizMessageId == null) {
-                        alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
-                        return;
-                    }
-
-                    if (quizMessageId == -1)
-                        return;
-
-                    user.setCurrentQuizMessageId(quizMessageId);
-                    if (!saveUser(user))
-                        alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
-                }).start();
-            } else if (question.getType().equalsIgnoreCase("ans")){
-                new Thread(() -> {
-                    try {
-                        Thread.sleep(250);
-                    } catch (InterruptedException e) {
-                        sendMessage(translator.getTranslatedText("failed.send.question", user.getLang()), chatId);
-                    }
-                    System.out.println(user.getCurrentQuizPhotoId());
-                    Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("question.number", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), user.getCurrentQuizMessageId());
+                    Integer quizMessageId = sendMessagePhoto(
+                            getTranslator().getTranslatedText("survey.number", user.getLang(), user.getQuizState(), question.getQuestion()),
+                            chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId()
+                    );
                     user.setPrevType("ans");
 
                     if (!saveUser(user)) {
@@ -452,7 +510,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         return;
                     }
 
-                    if (quizMessageId == null) {
+                    if (quizMessageId == null || quizMessageId == -5) {
                         alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
                         return;
                     }
@@ -463,35 +521,35 @@ public class TelegramBot extends TelegramLongPollingBot {
                     user.setCurrentQuizMessageId(quizMessageId);
                     if (!saveUser(user))
                         alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
-                }).start();
-            } else if(question.getType().equalsIgnoreCase("srv")){
-                ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
-                ArrayList<String> callbacks = new ArrayList<>();
-                for (int j = 0; j < variants.size(); j++)
-                    callbacks.add("srv_" + j);
+                } else{
+                    new Thread(() -> {
+                        try {
+                            Thread.sleep(250);
+                        } catch (InterruptedException e) {
+                            sendMessage(translator.getTranslatedText("failed.send.question", user.getLang()), chatId);
+                        }
+                        System.out.println(user.getCurrentQuizPhotoId());
+                        Integer quizMessageId = sendMessagePhoto(translator.getTranslatedText("survey.number", user.getLang(), user.getQuizState(), question.getQuestion()), chatId, question.getImage(), user.getCurrentQuizMessageId());
+                        user.setPrevType("ans");
 
-                Integer quizMessageId = sendMessagePhoto(
-                        getTranslator().getTranslatedText("survey.number", user.getLang(), user.getQuizState(), question.getQuestion()),
-                        chatId, question.getImage(), variants, callbacks, user.getCurrentQuizMessageId()
-                );
-                user.setPrevType("srv");
+                        if (!saveUser(user)) {
+                            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+                            return;
+                        }
 
-                if (!saveUser(user)) {
-                    alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
-                    return;
+                        if (quizMessageId == null || quizMessageId == -5) {
+                            alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
+                            return;
+                        }
+
+                        if (quizMessageId == -1)
+                            return;
+
+                        user.setCurrentQuizMessageId(quizMessageId);
+                        if (!saveUser(user))
+                            alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
+                    }).start();
                 }
-
-                if (quizMessageId == null) {
-                    alertMessage(translator.getTranslatedText("failed.get.message.id", user.getLang()), chatId, 10000, user);
-                    return;
-                }
-
-                if (quizMessageId == -1)
-                    return;
-
-                user.setCurrentQuizMessageId(quizMessageId);
-                if (!saveUser(user))
-                    alertMessage(translator.getTranslatedText("failed.update.user", user.getLang()), chatId, 10000, user);
             }
         }
     }

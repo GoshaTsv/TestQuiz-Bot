@@ -84,38 +84,51 @@ public class Quiz {
             Question question = quiz.getTest().getQuestions().getFirst();
             String questionType = question.getType();
             String questionKind = question.getKind();
-            Integer messageId;
+            Integer messageId = -5;
             String userLang = userCurrent.getLang();
+            if(questionKind.equalsIgnoreCase("que")){
+                userCurrent.setPrevKind("que");
+                if (questionType.equalsIgnoreCase("var")) {
+                    ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
+                    ArrayList<String> callbacks = new ArrayList<>();
+                    for (int j = 0; j < variants.size(); j++)
+                        callbacks.add("ans_" + j);
 
-            if (questionType.equalsIgnoreCase("var")) {
-                ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
-                ArrayList<String> callbacks = new ArrayList<>();
-                for (int j = 0; j < variants.size(); j++)
-                    callbacks.add("ans_" + j);
+                    messageId = bot.sendMessagePhoto(
+                            bot.getTranslator().getTranslatedText("question.number", userLang, 1, question.getQuestion()),
+                            studentId, question.getImage(), variants, callbacks, userCurrent.getCurrentQuizMessageId()
+                    );
+                    userCurrent.setPrevType("var");
 
-                messageId = bot.sendMessagePhoto(
-                        bot.getTranslator().getTranslatedText("question.number", userLang, 1, question.getQuestion()),
-                        studentId, question.getImage(), variants, callbacks, userCurrent.getCurrentQuizMessageId()
-                );
-                userCurrent.setPrevType("var");
+                } else if (questionType.equalsIgnoreCase("ans")) {
+                    messageId = bot.sendMessagePhoto(
+                            bot.getTranslator().getTranslatedText("question.number", userLang, 1, question.getQuestion()),
+                            studentId, question.getImage(), userCurrent.getCurrentQuizMessageId()
+                    );
+                    userCurrent.setPrevType("ans");
+                }
+            }
+            else {
+                userCurrent.setPrevKind("srv");
+                if (questionType.equalsIgnoreCase("var")){
+                    ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
+                    ArrayList<String> callbacks = new ArrayList<>();
+                    for (int j = 0; j < variants.size(); j++)
+                        callbacks.add("srv_" + j);
 
-            } else if (questionType.equalsIgnoreCase("ans")) {
-                messageId = bot.sendMessagePhoto(
-                        bot.getTranslator().getTranslatedText("question.number", userLang, 1, question.getQuestion()),
-                        studentId, question.getImage(), userCurrent.getCurrentQuizMessageId()
-                );
-                userCurrent.setPrevType("ans");
-            } else {
-                ArrayList<String> variants = new ArrayList<>(question.getAnswers().keySet());
-                ArrayList<String> callbacks = new ArrayList<>();
-                for (int j = 0; j < variants.size(); j++)
-                    callbacks.add("srv_" + j);
-
-                messageId = bot.sendMessagePhoto(
-                        bot.getTranslator().getTranslatedText("survey.number", userLang, 1, question.getQuestion()),
-                        studentId, question.getImage(), variants, callbacks, userCurrent.getCurrentQuizMessageId()
-                );
-                userCurrent.setPrevType("srv");
+                    messageId = bot.sendMessagePhoto(
+                            bot.getTranslator().getTranslatedText("survey.number", userLang, 1, question.getQuestion()),
+                            studentId, question.getImage(), variants, callbacks, userCurrent.getCurrentQuizMessageId()
+                    );
+                    userCurrent.setPrevType("var");
+                }
+               else{
+                    messageId = bot.sendMessagePhoto(
+                            bot.getTranslator().getTranslatedText("survey.number", userLang, 1, question.getQuestion()),
+                            studentId, question.getImage(), userCurrent.getCurrentQuizMessageId()
+                    );
+                    userCurrent.setPrevType("ans");
+                }
             }
 
             if (!bot.saveUser(userCurrent)) {
@@ -126,7 +139,7 @@ public class Quiz {
                 return;
             }
 
-            if (messageId == null) {
+            if (messageId == -5) {
                 bot.alertMessage(bot.getTranslator().getTranslatedText("failed.get.message.id", teacherLang), chatId, 10000, userCurrent);
                 return;
             }
