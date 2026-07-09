@@ -141,7 +141,7 @@ public class Test {
                     return "Неправильная структура ответов в вопросе #" + qIndex + "!";
 
                 int minAnswers = qType.equals("ans") ? 1 : 2;
-                if (answersNode.size() < minAnswers || answersNode.size() > 8 && !qType.equalsIgnoreCase("ans") && !qKind.equalsIgnoreCase("srv"))
+                if ((answersNode.size() < minAnswers || answersNode.size() > 8) && !qType.equalsIgnoreCase("ans") && !qKind.equalsIgnoreCase("srv"))
                     return "Неправильное количество вариантов ответа в вопросе #" + qIndex + "!";
 
                 boolean hasCorrect = false;
