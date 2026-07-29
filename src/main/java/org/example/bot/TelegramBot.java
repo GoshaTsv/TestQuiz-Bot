@@ -12,7 +12,6 @@ import org.example.spring.ButtonDTO;
 import org.example.spring.ImportClassRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.*;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
@@ -379,26 +378,26 @@ public class TelegramBot extends TelegramLongPollingBot {
                     int surveyCount = 0;
 
                     for (int i = 0; i < user.getUserAnswers().size() && i < quiz.getTest().getQuestions().size(); i++) {
-                        String question = test.getQuestions().get(i).getQuestion();
-                        String userAnswer = userAnswers.get(i).split("\uD80C\uDE78")[1];
+                        String question = textForHtml(test.getQuestions().get(i).getQuestion());
+                        String userAnswer = textForHtml(userAnswers.get(i).split("\uD80C\uDE78")[1]);
                         ArrayList<String> correctAnswers = getCorrectAnswersForQuestion(quiz.getTest().getQuestions().get(i));
 
                         System.out.println("Question: " + test.getQuestions().get(i));
                         System.out.println("User answer: " + userAnswer);
                         System.out.println("Correct answers: " + correctAnswers);
 
-                        String formattedAnswers = correctAnswers.stream()
+                        String formattedAnswers = textForHtml(correctAnswers.stream()
                                 .map(answer -> "\"" + answer + "\"")
-                                .collect(Collectors.joining(", "));
+                                .collect(Collectors.joining(", ")));
 
                         if (!test.getQuestions().get(i).getKind().equalsIgnoreCase("srv")) {
                             teacherRespose.append("\n<blockquote>");
-                            teacherRespose.append(translator.getTranslatedText("quiz.question.result", teacher.getLang(), i + 1, question, userName, userAnswer, formattedAnswers));
+                            teacherRespose.append(translator.getTranslatedText("quiz.question.result", teacher.getLang(), i + 1, question, textForHtml(userName), userAnswer, formattedAnswers));
                             teacherRespose.append("</blockquote>");
                         } else{
                             surveyCount++;
                             teacherRespose.append("\n<blockquote>");
-                            teacherRespose.append(translator.getTranslatedText("quiz.survey.result", teacher.getLang(), surveyCount, question, userName, userAnswer));
+                            teacherRespose.append(translator.getTranslatedText("quiz.survey.result", teacher.getLang(), surveyCount, question, textForHtml(userName), userAnswer));
                             teacherRespose.append("</blockquote>");
                         }
 
@@ -408,7 +407,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
 
                     sendMessageWithHtml(
-                            textForHtml(teacherRespose.toString()),
+                            teacherRespose.toString(),
                             quiz.getTeacherId()
                     );
 
@@ -677,20 +676,18 @@ public class TelegramBot extends TelegramLongPollingBot {
         return messageId.get();
     }
 
-    public Integer sendMessageWithHtml(String msg, long chatId) {
-        AtomicReference<Integer> messageId = new AtomicReference<>();
+    public void sendMessageWithHtml(String msg, long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(String.valueOf(chatId));
         sendMessage.setText(msg);
         sendMessage.setParseMode("HTML");
 
         try {
-            messageId.set(execute(sendMessage).getMessageId());
+            execute(sendMessage);
         } catch (TelegramApiException e) {
             System.err.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
             e.printStackTrace();
         }
-        return messageId.get();
     }
 
     private String textForHtml(String rawText) {
