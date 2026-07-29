@@ -1,4 +1,3 @@
-// src/test/java/org/example/spring/RateLimitFilterTest.java
 package org.example.spring;
 
 import org.example.bot.RateLimiterManager;
@@ -10,7 +9,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class RateLimitFilterTest {
-
     @Test
     void withinLimit_passes() throws Exception {
         RateLimiterManager manager = new RateLimiterManager();
@@ -31,7 +29,6 @@ class RateLimitFilterTest {
         RateLimiterManager manager = new RateLimiterManager();
         RateLimitFilter filter = new RateLimitFilter(manager);
 
-        // Отправляем 12 запросов — лимит 10/сек
         MockHttpServletResponse lastResponse = null;
         for (int i = 0; i < 12; i++) {
             MockHttpServletRequest req = new MockHttpServletRequest("POST", "/api/messages");
@@ -49,7 +46,6 @@ class RateLimitFilterTest {
         RateLimiterManager manager = new RateLimiterManager();
         RateLimitFilter filter = new RateLimitFilter(manager);
 
-        // /health не должен ограничиваться
         for (int i = 0; i < 50; i++) {
             MockHttpServletRequest req = new MockHttpServletRequest("GET", "/health");
             req.addHeader("X-Forwarded-For", "9.9.9.9");
@@ -64,14 +60,12 @@ class RateLimitFilterTest {
         RateLimiterManager manager = new RateLimiterManager();
         RateLimitFilter filter = new RateLimitFilter(manager);
 
-        // Исчерпать лимит для IP-A
         for (int i = 0; i < 11; i++) {
             MockHttpServletRequest req = new MockHttpServletRequest("POST", "/api/messages");
             req.addHeader("X-Forwarded-For", "10.0.0.1");
             filter.doFilter(req, new MockHttpServletResponse(), new MockFilterChain());
         }
 
-        // IP-B должен всё ещё проходить
         MockHttpServletRequest req = new MockHttpServletRequest("POST", "/api/messages");
         req.addHeader("X-Forwarded-For", "10.0.0.2");
         MockHttpServletResponse res = new MockHttpServletResponse();

@@ -370,10 +370,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                     }
 
                     sendMessage(translator.getTranslatedText("quiz.congrats", user.getLang(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size() - user.getSurveyAnswers().size()), chatId);
-                    sendMessage(
-                            translator.getTranslatedText("quiz.finished", teacher.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size() - user.getSurveyAnswers().size()),
-                            quiz.getTeacherId()
-                    );
+
+                    StringBuilder teacherRespose = new StringBuilder(translator.getTranslatedText("quiz.finished", teacher.getLang(), userName, quiz.getTest().getTestName(), user.getCorrectAnswers(), quiz.getTest().getQuestions().size() - user.getSurveyAnswers().size()));
 
                     List<String> userAnswers = new ArrayList<>(user.getUserAnswers().keySet());
 
@@ -393,17 +391,26 @@ public class TelegramBot extends TelegramLongPollingBot {
                                 .map(answer -> "\"" + answer + "\"")
                                 .collect(Collectors.joining(", "));
 
-                        if (!test.getQuestions().get(i).getKind().equalsIgnoreCase("srv"))
-                            sendMessage(translator.getTranslatedText("quiz.question.result", teacher.getLang(), i + 1, question, userName, userAnswer, formattedAnswers), quiz.getTeacherId());
-                        else{
+                        if (!test.getQuestions().get(i).getKind().equalsIgnoreCase("srv")) {
+                            teacherRespose.append("\n<blockquote>");
+                            teacherRespose.append(translator.getTranslatedText("quiz.question.result", teacher.getLang(), i + 1, question, userName, userAnswer, formattedAnswers));
+                            teacherRespose.append("</blockquote>");
+                        } else{
                             surveyCount++;
-                            sendMessage(translator.getTranslatedText("quiz.survey.result", teacher.getLang(), surveyCount, question, userName, userAnswer), quiz.getTeacherId());
+                            teacherRespose.append("\n<blockquote>");
+                            teacherRespose.append(translator.getTranslatedText("quiz.survey.result", teacher.getLang(), surveyCount, question, userName, userAnswer));
+                            teacherRespose.append("</blockquote>");
                         }
 
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException ignored) {}
                     }
+
+                    sendMessage(
+                            teacherRespose.toString(),
+                            quiz.getTeacherId()
+                    );
 
                     StudentClass currentClass = user.getCurrentClassForQuiz();
                     long newTotalAnswers = currentClass.getTotalAnswersCount()+quiz.getTest().getQuestions().size()-surveyCount;

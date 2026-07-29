@@ -8,23 +8,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
 public class TestInitDataHelper {
-    // Генерирует валидный initData для тестов
     public static String generateValidInitData(String botToken, long userId, long authDate) throws Exception {
         String userJson = URLEncoder.encode(
             "{\"id\":" + userId + ",\"first_name\":\"Test\",\"username\":\"testuser\"}",
             StandardCharsets.UTF_8
         );
 
-        // Строим data-check-string (ключи в алфавитном порядке)
         String dataCheckString = "auth_date=" + authDate + "\nuser=" +
             "{\"id\":" + userId + ",\"first_name\":\"Test\",\"username\":\"testuser\"}";
 
-        // Вычисляем secret_key = HMAC-SHA256("WebAppData", botToken)
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(new SecretKeySpec("WebAppData".getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
         byte[] secretKey = mac.doFinal(botToken.getBytes(StandardCharsets.UTF_8));
 
-        // Вычисляем hash = HMAC-SHA256(dataCheckString, secretKey)
         mac.init(new SecretKeySpec(secretKey, "HmacSHA256"));
         String hash = HexFormat.of().formatHex(
             mac.doFinal(dataCheckString.getBytes(StandardCharsets.UTF_8))
@@ -36,7 +32,6 @@ public class TestInitDataHelper {
     }
 
     public static String generateExpiredInitData(String botToken, long userId) throws Exception {
-        // auth_date в прошлом (2 дня назад)
         long expiredDate = System.currentTimeMillis() / 1000 - 172800;
         return generateValidInitData(botToken, userId, expiredDate);
     }
