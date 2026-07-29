@@ -407,8 +407,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                         } catch (InterruptedException ignored) {}
                     }
 
-                    sendMessage(
-                            teacherRespose.toString(),
+                    sendMessageWithHtml(
+                            textForHtml(teacherRespose.toString()),
                             quiz.getTeacherId()
                     );
 
@@ -675,6 +675,28 @@ public class TelegramBot extends TelegramLongPollingBot {
             e.printStackTrace();
         }
         return messageId.get();
+    }
+
+    public Integer sendMessageWithHtml(String msg, long chatId) {
+        AtomicReference<Integer> messageId = new AtomicReference<>();
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(chatId));
+        sendMessage.setText(msg);
+        sendMessage.setParseMode("HTML");
+
+        try {
+            messageId.set(execute(sendMessage).getMessageId());
+        } catch (TelegramApiException e) {
+            System.err.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+            e.printStackTrace();
+        }
+        return messageId.get();
+    }
+
+    private String textForHtml(String rawText) {
+        return rawText.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;");
     }
 
     public Integer sendMessage(String msg, long chatId, Integer editMessageId) {
