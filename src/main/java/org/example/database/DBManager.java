@@ -41,7 +41,7 @@ public class DBManager {
             dataSource = new HikariDataSource(config);
             System.out.println("Connection pull initialized");
         } catch (Exception e) {
-            System.out.println("Failed to initialize connection pull: " + e.getMessage());
+            System.err.println("Failed to initialize connection pull: " + e.getMessage());
             throw new RuntimeException("Connection pull wasn't initialized");
         }
     }
@@ -50,7 +50,7 @@ public class DBManager {
         try {
             return dataSource.getConnection();
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
             return null;
         }
     }
@@ -58,7 +58,7 @@ public class DBManager {
     public static int doesClassExit(long teacherId, String name) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while checking the existence of the class");
+                System.err.println("Connection became null while checking the existence of the class");
                 return 2;
             }
 
@@ -71,7 +71,7 @@ public class DBManager {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("An exception while checking the existence of the class");
+            System.err.println("An exception while checking the existence of the class");
             return 2;
         }
     }
@@ -79,7 +79,7 @@ public class DBManager {
     public static boolean registerAccount(String username, long chatId) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while registering account");
+                System.err.println("Connection became null while registering account");
                 return false;
             }
 
@@ -90,7 +90,7 @@ public class DBManager {
                 return true;
             }
         } catch (SQLException e) {
-            System.out.println("An exception while registering account: " + e.getMessage());
+            System.err.println("An exception while registering account: " + e.getMessage());
             return false;
         }
     }
@@ -98,7 +98,7 @@ public class DBManager {
     public static boolean createClass(String name, long teacherId, ArrayList<Long> students, long totalAnswers, long correctAnswers, long experience) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while creating new class");
+                System.err.println("Connection became null while creating new class");
                 return false;
             }
 
@@ -114,7 +114,7 @@ public class DBManager {
                 return true;
             }
         } catch (SQLException e) {
-            System.out.println("An exception while creating creating new class: " + e.getMessage());
+            System.err.println("An exception while creating creating new class: " + e.getMessage());
             return false;
         }
     }
@@ -122,7 +122,7 @@ public class DBManager {
     public static boolean deleteClass(long teacherId, String name) { // new method delete class
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while deleting " + teacherId + "'s class: " + name);
+                System.err.println("Connection became null while deleting " + teacherId + "'s class: " + name);
                 return false;
             }
 
@@ -133,7 +133,7 @@ public class DBManager {
                 return true;
             }
         } catch (SQLException e) {
-            System.out.println("An exception while deleting " + teacherId + "'s class (" + name + "): " + e.getMessage());
+            System.err.println("An exception while deleting " + teacherId + "'s class (" + name + "): " + e.getMessage());
             return false;
         }
     }
@@ -141,7 +141,7 @@ public class DBManager {
     public static int doesUserExist(String username) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while searching account");
+                System.err.println("Connection became null while searching account");
                 return 2;
             }
 
@@ -152,7 +152,7 @@ public class DBManager {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("An exception while searching an account: " + e.getMessage());
+            System.err.println("An exception while searching an account: " + e.getMessage());
             return 2;
         }
     }
@@ -160,7 +160,7 @@ public class DBManager {
     public static boolean createTest(String content, long userId) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while creating new test");
+                System.err.println("Connection became null while creating new test");
                 return false;
             }
 
@@ -172,7 +172,7 @@ public class DBManager {
                 return true;
             }
         } catch (SQLException e) {
-            System.out.println("An exception while creating new test: " + e.getMessage());
+            System.err.println("An exception while creating new test: " + e.getMessage());
             return false;
         }
     }
@@ -180,7 +180,7 @@ public class DBManager {
     public static boolean deleteTest(long userId, String content) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while deleting " + userId + "'s test: " + content);
+                System.err.println("Connection became null while deleting " + userId + "'s test: " + content);
                 return false;
             }
 
@@ -191,7 +191,7 @@ public class DBManager {
                 return true;
             }
         } catch (SQLException e) {
-            System.out.println("An exception while deleting " + userId + "'s test (" + content + "): " + e.getMessage());
+            System.err.println("An exception while deleting " + userId + "'s test (" + content + "): " + e.getMessage());
             return false;
         }
     }
@@ -199,7 +199,7 @@ public class DBManager {
     public static StudentClass getClass(String name, long teacherId) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while getting " + teacherId + "'s class: " + name);
+                System.err.println("Connection became null while getting " + teacherId + "'s class: " + name);
                 return null;
             }
 
@@ -220,7 +220,7 @@ public class DBManager {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("An exception while getting " + teacherId + "'s class: " + name);
+            System.err.println("An exception while getting " + teacherId + "'s class: " + name);
             return null;
         }
     }
@@ -228,7 +228,7 @@ public class DBManager {
     public static ArrayList<StudentClass> getClasses(long chatId) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while getting " + chatId + "'s classes");
+                System.err.println("Connection became null while getting " + chatId + "'s classes");
                 return null;
             }
 
@@ -251,7 +251,7 @@ public class DBManager {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("An exception while getting " + chatId + "'s classes");
+            System.err.println("An exception while getting " + chatId + "'s classes");
             return null;
         }
     }
@@ -259,7 +259,7 @@ public class DBManager {
     public static ArrayList<Long> getIdsByUsernames(ArrayList<String> usernames) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while getting " + usernames + " ids");
+                System.err.println("Connection became null while getting " + usernames + " ids");
                 return null;
             }
 
@@ -269,19 +269,19 @@ public class DBManager {
                     st.setString(1, username);
                     try (ResultSet res = st.executeQuery()) {
                         if (!res.next()) {
-                            System.out.println("User with username = " + username + " doesn't exit in the database");
+                            System.err.println("User with username = " + username + " doesn't exit in the database");
                             return null;
                         }
                         ids.add(res.getLong("chat_id"));
                     }
                 } catch (SQLException e) {
-                    System.out.println("An exception while getting " + username + "'s chat id: " + e.getMessage());
+                    System.err.println("An exception while getting " + username + "'s chat id: " + e.getMessage());
                     return null;
                 }
             }
             return ids;
         } catch (SQLException e) {
-            System.out.println("An exception while getting ids: " + e.getMessage());
+            System.err.println("An exception while getting ids: " + e.getMessage());
             return null;
         }
     }
@@ -289,7 +289,7 @@ public class DBManager {
     public static ArrayList<String> getUsernamesByIds(ArrayList<Long> ids) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while getting " + ids + "'s usernames");
+                System.err.println("Connection became null while getting " + ids + "'s usernames");
                 return null;
             }
 
@@ -299,19 +299,19 @@ public class DBManager {
                     st.setLong(1, id);
                     try (ResultSet res = st.executeQuery()) {
                         if (!res.next()) {
-                            System.out.println("User with id = " + id + " doesn't exit in the database");
+                            System.err.println("User with id = " + id + " doesn't exit in the database");
                             return null;
                         }
                         usernames.add(res.getString("username"));
                     }
                 } catch (SQLException e) {
-                    System.out.println("An exception while getting " + id + "'s username: " + e.getMessage());
+                    System.err.println("An exception while getting " + id + "'s username: " + e.getMessage());
                     return null;
                 }
             }
             return usernames;
         } catch (SQLException e) {
-            System.out.println("An exception while getting usernames: " + e.getMessage());
+            System.err.println("An exception while getting usernames: " + e.getMessage());
             return null;
         }
     }
@@ -320,7 +320,7 @@ public class DBManager {
     public static ArrayList<Test> getTests(long chatId) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while getting tests");
+                System.err.println("Connection became null while getting tests");
                 return null;
             }
 
@@ -337,7 +337,7 @@ public class DBManager {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error when getting tests: " + e.getMessage());
+            System.err.println("Error when getting tests: " + e.getMessage());
             return null;
         }
     }
@@ -345,7 +345,7 @@ public class DBManager {
     public static Test getTest(long chatId, String name) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while getting test");
+                System.err.println("Connection became null while getting test");
                 return null;
             }
 
@@ -364,7 +364,7 @@ public class DBManager {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error when getting test: " + e.getMessage());
+            System.err.println("Error when getting test: " + e.getMessage());
             return null;
         }
     }
@@ -372,7 +372,7 @@ public class DBManager {
     public static String getTestContent(long chatId, String name) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while getting tests");
+                System.err.println("Connection became null while getting tests");
                 return null;
             }
 
@@ -389,7 +389,7 @@ public class DBManager {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Error when getting test: " + e.getMessage());
+            System.err.println("Error when getting test: " + e.getMessage());
             return null;
         }
     }
@@ -406,7 +406,7 @@ public class DBManager {
     public static boolean updateUserLang(long chatId, String lang) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while updating user lang");
+                System.err.println("Connection became null while updating user lang");
                 return false;
             }
 
@@ -418,7 +418,7 @@ public class DBManager {
                 return true;
             }
         } catch (SQLException e) {
-            System.out.println("An exception while updating user's lang: " + e.getMessage());
+            System.err.println("An exception while updating user's lang: " + e.getMessage());
             return false;
         }
     }
@@ -426,7 +426,7 @@ public class DBManager {
     public static boolean setAutodeleteMode(long chatId, int autodelete) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while setting autodelet mode");
+                System.err.println("Connection became null while setting autodelet mode");
                 return false;
             }
 
@@ -437,7 +437,7 @@ public class DBManager {
                 return true;
             }
         } catch (SQLException e) {
-            System.out.println("An exception while setting autodelete mode: " + e.getMessage());
+            System.err.println("An exception while setting autodelete mode: " + e.getMessage());
             return false;
         }
     }
@@ -445,7 +445,7 @@ public class DBManager {
     public static boolean setAutodeleteDelay(long chatId, int delay) {
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while setting autodelete delay");
+                System.err.println("Connection became null while setting autodelete delay");
                 return false;
             }
 
@@ -456,7 +456,7 @@ public class DBManager {
                 return true;
             }
         } catch (SQLException e) {
-            System.out.println("An exception while setting autodelete delay: " + e.getMessage());
+            System.err.println("An exception while setting autodelete delay: " + e.getMessage());
             return false;
         }
     }
@@ -464,7 +464,7 @@ public class DBManager {
     public static ArrayList<User> getUsers() { // new method get users
         try (Connection connection = getConnection()) {
             if (connection == null) {
-                System.out.println("Connection became null while getting users");
+                System.err.println("Connection became null while getting users");
                 return null;
             }
 
@@ -476,14 +476,14 @@ public class DBManager {
                     ArrayList<StudentClass> classes = getClasses(res.getLong("chat_id"));
 
                     if (classes == null) {
-                        System.out.println("Classes became null while getting users");
+                        System.err.println("Classes became null while getting users");
                         return null;
                     }
 
                     ArrayList<Test> tests = getTests(res.getLong("chat_id"));
 
                     if (tests == null) {
-                        System.out.println("Tests became null while getting users");
+                        System.err.println("Tests became null while getting users");
                         return null;
                     }
 
@@ -492,7 +492,7 @@ public class DBManager {
                 return users;
             }
         } catch (SQLException e) {
-            System.out.println("An exception while getting users: " + e.getMessage());
+            System.err.println("An exception while getting users: " + e.getMessage());
             return null;
         }
     }

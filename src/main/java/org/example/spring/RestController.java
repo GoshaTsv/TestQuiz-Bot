@@ -2,6 +2,7 @@ package org.example.spring;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
 import org.example.bot.RateLimiterManager;
 import org.example.bot.TelegramBot;
 import org.example.bot.Translator;
@@ -17,10 +18,13 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
@@ -62,7 +66,7 @@ public class RestController {
         User neededUser = telegramBot.getUsers().stream().filter(x -> x.getChatId() == chatId).findFirst().orElse(null);
 
         if (neededUser == null) {
-            System.out.println("Needed user is null");
+            System.err.println("Needed user is null");
             return null;
         }
 
