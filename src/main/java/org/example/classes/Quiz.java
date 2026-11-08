@@ -33,7 +33,7 @@ public class Quiz {
         quiz.getStudentClass().getStudents().forEach(x -> {
             User userCurrent = users.stream().filter(user1 -> user1.getChatId() == x).findFirst().orElse(null);
             if (userCurrent == null) {
-                System.out.println("User not found in thread when starting test");
+                System.err.println("User not found in thread when starting test");
                 bot.alertMessage(bot.getTranslator().getTranslatedText("something.went.wrong", teacherLang), teacherId,10000, teacher);
                 return;
             }
@@ -46,7 +46,7 @@ public class Quiz {
             }
 
             ArrayList<String> callbacks = new ArrayList<>();
-            callbacks.add("start_quiz_user_" + rawTeacherUsername.getFirst() + "\uD80C\uDE78" + quiz.getTest().getTestName().replaceAll(" ", "_"));
+            callbacks.add("s_q_u_" + rawTeacherUsername.getFirst() + "\uD80C\uDE78" + quiz.getTest().getTestName().replaceAll(" ", "_"));
             ArrayList<String> buttons = new ArrayList<>();
             buttons.add(bot.getTranslator().getTranslatedText("test.send.confirm", userCurrent.getLang()));
             Integer messageId = bot.sendMessage(bot.getTranslator().getTranslatedText("test.send.message", userCurrent.getLang(), quiz.getTest().getTestName()), x, buttons, callbacks, null );

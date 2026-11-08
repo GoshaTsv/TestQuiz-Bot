@@ -268,7 +268,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         try {
                             execute(answer);
                         } catch (TelegramApiException e) {
-                            System.out.println("Exception while processing variant answer: " + e.getMessage());
+                            System.err.println("Exception while processing variant answer: " + e.getMessage());
                         }
                     } else {
                         alertMessage(translator.getTranslatedText("click.button", user.getLang()), chatId, 10000, user);
@@ -305,7 +305,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                         try {
                             execute(answer);
                         } catch (TelegramApiException e) {
-                            System.out.println("Exception while processing variant answer: " + e.getMessage());
+                            System.err.println("Exception while processing variant answer: " + e.getMessage());
                         }
                     } else {
                         alertMessage(translator.getTranslatedText("click.button", user.getLang()), chatId, 10000, user);
@@ -617,7 +617,7 @@ public class TelegramBot extends TelegramLongPollingBot {
         try {
             execute(deleteMessage);
         } catch (TelegramApiException e) {
-            System.out.println("An exception while deleting message: " + e.getMessage());
+            System.err.println("An exception while deleting message: " + e.getMessage());
         }
     }
 
@@ -632,7 +632,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendDocument.setDocument(inputFile);
             execute(sendDocument);
         } catch (TelegramApiException e) {
-            System.out.println("An exception while sending document: " + e.getMessage());
+            System.err.println("An exception while sending document: " + e.getMessage());
         }
     }
 
@@ -645,7 +645,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             messageId = execute(sendMessage).getMessageId();
         }
         catch (TelegramApiException e){
-            System.out.println("An exception in alert: " + e.getMessage());
+            System.err.println("An exception in alert: " + e.getMessage());
             return;
         }
         if(user != null && user.getAutoDeleting() == 2){
@@ -654,7 +654,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 try {
                     Thread.sleep(length);
                 } catch (InterruptedException e) {
-                    System.out.println("An exception in alert thread: " + e.getMessage());
+                    System.err.println("An exception in alert thread: " + e.getMessage());
                 }
                 deleteMessage(messageId, chatId);
                 System.out.println("Deleting alert message");
@@ -705,7 +705,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             try {
                 messageId = execute(sendMessage).getMessageId();
             } catch (TelegramApiException e) {
-                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                System.err.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
             }
             return messageId;
         }
@@ -719,7 +719,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             try {
                 execute(editMessage);
             } catch (TelegramApiException e) {
-                System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
+                System.err.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
                 SendMessage sendMessage = new SendMessage();
                 sendMessage.setChatId(String.valueOf(chatId));
                 sendMessage.setText(msg);
@@ -728,7 +728,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 try {
                     messageId = execute(sendMessage).getMessageId();
                 } catch (TelegramApiException e1) {
-                    System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                    System.err.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
                 }
                 return messageId;
             }
@@ -757,7 +757,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             try {
                 messageId = execute(sendMessage).getMessageId();
             } catch (TelegramApiException e) {
-                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                System.err.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
                 e.printStackTrace();
             }
             return messageId;
@@ -772,7 +772,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             try {
                 execute(editMessage);
             } catch (TelegramApiException e) {
-                System.out.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
+                System.err.println("An exception while editing msg: \" " + msg + "\" to " + chatId);
                 SendMessage sendMessage = new SendMessage();
                 sendMessage.setChatId(String.valueOf(chatId));
                 sendMessage.setReplyMarkup(keyboard);
@@ -782,7 +782,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 try {
                     messageId = execute(sendMessage).getMessageId();
                 } catch (TelegramApiException e1) {
-                    System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                    System.err.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
                     e1.printStackTrace();
                 }
                 return messageId;
@@ -804,7 +804,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             try {
                 messageId = execute(sendMessage).getMessageId();
             } catch (TelegramApiException e) {
-                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                System.err.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
             }
             return messageId;
         }
@@ -847,7 +847,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             try {
                 messageId = execute(sendMessage).getMessageId();
             } catch (TelegramApiException e) {
-                System.out.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
+                System.err.println("An exception while sending msg: \" " + msg + "\" to " + chatId);
             }
             return messageId;
         }
@@ -1134,7 +1134,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             for (Long ids: chosenClass.getStudents()){
                 User user13 = users.stream().filter(x -> x.getChatId() == ids).findFirst().get();
                 if (user13==null){
-                    System.out.println("user with the id " + ids + " is empty");
+                    System.err.println("user with the id " + ids + " is empty");
                     continue;
                 }
                 user13.setCurrentClassForQuiz(chosenClass);
@@ -1192,8 +1192,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             });
             quizThread.start();
         }
-        else if(data.startsWith("start_quiz_user")){
-            ArrayList<String> params = new ArrayList<>(List.of(data.replaceFirst("start_quiz_user_", "").split("\uD80C\uDE78")));
+        else if(data.startsWith("s_q_u")){
+            ArrayList<String> params = new ArrayList<>(List.of(data.replaceFirst("s_q_u_", "").split("\uD80C\uDE78")));
             String teacherUsername = params.getFirst();
             String testName = params.getLast().replaceAll("_", " ");
 
@@ -1528,7 +1528,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void loadUsers() {
         users = DBManager.getUsers();
         if (users == null) {
-            System.out.println("An error while getting users: users is null");
+            System.err.println("An error while getting users: users is null");
             throw new RuntimeException("Users is null");
         }
         System.out.print("Loaded users: ");

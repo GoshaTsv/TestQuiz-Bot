@@ -12,10 +12,12 @@ Features
  - Ability to change classes and tests on the go
  - Autodeletion of the user's messages and the option to change the time between sending and deleting, and the option to change the behaviour of the system.
  - Ability to use the bot in multiple languages
+ - Add the possibility of adding 2 and more correct variants
 
 Future plans
 --------------------------------------------------
- - Add the possibility of adding 2 and more correct variants
+ - Include buckets in the image saving process
  - Add new kinds of testing
  - Quality Of Life changes
  - User's statistics
+- Add AI for making tests
