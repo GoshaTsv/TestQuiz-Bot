@@ -91,6 +91,7 @@ public class Test {
             }
             if (isValidText(quizNameNode.asText(), 200)) {
                 Character bad = findDisallowedChar(quizNameNode.asText().strip());
+                if (quizNameNode.asText().contains("_")) bad = '_';
                 return bad != null
                         ? "Недопустимый символ в заголовке теста: '" + bad + "' (U+" + String.format("%04X", (int) bad) + ")"
                         : "Заголовок теста пустой или слишком длинный!";

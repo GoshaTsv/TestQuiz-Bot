@@ -2,7 +2,6 @@ package org.example.spring;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.apache.coyote.Response;
 import org.example.bot.RateLimiterManager;
 import org.example.bot.TelegramBot;
 import org.example.bot.Translator;
@@ -24,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 @org.springframework.web.bind.annotation.RestController
 public class RestController {
